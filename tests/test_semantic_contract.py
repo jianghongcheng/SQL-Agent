@@ -96,10 +96,10 @@ def test_saved_wrong_customer_and_date_queries_are_rejected():
     from pathlib import Path
     root=Path(__file__).parents[1]
     cases=json.loads((root/'data/benchmarks/commerce_v1.json').read_text())
+    queries=json.loads((root/'tests/fixtures/commerce_wrong_queries.json').read_text())['queries']
     for name in ('customer_net','empty_cohort'):
         case=next(c for c in cases if c['id']=='commerce:'+name)
-        artifact=json.loads((root/f'outputs/validation/commerce_v1_prompt_v3/commerce_{name}.json').read_text())
-        sql=json.loads(artifact['model_calls'][0]['content'])['sql']
+        sql=queries[name]
         db=sqlite3.connect(':memory:'); db.executescript(case['setup_sql'])
         try:
             r=DataAgentLoop().run(case['goal'],lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':sql}),ContractSQLSession(db,DataContract(**case['contract'],verification_sql=case['gold_sql'])))
