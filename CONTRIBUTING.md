@@ -1,16 +1,11 @@
 # Contributing
 
-RadMeasure is a research prototype, not a medical device. Contributions must
-not describe outputs as diagnoses or claim clinical validation.
+RadMeasure is a SQL Data Agent prototype. Keep changes focused on registered
+read-only tasks, explicit contracts, evidence, evaluation and reliable execution.
 
-1. Create a focused branch and keep generated data, checkpoints, radiographs,
-   credentials, and patient information out of Git.
-2. Add tests for behavior changes.
-3. Run `pip install -e '.[dev]'` and `pytest -q`.
-4. Explain safety-policy changes and any new executable tool permissions in the
-   pull request.
-5. Report benchmark changes with the dataset size, split, metric definition,
-   and limitations.
-
-Security issues or suspected sensitive-data exposure should be reported
-privately rather than through a public issue.
+- Keep reference answers out of planner prompts and runtime verification.
+- Distinguish scripted demonstrations from real-model experiments.
+- Preserve source provenance, benchmark conditions and negative results.
+- Test failure behavior, role checks, stale claims and contract drift when changed.
+- Never commit database credentials, API keys or private source databases.
+- Run `python -m pytest -q` and `python -m compileall -q src` before proposing changes.

@@ -25,10 +25,10 @@ class ApiKeyAuthorizer:
 
     @classmethod
     def from_env(cls) -> "ApiKeyAuthorizer":
-        raw = os.environ.get("GEOMED_API_KEYS")
+        raw = os.environ.get("RADMEASURE_API_KEYS") or os.environ.get("GEOMED_API_KEYS")
         if not raw:
             raise RuntimeError(
-                "GEOMED_API_KEYS must be a JSON object mapping API keys to {name, role}"
+                "RADMEASURE_API_KEYS must be a JSON object mapping API keys to {name, role}"
             )
         rows = json.loads(raw)
         principals = {}
@@ -53,3 +53,48 @@ class ApiKeyAuthorizer:
         if ROLE_LEVEL[matched.role] < ROLE_LEVEL[minimum_role]:
             raise PermissionError(f"{minimum_role} role required")
         return matched
+
+
+class BrowserSessions:
+    """Bounded, process-local browser sessions; restarting the API signs users out."""
+
+    def __init__(self, ttl_seconds=28800, capacity=1024):
+        import threading
+        self.ttl_seconds = ttl_seconds
+        self.capacity = capacity
+        self._entries = {}
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _digest(token):
+        import hashlib
+        return hashlib.sha256(token.encode()).hexdigest()
+
+    def create(self, principal):
+        import secrets
+        import time
+        with self._lock:
+            now = time.monotonic()
+            self._entries = {key: value for key, value in self._entries.items() if value[1] > now}
+            if len(self._entries) >= self.capacity:
+                raise RuntimeError('browser session capacity reached')
+            token = secrets.token_urlsafe(32)
+            self._entries[self._digest(token)] = (principal, now + self.ttl_seconds)
+            return token
+
+    def authenticate(self, token, minimum_role):
+        import time
+        with self._lock:
+            key = self._digest(token or '')
+            value = self._entries.get(key)
+            if value is None or value[1] <= time.monotonic():
+                self._entries.pop(key, None)
+                raise PermissionError('invalid or missing browser session')
+            principal = value[0]
+            if ROLE_LEVEL[principal.role] < ROLE_LEVEL[minimum_role]:
+                raise PermissionError(f'{minimum_role} role required')
+            return principal
+
+    def revoke(self, token):
+        with self._lock:
+            self._entries.pop(self._digest(token or ''), None)

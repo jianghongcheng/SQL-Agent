@@ -1,429 +1,350 @@
-# RadMeasure
+# ContractSQL — SQL Data Agent
 
-**A bounded agent runtime for reliable tool execution, evaluated on
-radiographic measurement and SQL repair.**
+Medical imaging measurement is maintained separately in
+[RadMeasure](https://github.com/jianghongcheng/radmeasure-agent).
+This repository preserves the shared project history but its current application
+is SQL-only. Local raw validation runs, logs, runtime databases, and downloaded
+datasets are intentionally excluded from this public release. Historical result
+reports refer to local artifacts, not files bundled with a fresh clone.
+See [public release validation](docs/PUBLIC_RELEASE_VALIDATION.md).
+Install ContractSQL and RadMeasure in separate virtual environments: their
+legacy Python module namespace is still shared.
 
-RadMeasure combines LLM planning, policy-gated tools, deterministic execution,
-verification, replay, and frozen evaluations. Radiographic measurement is the
-primary safety-critical workload. The same execution runtime also supports SQL
-repair, providing a second tool domain for stress-testing policy enforcement
-and replay.
+Turn a natural-language question into a **reviewable, read-only SQL result**.
+The default `commerce_analysis` task supports totals, order lists, and grouped
+summaries with flexible result columns. ContractSQL connects a model to registered
+SQLite sources, executes queries within
+explicit limits, records evidence, and routes general answers to human review.
 
-## What it does
+This is a local portfolio project, with real model inference and synthetic/public
+evaluation data. It is not a claim of customer adoption or production SQL accuracy.
 
-RadMeasure turns an authorized measurement request into a durable, auditable
-job. An LLM may propose an intent, but it cannot execute arbitrary output. The
-runtime validates the plan against registered protocols, applies policy before
-tool execution, runs deterministic tools behind a service boundary, verifies
-the result, and routes uncertain cases to review.
+## Start here
+
+- [Five-minute demo, architecture and interview questions](docs/INTERVIEW_DEMO_GUIDE.md)
+- [Interview narrative, evidence requirements and truthful resume wording](docs/INTERVIEW_READINESS.md)
+- [Local demo setup and walkthrough](docs/LOCAL_DEMO.md)
+- [Flexible analysis and small-scale product acceptance](docs/PRODUCT_ACCEPTANCE.md)
+- [Configuration results and data robustness](docs/QUALITY_PROFILE_RESULTS.md)
+- [Market evidence and remaining gaps](docs/MARKET_ALIGNMENT_2026_09.md)
+
+## Run the local demo
+
+With Python 3.10+, Ollama running locally, and `qwen3:14b` installed:
+
+```bash
+git clone https://github.com/jianghongcheng/contractsql.git
+cd contractsql
+pip install -e '.[dev]'
+PYTHONPATH=src:. python scripts/local_demo.py start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
+```
+
+Open **http://127.0.0.1:8765**, then click **Enter local demo**.
+If using the key field, the local demo key is **`123`**. Select **`commerce_analysis`**
+and try the questions below. Existing demo processes can be inspected with `status`
+or stopped with `stop`. Credentials are for loopback demonstration only.
+
+## Six questions to test yourself
+
+Use **`commerce_analysis` for all six questions**. Paste only the question into
+**Question**, leave **Initial SQL / corrected SQL** empty, and click **Submit
+analysis** once. The page polls automatically. Wait for `needs_review`, inspect
+**Candidate result** and **Executed / proposed SQL**, then expand the expected
+answer below. `needs_review` is the normal outcome for this task, including a
+correct answer; it is not an accuracy verdict.
+
+These answers were independently calculated from the current local
+`analytics.sqlite` and checked against the deterministic
+[commerce fixture](scripts/commerce_acceptance_cases.py), seed **17**: 6 customers,
+17 orders and 15 refunds. All amounts are **integer cents**. Rebuilding the demo
+with the documented launcher recreates this fixture; answers must be recalculated
+if you change the data. These are known manual regression questions, not a new
+held-out benchmark. The answer keys are documentation and are not given to the
+runtime Agent.
+
+### 1. Paid revenue — scalar aggregation
 
 ```text
-API / MCP client
-       |
-       v
-FastAPI control plane -- API-key roles -- idempotency
-       |
-       v
-PostgreSQL job queue -- atomic claim -- bounded retry / lease recovery
-       |
-       v
-Worker pool -- registered tools -- isolated inference service
-       |
-       v
-Verifier -- KEEP / REPAIR / STOP -- human review
-       |
-       v
-MinIO artifacts -- audit lineage -- replay -- Prometheus metrics
+What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.
 ```
 
-### Operational guarantees in the reference deployment
+<details>
+<summary>Expected answer and what to check</summary>
 
-- **Durable execution:** idempotent submission, PostgreSQL-backed job state,
-  atomic concurrent-worker claims, bounded retries, leases, and crash recovery.
-- **Constrained action boundary:** schema and registry validation plus
-  policy authorization before any tool invocation; unsupported actions fail
-  closed.
-- **Service isolation:** workers call a separately deployed inference service;
-  failures exhaust a bounded retry budget without fabricated fallbacks.
-- **Artifact integrity:** content-addressed, deduplicated MinIO storage with
-  model version, backend, and artifact-hash provenance.
-- **Access and review controls:** API-key roles, internal service
-  authentication, and mandatory review paths for uncertain medical outputs.
-- **Operations:** correlated structured logs, protected Prometheus metrics,
-  trace lineage, parent-linked replay, Docker Compose, and public CI.
+| paid_revenue_cents |
+|---:|
+| 52000 |
 
-> **LLM proposes. Policy authorizes. Deterministic tools execute. Verifier decides.**
+Only `status = 'paid'` orders count. **58250** is the total across all orders,
+including cancelled orders, and is wrong for this question. Refunds are not part
+of the requested measure.
 
-> Research prototype only. It is not a medical device and must not be used for
-> diagnosis or patient care.
+</details>
 
-## Quick start
-
-Run the dependency-light offline workflow:
-
-```bash
-git clone https://github.com/jianghongcheng/radmeasure-agent.git
-cd radmeasure-agent
-pip install -e .
-radmeasure --question "Measure and verify the hallux valgus angle"
-```
-
-The command uses bundled synthetic geometry and labels its provenance
-accordingly; no model checkpoint or medical data is required. For the complete
-service stack and live-model setup, see [Model serving](docs/MODEL_SERVING.md)
-and the [five-minute demo](#five-minute-demo).
-
-Run the complete reference deployment:
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-Compose starts the FastAPI control plane, PostgreSQL job store, concurrent
-workers, MinIO artifact storage, isolated inference service, and local review
-UI. The credentials in `.env.example` are development-only and must be replaced
-before any shared deployment. See
-[Security and observability](docs/SECURITY_AND_OBSERVABILITY.md) and
-[Engineering architecture](docs/ENGINEERING_ARCHITECTURE.md).
-
-## Safety and execution model
-
-The runtime uses the same bounded execution path for radiographic measurement
-and SQL repair: an LLM proposes a registered action, a policy layer authorizes
-or rejects it, deterministic tools execute it, and a verifier chooses `KEEP`,
-`REPAIR`, or `STOP`. The SQL workload stress-tests this execution and
-authorization path outside the radiography stack; it does not imply that every
-domain is supported without a registered tool and policy.
-
-## Engineering evidence
-
-| Check | Result |
-|---|---:|
-| Automated tests | 106 passing locally |
-| Controller policy suite | 12/12 expected decisions, 0 unsafe actions |
-| Planner safety suite | 24 frozen cases |
-| SQL harness v2 | 120 frozen cases, 5 schemas, 24 failure-family clusters |
-| SQL confirmatory v3 | 108 frozen cases, 6 unseen schemas, 18 unseen failure families |
-| Harbor isolated replay | v3: 98/108 success, 25/25 unsafe proposals blocked |
-| Public CI | GitHub Actions |
-
-Model metrics, artifact hashes, split qualifications, and retrieval evaluations
-are reported separately in [Evaluation results](docs/PORTFOLIO_RESULTS.md).
-
-## Authorization path
+### 2. Filtered order list — status, amount and date boundaries
 
 ```text
-User goal
-    ↓
-LLM planner
-    ↓
-Schema + registry validation
-    ↓
-Policy authorization
-    ↓
-Deterministic tool execution
-    ↓
-Verifier
- ┌──┴──────────┐
-KEEP      REPAIR / STOP
-    ↓
-Trace + replay + evals
+List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.
 ```
 
-The planner may use an OpenAI-compatible endpoint or local Ollama, but
-its JSON output is never executed directly. Every protocol, tool, and repair
-action is checked against the registry. Invalid model output and unsupported
-requests fail closed with `STOP`. The runtime also supports an explicitly
-selected deterministic planner, allowing the complete workflow to run without
-a hosted LLM.
+<details>
+<summary>Expected answer and what to check</summary>
 
-```bash
-export RADMEASURE_PLANNER_BASE_URL=http://127.0.0.1:8080/v1
-export RADMEASURE_PLANNER_MODEL=your-instruct-model
-export RADMEASURE_PLANNER_API_KEY=<your-planner-key>
-```
+| order_id | ordered_at | amount_cents |
+|---:|---|---:|
+| 2 | 2026-03-01 | 13500 |
+| 4 | 2026-02-01 | 5000 |
+| 11 | 2026-02-14 | 5000 |
+| 13 | 2026-02-28 | 2500 |
 
-For the benchmarked local 8B configuration:
+Exactly four rows. February 1 is included; April 1 is excluded. Cancelled orders
+15 and 17 meet the date/amount conditions but must not appear.
 
-```bash
-export RADMEASURE_PLANNER_PROVIDER=ollama
-export RADMEASURE_PLANNER_BASE_URL=http://127.0.0.1:11434
-export RADMEASURE_PLANNER_MODEL=qwen3:8b
-```
+</details>
 
-Inspect the executable boundary:
-
-```bash
-curl http://127.0.0.1:8000/v1/protocols
-curl -X POST http://127.0.0.1:8000/v1/plan \
-  -H 'content-type: application/json' -H 'x-api-key: <your-viewer-key>' \
-  --data '{"request":"Measure hallux valgus angle"}'
-```
-
-API keys are read from the environment; see `.env.example` for the variables
-the Compose demo expects. No usable credentials are committed to this
-repository.
-
-## Measured reliability
-
-The engineering claims above are exercised with frozen, reproducible suites;
-they are not production-traffic or clinical-validation claims. For the SQL
-ablation, Qwen3-8B generated each proposal once and the evaluator replayed that
-identical proposal through every configuration.
-
-| Suite and configuration | Successful tasks | Unsafe actions accepted | Incorrect outputs accepted |
-|---|---:|---:|---:|
-| v2 development: LLM only | 94/120 | 19/120 | 5/120 |
-| v2 development: policy + verifier | **113/120** | **0/120** | **0/120** |
-| v3 held-out: LLM only | 73/108 | 25/108 | 6/108 |
-| v3 held-out: policy + verifier | **98/108** | **0/108** | **0/108** |
-
-Policy eliminates unsafe execution; verification eliminates acceptance of
-incorrect query outputs. Without changing the prompt, policy, verifier, or
-evaluation semantics, the separately frozen v3 suite improved by **23.22
-points** under an 18-cluster bootstrap (95% CI **+7.41 to +40.74**). Its six
-schemas and failure templates do not occur in v2. The complete v3 suite also
-runs in [Harbor](https://github.com/harbor-framework/harbor) with an isolated
-agent container, hidden database fixtures, a separate verifier, and no network
-access; its frozen replay reproduced **98/108** success and **0/25** unsafe
-executions. See the
-[detailed ablation and measurement protocol](docs/PORTFOLIO_RESULTS.md#cross-domain-agent-reliability),
-[audited v2 result](outputs/portfolio/sql_harness_v2_qwen3_8b_audited.json),
-[confirmatory v3 result](outputs/portfolio/sql_harness_v3_qwen3_8b_confirmatory.json),
-and [Harbor evaluation](docs/HARBOR_EVALUATION.md).
-
-### Planner authorization pilot
-
-On a separate frozen 24-case safety pilot, the registry planner produced 18/24
-correct and 4/24 unsafe actions versus 15/24 and 9/24 for Qwen3-8B. This
-directional result—not a significance claim—keeps the LLM as an optional intent
-proposer rather than an execution authority. Detailed cases and limitations are
-reported in [Evaluation results](docs/PORTFOLIO_RESULTS.md#planner-authorization-pilot).
-
-### Medical repair safety gate
-
-An independent HRNet/RepairMLP stack may propose a one-step edit, but the policy
-accepts it only when verification and cross-model agreement pass registered
-bounds; otherwise the case routes to review. On 243 patient-disjoint cases this
-gate reduced the weak proposal model's error while limiting harm, but remained
-unsuitable as the final predictor. See the
-[detailed medical evaluation](docs/PORTFOLIO_RESULTS.md#medical-repair-safety-gate)
-and `outputs/research/hrnet_geometry_repair.json`.
-
-The live workflow also supports:
+### 3. Monthly paid revenue — grouped counts and totals
 
 ```text
-Orthanc / direct upload
-        → DICOM direct-identifier removal
-        → content-addressed MinIO storage
-        → image quality and OOD gates
-        → live HVA/IMA inference
-        → mandatory human correction/approval
-        → versioned structured measurement report
+For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.
 ```
 
-Evaluation jobs remain restricted to locked image IDs. Uploaded JPEG/PNG
-radiographs use the live ResNet50 HVA/IMA adapter and always route to human
-review. Every response distinguishes replay from live inference under
-`provenance`; neither path is approved for clinical use.
+<details>
+<summary>Expected answer and what to check</summary>
 
-## Repository contents
-
-> **Naming note.** `RadMeasure` is the project name. `geomed_copilot` is the
-> Python package name, and the service, MCP server, and `GEOMED_*` environment
-> variables inherit that prefix. They refer to the same system. Planner
-> configuration uses the `RADMEASURE_PLANNER_*` variables; data and artifact
-> paths use `GEOMED_*`.
-
-- `artifact_predictor.py`: hash-verified three-seed axis ensemble replay;
-- `geometry.py`: independent acute-angle reconstruction;
-- `protocols.py`: allow-listed measurement protocols, tools, and repair policy;
-- `planner.py`: OpenAI-compatible planner with registry validation and fail-closed fallback;
-- `agent_controller.py`: bounded `KEEP / REPAIR / STOP` execution loop;
-- `repair_inference.py`: independent HRNet + residual repair + verifier proposal service;
-- `retrieval.py`: evidence and measurement-space case retrieval;
-- `production.py`: end-to-end application service using real locked artifacts;
-- `api.py`: FastAPI planning, protocols, durable analysis, trace lookup, and replay;
-- `evaluation.py` and `scripts/evaluate_*`: measurement, retrieval and evidence evals;
-- `scripts/prepare_hvangleest.py`: patient-level splitting with identifiers removed;
-- `data/evidence/catalog.json`: traceable curated evidence catalog.
-
-## Data integrity
-
-The original HVAngleEst release split has no image overlap but does have patient
-overlap (85 train/validation, 42 train/test, and 9 validation/test patients).
-Models evaluated on that split can therefore see the same patient in training
-and test. The preparation script creates a separate patient-disjoint 1,598-foot
-manifest:
-
-| Split | Samples | Patients |
+| month | order_count | revenue_cents |
 |---|---:|---:|
-| Train | 1,121 | 756 |
-| Validation | 234 | 162 |
-| Test | 243 | 162 |
+| 2026-01 | 3 | 7500 |
+| 2026-02 | 3 | 12500 |
+| 2026-03 | 4 | 14750 |
+| 2026-04 | 3 | 17250 |
 
-No patient IDs or image bytes are copied into the project. One out-of-range
-source box is clipped and recorded in the audit. HVA/IMA landmark reconstruction
-matches all 1,598 released targets within 0.1°.
+Zero-amount paid orders still count as orders. Counts sum to **13** and monthly
+revenue sums to **52000**.
 
-## Run the verified application
+</details>
 
-```bash
-PYTHONPATH=src python scripts/run_locked_demo.py \
-  --predictions /path/to/line_predictions_medimageinsight.csv \
-  --annotations /path/to/HVAngleEst/datasets.csv \
-  --split-manifest /path/to/hvangle_results.json \
-  --evidence-catalog data/evidence/catalog.json \
-  --image-id IMG000005.jpg
+### 4. Customer net revenue — joins, refunds and missing data
+
+```text
+For every customer, return customer_id and net_cents: paid order amounts minus approved refund amounts on those paid orders. Count each order and refund once, ignore pending refunds, and use zero for absent or NULL amounts. Include customers without paid orders and sort by customer_id.
 ```
 
-Run tests:
+<details>
+<summary>Expected answer and what to check</summary>
+
+| customer_id | net_cents |
+|---:|---:|
+| 1 | 14500 |
+| 2 | 14750 |
+| 3 | 13000 |
+| 4 | 8500 |
+| 5 | 0 |
+| 6 | 0 |
+
+Keep all six customers. Avoid counting an order amount repeatedly when it has
+multiple refund rows. Pending refunds do not reduce revenue; NULL amounts count
+as zero. Customer totals sum to **50750**: 52000 paid revenue minus 1250 approved
+refunds on paid orders.
+
+</details>
+
+### 5. Customers without paid orders — absence versus cancellation
+
+```text
+List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.
+```
+
+<details>
+<summary>Expected answer and what to check</summary>
+
+| customer_id | name |
+|---:|---|
+| 5 | Customer 5 |
+| 6 | Customer 6 |
+
+Customer 5 has no orders; customer 6 has only a cancelled order. Both qualify.
+Having a cancelled order alone does not qualify a customer who also has paid orders.
+
+</details>
+
+### 6. Highest paid revenue — preserve ties
+
+```text
+Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.
+```
+
+<details>
+<summary>Expected answer and what to check</summary>
+
+| customer_id | paid_cents |
+|---:|---:|
+| 1 | 14750 |
+| 2 | 14750 |
+
+Return both tied customers. An unconditional `LIMIT 1` loses a correct row.
+This question asks for paid order amounts, so subtracting refunds is wrong.
+
+</details>
+
+### Record your results
+
+Compare column names, ordered rows and values. A successful SQL execution alone
+does not pass these checks. Record **Observed submit-to-result (this page)** from
+**Run performance**, which includes queue wait and browser polling. Copy it before
+reloading; reopening an old job does not reconstruct the browser measurement.
+
+| Question | Job ID | Correct / incorrect / no candidate | Submit-to-result (ms) | Review / issue |
+|---|---|---|---|---|
+| 1 | | | | |
+| 2 | | | | |
+| 3 | | | | |
+| 4 | | | | |
+| 5 | | | | |
+| 6 | | | | |
+
+Enter a rationale before clicking **Approve review** or **Reject / request
+correction**. Use **Open existing job** to reopen the job by ID and check **Full
+evidence and audit history**. If you correct a question or SQL, submit a new job
+and retain the original failure. Approval records your decision; it does not
+rerun the query or establish an automatic correctness guarantee.
+
+## Agent design
+
+ContractSQL is a **single SQL Agent inside a durable application workflow**.
+The model proposes a query; application code controls tool access, checks the
+execution result, decides whether to repair or stop, and persists evidence.
+There are five implementation layers:
+
+| Layer | Responsibility | Implementation |
+|---|---|---|
+| 1. Interaction | Login, submit a question, poll progress, inspect results and record a review | [Dashboard](src/geomed_copilot/dashboard.py), [API](src/geomed_copilot/api.py), [MCP](src/geomed_copilot/mcp_server.py) |
+| 2. Durable jobs | Idempotent submission, persistent job state, worker claims, leases and stale-result rejection | [Job store](src/geomed_copilot/jobs.py), [worker](src/geomed_copilot/worker.py) |
+| 3. Task and context | Resolve a registered database and immutable output contract; collect schema and previous execution feedback | [Task registry](src/geomed_copilot/sql_config.py), [pipeline](src/geomed_copilot/pipeline.py) |
+| 4. Agent loop | Generate SQL, execute an allowed tool, inspect feedback, retain a candidate, repair or stop | [SQL planner](src/geomed_copilot/native_sql.py), [DataAgentLoop](src/geomed_copilot/data_agent.py), [bounded runtime](src/geomed_copilot/bounded_runtime.py) |
+| 5. Evidence and evaluation | Persist SQL, decisions, contract hashes, usage and review history; score results separately against offline answers | [Execution record](src/geomed_copilot/execution_record.py), [acceptance protocol](docs/PRODUCT_ACCEPTANCE.md) |
+
+### Execution and repair loop
+
+```mermaid
+flowchart TD
+    A[Question and registered task ID] --> B[API: authenticate, pin contract hash, persist job]
+    B --> C[Worker claims job and renews lease]
+    C --> D[Collect schema and execution feedback in a read snapshot]
+    D --> E[Model proposes one SQL query]
+    E --> F[Policy check, bounded read-only execution, output checks]
+    F --> G{Deterministic routing}
+    G -->|Checks pass| H[Retain candidate]
+    G -->|Repairable error and budget left| D
+    G -->|Denied, repeated, or exhausted| I[Stop with evidence]
+    H --> J[Persist result as needs_review]
+    I --> J
+    J --> K[Human inspects, approves or rejects; audit event persists]
+```
+
+This diagram describes the default **`commerce_analysis`** task. Its collected
+context is the question, database DDL, output constraints and previous SQL/error.
+The read transaction keeps schema collection and repair queries on the same
+SQLite snapshot. The model is Qwen3 14B through Ollama when launched with the
+command above, with reasoning enabled, SQL-text output and a semantic checklist
+for status filters, joins, NULLs and ties. That checklist guides generation; it
+does not prove the answer.
+
+The executor accepts one supported **SELECT** query and enforces registered
+sources, read-only SQLite access, an authorizer, a VM execution budget and row
+limits. This task permits **1–50 unique, nonempty result column names** and at most
+**200 rows**. Columns vary with the question; the runtime does not mechanically
+enforce question-specific aliases for this dynamic task. CTEs, writes and external
+functions are outside the supported query policy.
+
+The router returns `KEEP`, `REPAIR` or `STOP`. `KEEP` means the candidate passed
+the configured checks. For general analysis, the pipeline still stores it as
+`needs_review` with **Automatic release: false**. A valid query that omits a paid
+status filter can pass structural checks; compare against the answer key above.
+
+### Three separate retry budgets
+
+| Mechanism | Default bound | What it does |
+|---|---|---|
+| SQL repair loop | 3 proposal rounds: first attempt + at most 2 repairs | Revisits selected execution/contract failures, supplying previous SQL and execution errors when available. Repeated identical proposals and policy denials stop early. |
+| Model transport recovery | At most 3 HTTP attempts per model invocation | Retries eligible transient failures with backoff. The documented reasoning profile allows 120 seconds per request; this is not an end-to-end deadline. |
+| Durable job recovery | At most 3 claims per job | Re-executes the whole read-only pipeline after eligible infrastructure failures or expired claims. Default lease is 300 seconds, renewed every 100 seconds. |
+
+These budgets are different: three SQL rounds do not imply only three HTTP
+requests. Model transport exhaustion inside the planner becomes a stopped result
+for review; it does not automatically trigger all durable job retries. Worker
+recovery repeats whole jobs and may repeat model cost. There is no mid-step model
+checkpoint. An expired or superseded worker cannot overwrite the new owner's job.
+Dynamic-column validation failures currently stop rather than retry, and not every
+structural failure reason is explicitly included in the SQL-text repair prompt.
+
+### Active features and optional modes
+
+| Mode | Current behavior |
+|---|---|
+| `commerce_analysis` | Dynamic output, schema context, bounded generation/execution/repair, review and audit. No registered business definitions or source-health checks; the page reports this explicitly. |
+| Fixed catalog metrics, such as `net_revenue` | Separate registered questions with business definitions, source checks and reference-query comparison. Successful reference checks can permit automatic release within that contract. |
+| Independent model checker, relational planning and data probes | Experimental/alternative paths; none is enabled in the documented SQL-text demo profile. Their measurements are listed separately below. |
+
+This is a Data Agent because it collects data context, chooses a SQL tool action,
+observes execution feedback and makes a bounded next-step decision. One Agent is
+enough for this loop. There is no vector-store RAG or multi-agent delegation in
+the default design. Offline answer keys never serve as runtime verification for
+general queries. The separate registered-reference mode must not be reported as
+blind model accuracy.
+
+Each submitted question is an independent job. The repair loop uses feedback
+within that job; it does not provide conversational memory across questions.
+
+The API persists jobs and review events. The local CLI uses the same pipeline
+with a temporary job store; retain its JSON output if you need evidence. The local
+demo uses SQLite for sources and jobs; a PostgreSQL job-store adapter exists but
+has separate live-validation requirements.
+
+[Architecture and book connection](docs/DATA_AGENT.md) · [Task registration](docs/SQL_TASKS.md) · [Reliability details](docs/RELIABILITY.md)
+
+## Measured configuration choice
+
+On **26 known development questions × 2 database instances × 3 trials**, the
+selected reasoning configuration retained **142/156 correct candidates (91.0%)**,
+versus 102/156 for the Coder baseline and 108/156 for non-reasoning Qwen3.
+Its p95 latency was **74.8 seconds**, versus 2.23 seconds for non-reasoning;
+the demo therefore uses an asynchronous job workflow. It still retained 13 wrong
+candidates and stopped once. General answers require review.
+
+The 35 originally correct billing candidates also passed 24 additional data
+instances. These are synthetic regression results, not unseen public-benchmark
+accuracy. Historical BIRD 500 results have **not** been rerun with this profile.
+See [protocol, failures and tradeoffs](docs/QUALITY_PROFILE_RESULTS.md), or open
+`/benchmark` on the demo for 864 recorded inference episodes across experiments.
+
+## Experiments are not all enabled features
+
+The default service stays separate from experimental generation strategies.
+Relational planning and data probes are evaluated independently, not stacked.
+SQL-text model evaluation is another controlled comparison.
+
+| Completed experiment | Evidence-backed conclusion |
+|---|---|
+| [432-episode paired comparison](docs/PAIRED_SQL_BENCHMARK_RESULTS.md) | Independent checking rejected wrong and correct candidates; no answer-quality gain established |
+| [Relational planning](docs/RELATIONAL_PLAN_INTERVIEW.md) | 42/72 correct versus 39/72, twice the calls; small development result with substantial uncertainty |
+| [Bounded data probes](docs/SQL_AGENT_WALKTHROUGH.md) | 137 successful probe queries; 38/72 correct versus 39/72, so not promoted |
+| [Paper and implementation review](docs/SQL_ACCURACY_METHODS_RESEARCH.md) | Motivation and limitations, not locally reproduced paper scores |
+
+All denominators describe the documented datasets and protocols. Repeated episodes
+are not distinct questions. Model agreement and successful execution are not
+correctness proofs. Previous BIRD data has been used during development.
+
+## Verify and reproduce
 
 ```bash
 python -m pytest -q
 ```
 
-Run the API after installing the optional dependencies:
+Benchmark runners write immutable run directories containing inputs, manifests,
+source snapshots, responses, per-task outcomes and summaries. Follow the commands
+in each dated report; do not overwrite a prior run or omit failed episodes.
 
-```bash
-pip install -e '.[api]'
-export GEOMED_PREDICTIONS=/path/to/line_predictions_medimageinsight.csv
-export GEOMED_ANNOTATIONS=/path/to/HVAngleEst/datasets.csv
-export GEOMED_SPLIT_MANIFEST=/path/to/hvangle_results.json
-export GEOMED_EVIDENCE_CATALOG="$PWD/data/evidence/catalog.json"
-uvicorn geomed_copilot.api:create_app --factory
-```
-
-Discover the backend contract before calling it:
-
-```bash
-curl http://127.0.0.1:8000/v1/capabilities
-```
-
-## MCP agent tools
-
-RadMeasure exposes the same honest application boundary through a standard
-Python MCP server (packaged as `geomed-mcp`). The current server accepts only
-identifiers from the configured, hash-locked artifact; it does not claim live
-image inference.
-
-```bash
-pip install -e .
-export GEOMED_PREDICTIONS=/path/to/line_predictions_medimageinsight.csv
-export GEOMED_ANNOTATIONS=/path/to/HVAngleEst/datasets.csv
-export GEOMED_SPLIT_MANIFEST=/path/to/hvangle_results.json
-export GEOMED_EVIDENCE_CATALOG="$PWD/data/evidence/catalog.json"
-geomed-mcp
-```
-
-For a minimal synthetic smoke demo instead of the included evaluation replay:
-
-```bash
-GEOMED_DEMO_MODE=1 geomed-mcp
-```
-
-Use `demo-foot-001` as the image identifier. The response provenance says
-`deterministic_synthetic_demo`; this mode never claims live model inference.
-
-Tools:
-
-- `list_geomed_capabilities`: reports supported measurements, backend mode,
-  accepted input, and limitations;
-- `analyze_radiograph`: runs geometry verification, similar-case retrieval,
-  evidence retrieval, citations, and per-tool traces for a locked case ID.
-
-## Five-minute demo
-
-```bash
-docker compose up --build
-```
-
-Open `http://localhost:8000` and select one of 176 persisted evaluation cases.
-These cases come from a legacy prediction artifact produced under an earlier
-split state; when reconciled against the current manifest, they map to 122
-training, 24 validation, and 30 test records. They are therefore not presented
-as a subset of the newer 243-case patient-disjoint test split, and the dashboard
-reports the split alignment as unverified. Inspect predictions, targets,
-absolute errors, citations, provenance, and per-tool latency. The response
-explicitly reports that live inference is off.
-
-Because most of these cases were seen during training, the displayed errors are
-optimistically biased and must not be read as held-out performance. They
-demonstrate the workflow, traces, and provenance surface—not measurement
-accuracy.
-
-The dashboard submits a durable asynchronous job. The API writes an idempotent
-queued record, and a separate worker atomically claims it, runs the workflow,
-and stores either `completed`, `needs_review`, or `failed`. PostgreSQL persists
-job state, while content-addressed uploads live in S3-compatible MinIO.
-
-Workers call a separately deployed, internally authenticated inference service.
-Every result records the model ID, version, backend, artifact hash, readiness,
-and whether the service output agrees with downstream verification. The included
-registry contains both locked replay and live PyTorch image inference. Compose
-mounts the local checkpoint read-only and defaults to CPU; set an appropriate
-device and GPU-enabled base image before benchmarking GPU serving.
-
-Run a real uploaded-image job:
-
-```bash
-curl -X POST http://localhost:8000/v1/uploads \
-  -H 'X-API-Key: <your-operator-key>' \
-  -H 'Idempotency-Key: example-upload-001' \
-  -F 'file=@/path/to/radiograph.jpg;type=image/jpeg'
-```
-
-Dashboard and API keys are supplied through the environment and are scoped to
-the Compose demo. Protected API calls use `X-API-Key`. See
-`docs/SECURITY_AND_OBSERVABILITY.md` before deploying outside localhost.
-
-The local medical-imaging UI is available at:
-
-- Upload/review dashboard: `http://localhost:8000`
-- OHIF DICOM viewer: `http://127.0.0.1:3000`
-- Orthanc Explorer/DICOMWeb: `http://127.0.0.1:8042`
-
-Orthanc and OHIF bind only to loopback. The development credentials in
-`.env.example` and the permissive local assumptions must be replaced before any
-shared deployment.
-
-```bash
-PYTHONPATH=src python scripts/portfolio_benchmark.py --iterations 100
-```
-
-This reports successful runs, tool success rate, citation presence, and p50/p95
-workflow latency. It is an engineering reliability check, not clinical validation.
-
-## Limitations
-
-- Live inference currently supports JPEG/PNG only; DICOM is accepted by storage
-  but deliberately rejected by the image adapter until modality/windowing and
-  de-identification handling are implemented.
-- The live model is internally reproduced on one public dataset split only;
-  there is no external, prospective, or clinical validation.
-- The image encoder's pooled embedding is weak for angle-neighbor retrieval;
-  hybrid retrieval only slightly improves over predicted geometry.
-- The evidence evaluation contains five transparent, manually labeled questions.
-- No prospective or external clinical validation has been performed.
-- Dataset redistribution remains disabled pending a separate license review.
-
-See [Evaluation results](docs/PORTFOLIO_RESULTS.md),
-[Security and observability](docs/SECURITY_AND_OBSERVABILITY.md), and
-[Engineering architecture](docs/ENGINEERING_ARCHITECTURE.md) for detailed
-evaluation scope, deployment assumptions, and failure analysis.
-
-## Author
-
-**Hongcheng Jiang** — Ph.D., Electrical & Computer Engineering,
-University of Missouri–Kansas City.
-
-[GitHub](https://github.com/jianghongcheng) ·
-[Website](https://jianghongcheng.github.io/) ·
-[Google Scholar](https://scholar.google.com/citations?user=NPk5cT0AAAAJ)
-
-RadMeasure originated from work at
-[NextTier IT Solutions Consultancy](https://www.nexttiertech.com/) and was later
-released publicly with permission.
-
-Released under the [MIT License](LICENSE).
+For MCP configuration, deployment options and earlier experiments, see
+[historical implementation notes](docs/PROJECT_HISTORY.md). Portfolio name:
+**ContractSQL**; existing `radmeasure` commands and `geomed_copilot` imports remain
+compatible. This SQL project does not include the earlier medical project.

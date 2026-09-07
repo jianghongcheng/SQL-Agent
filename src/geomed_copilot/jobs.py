@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import uuid
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
@@ -44,6 +45,11 @@ class SqliteJobRepository:
     boundary so a PostgreSQL adapter can replace it without changing workflows.
     """
 
+    # Keep short queue transactions serialized within this process. The local
+    # SQLite build can hang when connections are opened and closed concurrently.
+    # Worker inference never runs while this lock is held; processes still use WAL.
+    _connection_lock = threading.RLock()
+
     def __init__(self, path: Path) -> None:
         self.path = path
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -51,14 +57,15 @@ class SqliteJobRepository:
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
-        connection = sqlite3.connect(str(self.path), timeout=10, isolation_level=None)
-        connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.execute("PRAGMA busy_timeout=10000")
-        try:
-            yield connection
-        finally:
-            connection.close()
+        with self._connection_lock:
+            connection = sqlite3.connect(str(self.path), timeout=10, isolation_level=None)
+            try:
+                connection.row_factory = sqlite3.Row
+                connection.execute("PRAGMA journal_mode=WAL")
+                connection.execute("PRAGMA busy_timeout=10000")
+                yield connection
+            finally:
+                connection.close()
 
     def _initialize(self) -> None:
         with self._connect() as connection:
@@ -180,16 +187,17 @@ class SqliteJobRepository:
             connection.execute("BEGIN IMMEDIATE")
             now = _now()
             expired = connection.execute(
-                "SELECT job_id,worker_id FROM jobs WHERE status='running' AND lease_expires_at < ?", (now,)
+                "SELECT job_id,worker_id,attempts,max_attempts FROM jobs WHERE status='running' AND lease_expires_at < ?", (now,)
             ).fetchall()
             for stale in expired:
+                status = "failed" if stale["attempts"] >= stale["max_attempts"] else "queued"
                 connection.execute(
-                    "UPDATE jobs SET status='queued',worker_id=NULL,lease_expires_at=NULL,updated_at=? WHERE job_id=?",
-                    (now, stale["job_id"]),
+                    "UPDATE jobs SET status=?,worker_id=NULL,lease_expires_at=NULL,updated_at=? WHERE job_id=?",
+                    (status, now, stale["job_id"]),
                 )
-                self._event(connection, stale["job_id"], "lease_expired", {"worker_id": stale["worker_id"]})
+                self._event(connection, stale["job_id"], "lease_expired", {"worker_id": stale["worker_id"], "next_status": status})
             row = connection.execute(
-                "SELECT * FROM jobs WHERE status = 'queued' ORDER BY created_at LIMIT 1"
+                "SELECT * FROM jobs WHERE status = 'queued' AND attempts < max_attempts ORDER BY created_at LIMIT 1"
             ).fetchone()
             if row is None:
                 connection.execute("COMMIT")
@@ -203,37 +211,58 @@ class SqliteJobRepository:
             connection.execute("COMMIT")
         return self.get(row["job_id"])
 
-    def finish(self, job_id: str, status: str, result: dict[str, Any]) -> Job:
+    def renew_lease(self, claim: Job, lease_seconds: int) -> None:
+        if type(lease_seconds) is not int or lease_seconds < 1:
+            raise ValueError('lease must be positive seconds')
+        now = _now()
+        expiry = (datetime.now(timezone.utc) + timedelta(seconds=lease_seconds)).isoformat()
+        with self._connect() as connection:
+            cursor = connection.execute(
+                "UPDATE jobs SET lease_expires_at=?,updated_at=? WHERE job_id=? AND status='running' AND worker_id=? AND attempts=? AND lease_expires_at>?",
+                (expiry, now, claim.job_id, claim.worker_id, claim.attempts, now))
+            if cursor.rowcount != 1:
+                raise RuntimeError('cannot renew stale claim')
+
+    def finish(self, job_id: str, status: str, result: dict[str, Any], *, claim: Job) -> Job:
+        if claim.job_id != job_id:
+            raise ValueError("claim does not belong to job")
         if status not in {"completed", "needs_review"}:
             raise ValueError("finish status must be completed or needs_review")
         with self._connect() as connection:
             cursor = connection.execute(
-                "UPDATE jobs SET status=?, result=?, error=NULL, worker_id=NULL, lease_expires_at=NULL, updated_at=? WHERE job_id=? AND status='running'",
-                (status, json.dumps(result), _now(), job_id),
+                "UPDATE jobs SET status=?, result=?, error=NULL, worker_id=NULL, lease_expires_at=NULL, updated_at=? WHERE job_id=? AND status='running' AND worker_id=? AND attempts=? AND lease_expires_at>?",
+                (status, json.dumps(result), _now(), job_id, claim.worker_id, claim.attempts, _now()),
             )
             if cursor.rowcount == 1:
                 self._event(connection, job_id, status, {})
         if cursor.rowcount != 1:
-            raise RuntimeError("job is not running")
+            raise RuntimeError("job is not running or claim is stale")
         return self.get(job_id)
 
     def record_failure(self, job_id: str, code: str, message: str,
-                       retryable: bool = True) -> Job:
-        job = self.get(job_id)
-        if job is None or job.status != "running":
-            raise RuntimeError("job is not running")
-        status = "queued" if retryable and job.attempts < job.max_attempts else "failed"
-        error = {"code": code, "message": message, "retryable": retryable}
+                       retryable: bool = True, *, claim: Job) -> Job:
+        if claim.job_id != job_id:
+            raise ValueError("claim does not belong to job")
         with self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT * FROM jobs WHERE job_id=? AND status='running' AND worker_id=? AND attempts=? AND lease_expires_at>?",
+                (job_id, claim.worker_id, claim.attempts, _now()),
+            ).fetchone()
+            if row is None:
+                connection.execute("ROLLBACK")
+                raise RuntimeError("job is not running or claim is stale")
+            status = "queued" if retryable and row["attempts"] < row["max_attempts"] else "failed"
+            error = {"code": code, "message": message, "retryable": retryable}
             connection.execute(
-                "UPDATE jobs SET status=?, error=?, worker_id=NULL, lease_expires_at=NULL, updated_at=? WHERE job_id=? AND status='running'",
+                "UPDATE jobs SET status=?,error=?,worker_id=NULL,lease_expires_at=NULL,updated_at=? WHERE job_id=?",
                 (status, json.dumps(error), _now(), job_id),
             )
             self._event(connection, job_id, "retry_scheduled" if status == "queued" else "failed", error)
+            connection.execute("COMMIT")
         return self.get(job_id)
 
     def review(self, job_id: str, reviewer: str, decision: str,
-               corrected_measurements: dict[str, float] | None = None,
                notes: str = "") -> Job:
         if decision not in {"approve", "reject"}:
             raise ValueError("decision must be approve or reject")
@@ -248,9 +277,6 @@ class SqliteJobRepository:
             result = json.loads(row["result"])
             review = {"reviewer": reviewer, "decision": decision, "notes": notes,
                       "reviewed_at": _now()}
-            if corrected_measurements is not None:
-                review["corrected_measurements"] = corrected_measurements
-                result["measurements"] = corrected_measurements
             result["review"] = review
             status = "review_approved" if decision == "approve" else "review_rejected"
             connection.execute(

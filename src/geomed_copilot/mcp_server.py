@@ -1,94 +1,96 @@
-"""Small dependency-free MCP stdio server for the GeoMed tool boundary."""
-
+"""Local stdio MCP adapter for the authenticated SQL API."""
 from __future__ import annotations
 
 import json
+import os
 import sys
-from functools import lru_cache
 from typing import Any
-
-from .factory import create_tools_from_env
-from .tools import GeoMedTools
+import urllib.request
+from urllib.parse import quote
 
 PROTOCOL_VERSION = "2024-11-05"
-
-
-@lru_cache(maxsize=1)
-def get_tools() -> GeoMedTools:
-    return create_tools_from_env()
-
-
 TOOL_SCHEMAS = [
-    {"name": "list_geomed_capabilities", "description": "Describe the GeoMed backend, measurements, and limitations.", "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
-    {"name": "list_available_cases", "description": "List case identifiers accepted by the configured backend.", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 100, "default": 20}}, "additionalProperties": False}},
-    {
-        "name": "analyze_radiograph",
-        "description": "Run geometry checks, retrieval, citations, and tool traces for a configured case ID.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "image_id": {"type": "string", "minLength": 1},
-                "question": {"type": "string", "minLength": 1},
-                "top_k": {"type": "integer", "minimum": 1, "maximum": 20, "default": 3},
-            },
-            "required": ["image_id"],
-            "additionalProperties": False,
-        },
-    },
+    {"name": "list_sql_tasks", "description": "List registered SQL tasks and fixed output contracts.",
+     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "submit_sql_task", "description": "Submit a read-only SQL task or query repair for asynchronous execution.",
+     "inputSchema": {"type": "object", "properties": {
+         "task_id": {"type": "string"}, "question": {"type": "string"},
+         "initial_sql": {"type": "string"}, "idempotency_key": {"type": "string"}},
+         "required": ["task_id", "idempotency_key"], "additionalProperties": False}},
+    {"name": "get_sql_job", "description": "Read job status, output and execution evidence.",
+     "inputSchema": {"type": "object", "properties": {"job_id": {"type": "string"}},
+                     "required": ["job_id"], "additionalProperties": False}},
 ]
 
 
-def _result(request_id: Any, result: Any) -> dict:
-    return {"jsonrpc": "2.0", "id": request_id, "result": result}
-
-
-def _error(request_id: Any, code: int, message: str) -> dict:
-    return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": message}}
+def api_call(path: str, payload: dict | None = None, idempotency_key: str | None = None):
+    key = os.environ.get("RADMEASURE_MCP_API_KEY")
+    if not key:
+        raise ValueError("RADMEASURE_MCP_API_KEY is required")
+    base = os.environ.get("RADMEASURE_API_URL", "http://127.0.0.1:8000").rstrip("/")
+    headers = {"x-api-key": key, "content-type": "application/json"}
+    if idempotency_key:
+        headers["idempotency-key"] = idempotency_key
+    request = urllib.request.Request(base + path, headers=headers,
+        data=None if payload is None else json.dumps(payload).encode())
+    with urllib.request.urlopen(request, timeout=15) as response:
+        return json.loads(response.read())
 
 
 def dispatch(message: dict) -> dict | None:
-    """Dispatch one MCP JSON-RPC message; notifications return no response."""
+    if not isinstance(message, dict):
+        return {"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid request"}}
     if "id" not in message:
         return None
     request_id = message["id"]
+    def result(data):
+        return {"jsonrpc": "2.0", "id": request_id, "result": data}
+    def error(code, text):
+        return {"jsonrpc": "2.0", "id": request_id, "error": {"code": code, "message": text}}
     method = message.get("method")
-    params = message.get("params") or {}
     try:
         if method == "initialize":
-            return _result(request_id, {"protocolVersion": PROTOCOL_VERSION, "capabilities": {"tools": {"listChanged": False}}, "serverInfo": {"name": "geomed-copilot", "version": "0.3.0"}})
+            return result({"protocolVersion": PROTOCOL_VERSION, "capabilities": {"tools": {"listChanged": False}},
+                           "serverInfo": {"name": "radmeasure-sql", "version": "0.5.0"}})
         if method == "ping":
-            return _result(request_id, {})
+            return result({})
         if method == "tools/list":
-            return _result(request_id, {"tools": TOOL_SCHEMAS})
-        if method == "tools/call":
-            name = params.get("name")
-            arguments = params.get("arguments") or {}
-            if name == "list_geomed_capabilities":
-                output = get_tools().capabilities()
-            elif name == "list_available_cases":
-                output = get_tools().list_available_cases(**arguments)
-            elif name == "analyze_radiograph":
-                output = get_tools().analyze_radiograph(**arguments)
-            else:
-                return _error(request_id, -32602, f"Unknown tool: {name}")
-            return _result(request_id, {"content": [{"type": "text", "text": json.dumps(output, ensure_ascii=False)}], "structuredContent": output, "isError": False})
-        return _error(request_id, -32601, f"Method not found: {method}")
-    except (KeyError, TypeError, ValueError, RuntimeError) as exc:
-        return _result(request_id, {"content": [{"type": "text", "text": str(exc)}], "isError": True})
+            return result({"tools": TOOL_SCHEMAS})
+        if method != "tools/call":
+            return error(-32601, "Method not found")
+        params = message.get("params")
+        if not isinstance(params, dict):
+            return error(-32602, "Invalid params: expected an object")
+        name, args = params.get("name"), params.get("arguments") or {}
+        if not isinstance(args, dict):
+            return error(-32602, "Invalid arguments")
+        if name == "list_sql_tasks" and not args:
+            output = api_call("/v1/tasks")
+        elif name == "get_sql_job" and set(args) == {"job_id"} and isinstance(args["job_id"], str):
+            output = api_call("/v1/jobs/" + quote(args["job_id"], safe=""))
+        elif name == "submit_sql_task" and {"task_id", "idempotency_key"} <= set(args) and not set(args) - {"task_id", "idempotency_key", "question", "initial_sql"}:
+            if not all(isinstance(v, str) and v for v in args.values()):
+                return error(-32602, "Arguments must be nonempty strings")
+            output = api_call("/v1/jobs", {k: v for k, v in args.items() if k != "idempotency_key"}, args["idempotency_key"])
+        else:
+            return error(-32602, "Unknown tool or invalid arguments")
+        return result({"content": [{"type": "text", "text": json.dumps(output)}],
+                       "structuredContent": output, "isError": False})
+    except (KeyError, TypeError, ValueError, OSError) as exc:
+        return result({"content": [{"type": "text", "text": str(exc)}], "isError": True})
 
 
-def main() -> None:
+def main():
     for line in sys.stdin:
         if not line.strip():
             continue
         try:
             response = dispatch(json.loads(line))
-        except (json.JSONDecodeError, TypeError) as exc:
-            response = _error(None, -32700, f"Parse error: {exc}")
+        except json.JSONDecodeError:
+            response = {"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error"}}
         if response is not None:
-            sys.stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
-            sys.stdout.flush()
+            print(json.dumps(response), flush=True)
 
 
-if __name__ == "__main__":  # pragma: no cover
+if __name__ == "__main__":
     main()

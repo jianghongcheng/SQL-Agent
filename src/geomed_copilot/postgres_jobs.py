@@ -125,14 +125,14 @@ class PostgresJobRepository:
                     SELECT job_id,worker_id FROM jobs
                     WHERE status='running' AND lease_expires_at < %s FOR UPDATE
                 )
-                UPDATE jobs SET status='queued',worker_id=NULL,lease_expires_at=NULL,updated_at=%s
+                UPDATE jobs SET status=CASE WHEN jobs.attempts >= jobs.max_attempts THEN 'failed' ELSE 'queued' END,worker_id=NULL,lease_expires_at=NULL,updated_at=%s
                 FROM expired WHERE jobs.job_id=expired.job_id
-                RETURNING jobs.job_id,expired.worker_id AS expired_worker_id
+                RETURNING jobs.job_id,jobs.status,expired.worker_id AS expired_worker_id
             """, (now, now))
             for stale in cursor.fetchall():
-                self._event(cursor, str(stale["job_id"]), "lease_expired", {"worker_id": stale["expired_worker_id"]})
+                self._event(cursor, str(stale["job_id"]), "lease_expired", {"worker_id": stale["expired_worker_id"], "next_status": stale["status"]})
             cursor.execute("""
-                SELECT job_id FROM jobs WHERE status='queued'
+                SELECT job_id FROM jobs WHERE status='queued' AND attempts < max_attempts
                 ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1
             """)
             selected = cursor.fetchone()
@@ -146,16 +146,29 @@ class PostgresJobRepository:
             self._event(cursor, str(row["job_id"]), "claimed", {"worker_id": worker_id, "lease_seconds": lease_seconds})
         return self._job(row)
 
-    def finish(self, job_id: str, status: str, result: dict) -> Job:
+    def renew_lease(self, claim: Job, lease_seconds: int) -> None:
+        if type(lease_seconds) is not int or lease_seconds < 1:
+            raise ValueError('lease must be positive seconds')
+        now = datetime.now(timezone.utc)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute("""UPDATE jobs SET lease_expires_at=%s,updated_at=%s
+                WHERE job_id=%s AND status='running' AND worker_id=%s AND attempts=%s AND lease_expires_at>%s""",
+                (now + timedelta(seconds=lease_seconds), now, claim.job_id, claim.worker_id, claim.attempts, now))
+            if cursor.rowcount != 1:
+                raise RuntimeError('cannot renew stale claim')
+
+    def finish(self, job_id: str, status: str, result: dict, *, claim: Job) -> Job:
         from psycopg.types.json import Jsonb
+        if claim.job_id != job_id:
+            raise ValueError("claim does not belong to job")
         if status not in {"completed", "needs_review"}:
             raise ValueError("finish status must be completed or needs_review")
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute("""
                 UPDATE jobs SET status=%s,result=%s,error=NULL,worker_id=NULL,
                     lease_expires_at=NULL,updated_at=%s
-                WHERE job_id=%s AND status='running' RETURNING *
-            """, (status, Jsonb(result), datetime.now(timezone.utc), job_id))
+                WHERE job_id=%s AND status='running' AND worker_id=%s AND attempts=%s AND lease_expires_at>%s RETURNING *
+            """, (status, Jsonb(result), datetime.now(timezone.utc), job_id, claim.worker_id, claim.attempts, datetime.now(timezone.utc)))
             row = cursor.fetchone()
             if row is None:
                 raise RuntimeError("job is not running")
@@ -163,10 +176,12 @@ class PostgresJobRepository:
         return self._job(row)
 
     def record_failure(self, job_id: str, code: str, message: str,
-                       retryable: bool = True) -> Job:
+                       retryable: bool = True, *, claim: Job) -> Job:
+        if claim.job_id != job_id:
+            raise ValueError("claim does not belong to job")
         from psycopg.types.json import Jsonb
         with self._connect() as connection, connection.cursor() as cursor:
-            cursor.execute("SELECT * FROM jobs WHERE job_id=%s AND status='running' FOR UPDATE", (job_id,))
+            cursor.execute("SELECT * FROM jobs WHERE job_id=%s AND status='running' AND worker_id=%s AND attempts=%s AND lease_expires_at>%s FOR UPDATE", (job_id, claim.worker_id, claim.attempts, datetime.now(timezone.utc)))
             current = cursor.fetchone()
             if current is None:
                 raise RuntimeError("job is not running")
@@ -192,7 +207,6 @@ class PostgresJobRepository:
         return [{"event_type": row["event_type"], "details": row["details"], "created_at": row["created_at"].isoformat()} for row in rows]
 
     def review(self, job_id: str, reviewer: str, decision: str,
-               corrected_measurements: dict[str, float] | None = None,
                notes: str = "") -> Job:
         from psycopg.types.json import Jsonb
         if decision not in {"approve", "reject"}:
@@ -206,9 +220,6 @@ class PostgresJobRepository:
             reviewed_at = datetime.now(timezone.utc)
             review = {"reviewer": reviewer, "decision": decision, "notes": notes,
                       "reviewed_at": reviewed_at.isoformat()}
-            if corrected_measurements is not None:
-                review["corrected_measurements"] = corrected_measurements
-                result["measurements"] = corrected_measurements
             result["review"] = review
             status = "review_approved" if decision == "approve" else "review_rejected"
             cursor.execute(
