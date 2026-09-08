@@ -2,21 +2,21 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: radmeasure
-      POSTGRES_USER: radmeasure
-      POSTGRES_PASSWORD: ${RADMEASURE_DB_PASSWORD:-local-demo-password}
+      POSTGRES_DB: contractsql
+      POSTGRES_USER: contractsql
+      POSTGRES_PASSWORD: ${CONTRACTSQL_DB_PASSWORD:-local-demo-password}
     volumes:
       - sql-jobs:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U radmeasure -d radmeasure"]
+      test: ["CMD-SHELL", "pg_isready -U contractsql -d contractsql"]
       interval: 3s
       timeout: 3s
       retries: 20
   api:
     build: .
     environment:
-      RADMEASURE_DATABASE_URL: postgresql://radmeasure:${RADMEASURE_DB_PASSWORD:-local-demo-password}@postgres:5432/radmeasure
-      RADMEASURE_API_KEYS: '${RADMEASURE_API_KEYS:-{"viewer-local":{"name":"viewer","role":"viewer"},"operator-local":{"name":"operator","role":"operator"},"admin-local":{"name":"admin","role":"admin"}}}'
+      CONTRACTSQL_DATABASE_URL: postgresql://contractsql:${CONTRACTSQL_DB_PASSWORD:-local-demo-password}@postgres:5432/contractsql
+      CONTRACTSQL_API_KEYS: '${CONTRACTSQL_API_KEYS:-{"viewer-local":{"name":"viewer","role":"viewer"},"operator-local":{"name":"operator","role":"operator"},"admin-local":{"name":"admin","role":"admin"}}}'
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -24,13 +24,13 @@ services:
         condition: service_healthy
   worker:
     build: .
-    command: ["radmeasure-worker", "--poll-seconds", "0.25"]
+    command: ["contractsql-worker", "--poll-seconds", "0.25"]
     environment:
-      RADMEASURE_DATABASE_URL: postgresql://radmeasure:${RADMEASURE_DB_PASSWORD:-local-demo-password}@postgres:5432/radmeasure
-      RADMEASURE_PLANNER_BASE_URL: ${RADMEASURE_PLANNER_BASE_URL:-}
-      RADMEASURE_PLANNER_MODEL: ${RADMEASURE_PLANNER_MODEL:-}
-      RADMEASURE_PLANNER_PROVIDER: ${RADMEASURE_PLANNER_PROVIDER:-ollama}
-      RADMEASURE_PLANNER_API_KEY: ${RADMEASURE_PLANNER_API_KEY:-}
+      CONTRACTSQL_DATABASE_URL: postgresql://contractsql:${CONTRACTSQL_DB_PASSWORD:-local-demo-password}@postgres:5432/contractsql
+      CONTRACTSQL_PLANNER_BASE_URL: ${CONTRACTSQL_PLANNER_BASE_URL:-}
+      CONTRACTSQL_PLANNER_MODEL: ${CONTRACTSQL_PLANNER_MODEL:-}
+      CONTRACTSQL_PLANNER_PROVIDER: ${CONTRACTSQL_PLANNER_PROVIDER:-ollama}
+      CONTRACTSQL_PLANNER_API_KEY: ${CONTRACTSQL_PLANNER_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

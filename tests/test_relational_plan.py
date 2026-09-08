@@ -3,8 +3,8 @@ import sqlite3
 
 import pytest
 
-from geomed_copilot.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from geomed_copilot.relational_plan import FIELDS
+from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
+from contractsql.relational_plan import FIELDS
 
 
 class Model:

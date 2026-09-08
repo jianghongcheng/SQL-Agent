@@ -13,10 +13,10 @@ import sys
 import time
 import urllib.request
 
-from geomed_copilot.commerce_catalog import make_task
-from geomed_copilot.business_context import MetricDefinition
-from geomed_copilot.data_agent import DataContract
-from geomed_copilot.sql_config import SQLTask
+from contractsql.commerce_catalog import make_task
+from contractsql.business_context import MetricDefinition
+from contractsql.data_agent import DataContract
+from contractsql.sql_config import SQLTask
 
 ROOT=Path(__file__).resolve().parents[1]
 RUNTIME=ROOT/'runtime/local-demo'
@@ -89,7 +89,7 @@ def main():
         for name,pid in state.get('pids',{}).items():
             # Check ownership marker to avoid terminating a reused/unrelated PID.
             cmd=Path(f'/proc/{pid}/cmdline')
-            if cmd.exists() and b'geomed_copilot' in cmd.read_bytes():os.kill(pid,signal.SIGTERM)
+            if cmd.exists() and b'contractsql' in cmd.read_bytes():os.kill(pid,signal.SIGTERM)
         for _ in range(30):
             if all(not Path(f'/proc/{pid}').exists() or 'Z' in Path(f'/proc/{pid}/stat').read_text().split()[2] for pid in state.get('pids',{}).values()):break
             time.sleep(.1)
@@ -105,18 +105,18 @@ def main():
         if not any(m['name']==args.model for m in json.load(response)['models']):raise SystemExit('Requested model is not installed in Ollama.')
     prepare()
     env=os.environ.copy()
-    for key in ('RADMEASURE_DATABASE_URL','GEOMED_DATABASE_URL'):env.pop(key,None)
-    env.update(PYTHONPATH=str(ROOT/'src'),RADMEASURE_JOB_DB=str(RUNTIME/'jobs.sqlite'),
-        RADMEASURE_SQL_TASKS=str(RUNTIME/'tasks.json'),RADMEASURE_PLANNER_PROVIDER='ollama',
-        RADMEASURE_PLANNER_BASE_URL='http://127.0.0.1:11434',RADMEASURE_PLANNER_MODEL=args.model,
-        RADMEASURE_SQL_GENERATION_FORMAT=args.generation_format,
-        RADMEASURE_PLANNER_THINKING='true' if args.thinking else 'false',
-        RADMEASURE_PLANNER_TIMEOUT_SECONDS='120' if args.thinking else '30',
-        RADMEASURE_PLANNER_MAX_TOKENS=str(max_tokens),
-        RADMEASURE_LOCAL_DEMO='1',RADMEASURE_API_KEYS=json.dumps({'123':{'name':'local-presenter','role':'admin'}}))
+    for key in ('CONTRACTSQL_DATABASE_URL',):env.pop(key,None)
+    env.update(PYTHONPATH=str(ROOT/'src'),CONTRACTSQL_JOB_DB=str(RUNTIME/'jobs.sqlite'),
+        CONTRACTSQL_SQL_TASKS=str(RUNTIME/'tasks.json'),CONTRACTSQL_PLANNER_PROVIDER='ollama',
+        CONTRACTSQL_PLANNER_BASE_URL='http://127.0.0.1:11434',CONTRACTSQL_PLANNER_MODEL=args.model,
+        CONTRACTSQL_SQL_GENERATION_FORMAT=args.generation_format,
+        CONTRACTSQL_PLANNER_THINKING='true' if args.thinking else 'false',
+        CONTRACTSQL_PLANNER_TIMEOUT_SECONDS='120' if args.thinking else '30',
+        CONTRACTSQL_PLANNER_MAX_TOKENS=str(max_tokens),
+        CONTRACTSQL_LOCAL_DEMO='1',CONTRACTSQL_API_KEYS=json.dumps({'123':{'name':'local-presenter','role':'admin'}}))
     procs={}
-    commands={'api':[sys.executable,'-m','uvicorn','geomed_copilot.api:create_app','--factory','--host','127.0.0.1','--port',str(PORT)],
-              'worker':[sys.executable,'-m','geomed_copilot.worker']}
+    commands={'api':[sys.executable,'-m','uvicorn','contractsql.api:create_app','--factory','--host','127.0.0.1','--port',str(PORT)],
+              'worker':[sys.executable,'-m','contractsql.worker']}
     try:
         for name,cmd in commands.items():
             with (RUNTIME/(name+'.log')).open('ab') as log:

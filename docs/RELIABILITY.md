@@ -1,10 +1,10 @@
-# Verified business tasks and operational recovery
+# Execution control and operational recovery
 
-## What changed
+## Fixed-task verification
 
-Structural SQL validation accepted wrong customer totals, wrong date filters and
-duplicate orders. Replaying the saved SQL now rejects those outputs. Fixed
-business tasks can declare `verification_sql` in their service-owned contract.
+Structural SQL validation checks executable form, not business semantics. Fixed
+business tasks can declare `verification_sql` in their application-owned contract
+to compare customer totals, date filters, and duplicate handling.
 The verifier executes against the same read transaction as the candidate, with
 the same read-only authorizer and execution/output limits. Exact ordered results
 must match. Invalid, failing or oversized verifiers fail closed.
@@ -15,14 +15,15 @@ boundaries. The model receives its previous SQL and an explicit mismatch reason
 for bounded correction. Changing the business question requires a new registered
 task and an appropriate business definition/check.
 
-`fallback_to_verified_query: true` additionally permits ONE registered-query
+`fallback_to_verified_query: true` additionally permits one registered-query
 fallback after exhausted/repeated repair or planner failure (including timeout).
 It is disabled by default and requires a verifier. The action passes the SQL
 policy and verifier and is recorded as `registered_business_fallback_verified`,
 never as model-generated success. Policy-denied writes, planner STOP, missing
 schema, and broken verifiers do not trigger this fallback. The model proposal
 budget remains three; the optional catalog action is a separate additional
-execution, plus verifier executions. No claim of three total database calls is made.
+execution, plus verifier executions. SQL proposal budgets and total database
+calls are counted separately.
 
 This is a bounded business-query catalog, **not a general semantic verifier**.
 The demo catalog's SQL definitions were promoted from the earlier development
@@ -71,7 +72,7 @@ not a reliability percentage, an uptime claim, or a blind model benchmark.
 
 ## Worker lifecycle
 
-Workers now renew their lease every one-third of the lease duration (default
+Workers renew their lease every one-third of the lease duration (default
 300 seconds). Renewal requires the same owner, attempt generation, running state
 and unexpired lease. An expired claim cannot be resurrected. Renewal failure
 marks the local claim lost and prevents publishing its result. Final writes
@@ -89,7 +90,7 @@ adapter: explicitly enabled catalog fallback returns the checked business result
 and records the planner error. It is an injected outage, not an observed Ollama
 availability measurement. Regression suite: **68 passed**.
 
-## Remaining production boundaries
+## Operational limits
 
 - No real users, public deployment, sustained load test or SLO evidence yet.
 - Service-wide roles are implemented; per-tenant table/row authorization is not.
@@ -102,19 +103,25 @@ availability measurement. Regression suite: **68 passed**.
 - Existing stored contract hashes change with new contract fields. Old replay
   may reject a changed contract; never silently rewrite historical evidence.
 
-These changes close specific correctness and lifecycle bugs. They do not justify
-describing the entire system as production-proven.
+These mechanisms provide bounded execution and recovery for local services;
+production capacity and deployment isolation require separate validation.
 
 ## General SQL release boundary
 
-The service now withholds unverified general SQL from automatic completion and
-runs independent query checking for model-backed tasks. Agreement is not proof;
-results remain review-required without trusted business verification. See
-[the evaluation summary](EVALUATION.md). Historical
-benchmark scores above are preserved and are not replaced with abstention rates.
+General SQL remains review-required without registered business verification.
+An independent model checker is available as an optional strategy; it is not
+enabled in the documented SQL-text demo profile. Its agreement does not prove
+correctness. See [the evaluation summary](EVALUATION.md) for the separate
+checker experiments and their abstention tradeoffs.
 
-## SQLite 读取一致性与 MCP 输入边界
+## Read snapshots and MCP input validation
 
-每次 SQL 任务在首次收集 schema 前开启读事务；后续执行与修复保持同一快照，连接由流水线关闭。`tests/test_sql_snapshot.py` 用实际 WAL 并发写入验证：外部数据改变后，修复仍读取任务开始时的数据。长读事务在 rollback-journal 模式可能阻塞写入；本测试采用 WAL，并未由只读任务修改数据库日志模式，也未验证远程数据库隔离。
+Each SQL task opens a read transaction before collecting schema; execution and
+repair share that snapshot until the pipeline closes the connection.
+`tests/test_sql_snapshot.py` exercises concurrent writes in WAL mode and checks
+that repairs still read the original snapshot. Long reads can block writers in
+rollback-journal mode; the read-only task does not change the journal mode.
 
-`tools/call` 要求 params 为对象，畸形输入返回 JSON-RPC -32602；`tests/test_mcp_invalid_params.py` 检查无效请求和无效 JSON 后 stdio 进程仍能响应 ping。这是输入可靠性验证，不是所有第三方 MCP 客户端的兼容性认证。
+MCP `tools/call` requires object parameters and rejects malformed calls with
+JSON-RPC error -32602. `tests/test_mcp_invalid_params.py` checks that the stdio
+process still responds to ping after invalid requests and malformed JSON.

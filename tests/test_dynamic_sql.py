@@ -1,9 +1,9 @@
 import sqlite3
 import pytest
 from dataclasses import asdict
-from geomed_copilot.data_agent import DataContract, ContractSQLSession
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.execution_record import ContractSnapshot
+from contractsql.data_agent import DataContract, ContractSQLSession
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.execution_record import ContractSnapshot
 
 
 def test_fixed_contract_hash_remains_compatible():

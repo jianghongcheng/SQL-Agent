@@ -14,16 +14,16 @@ import time
 import urllib.error
 import urllib.request
 
-from geomed_copilot.agent_evaluation import compare_output
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLPlanner, ContractSQLSession
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.paired_benchmark import CASES, SCHEMAS, create_database, expected, fixture
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.native_sql import NativeSQLPlanner
-from geomed_copilot.semantic_review import IndependentSQLPlanner
-from geomed_copilot.sql_config import SQLTaskRegistry
+from contractsql.agent_evaluation import compare_output
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession
+from contractsql.jobs import SqliteJobRepository
+from contractsql.paired_benchmark import CASES, SCHEMAS, create_database, expected, fixture
+from contractsql.pipeline import JobPipeline
+from contractsql.planner import OllamaPlannerModel
+from contractsql.native_sql import NativeSQLPlanner
+from contractsql.semantic_review import IndependentSQLPlanner
+from contractsql.sql_config import SQLTaskRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 METHODS = ('one_shot', 'execution_retry', 'checked_agent')
@@ -240,7 +240,7 @@ def main():
         create_database = lambda path, domain, data: billing.create_database(path, data)
         extra_sources = [Path(billing.__file__).resolve()]
     args.output.mkdir(parents=True, exist_ok=False)
-    sources = list((ROOT/'src/geomed_copilot').glob('*.py')) + [Path(__file__).resolve()] + extra_sources
+    sources = list((ROOT/'src/contractsql').glob('*.py')) + [Path(__file__).resolve()] + extra_sources
     hashes = {str(p.relative_to(ROOT)): sha_bytes(p.read_bytes()) for p in sources}
     snapshot = args.output/'source_snapshot'
     for path in sources:

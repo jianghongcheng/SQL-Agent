@@ -1,5 +1,5 @@
-from geomed_copilot.bounded_runtime import ActionProposal, BoundedAgentRuntime
-from geomed_copilot.sql_environment import (
+from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime
+from contractsql.sql_environment import (
     SQLiteRepairEnvironment,
     case_database,
     demo_database,

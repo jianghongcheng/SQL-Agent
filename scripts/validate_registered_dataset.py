@@ -13,12 +13,12 @@ import statistics
 import time
 import urllib.request
 
-from geomed_copilot.data_agent import ContractSQLPlanner, DataContract
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.sql_config import SQLTask, SQLTaskRegistry
-from geomed_copilot.worker import Worker
+from contractsql.data_agent import ContractSQLPlanner, DataContract
+from contractsql.jobs import SqliteJobRepository
+from contractsql.pipeline import JobPipeline
+from contractsql.planner import OllamaPlannerModel
+from contractsql.sql_config import SQLTask, SQLTaskRegistry
+from contractsql.worker import Worker
 from validate_live_sql_agent import RecordingModel
 
 
@@ -40,7 +40,7 @@ def main():
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=10) as response:
         model_info = [m for m in json.load(response)['models'] if m['name'] == 'qwen3:8b']
     manifest = {'source': source_manifest, 'database_hashes': database_hashes,
-        'agent_source_sha256': hashlib.sha256((Path(__file__).resolve().parents[1] / 'src/geomed_copilot/data_agent.py').read_bytes()).hexdigest(),
+        'agent_source_sha256': hashlib.sha256((Path(__file__).resolve().parents[1] / 'src/contractsql/data_agent.py').read_bytes()).hexdigest(),
         'model': model_info, 'prompt_version': ContractSQLPlanner.PROMPT_VERSION,
         'tasks_sha256': hashlib.sha256((args.data / 'tasks.json').read_bytes()).hexdigest(),
         'repeats': args.repeats, 'unique_tasks': len(tasks),

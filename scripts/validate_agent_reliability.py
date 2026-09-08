@@ -14,14 +14,14 @@ import time
 import urllib.error
 import urllib.request
 
-from geomed_copilot.agent_evaluation import compare_output, public_task_audit, summarize
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLPlanner, DataContract
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.semantic_review import IndependentSQLPlanner
-from geomed_copilot.sql_config import SQLTask, SQLTaskRegistry
+from contractsql.agent_evaluation import compare_output, public_task_audit, summarize
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLPlanner, DataContract
+from contractsql.jobs import SqliteJobRepository
+from contractsql.pipeline import JobPipeline
+from contractsql.planner import OllamaPlannerModel
+from contractsql.semantic_review import IndependentSQLPlanner
+from contractsql.sql_config import SQLTask, SQLTaskRegistry
 from scripts.validate_live_sql_agent import cases, RecordingModel
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -119,8 +119,8 @@ def main():
     plans += [(c,'wrong_sql') for c in suite if c['kind']=='wrong_filter']
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags',timeout=5) as response:
         models=json.load(response)['models']
-    sources=[Path(__file__), ROOT/'src/geomed_copilot/agent_evaluation.py',
-             ROOT/'scripts/validate_live_sql_agent.py']+list((ROOT/'src/geomed_copilot').glob('*.py'))
+    sources=[Path(__file__), ROOT/'src/contractsql/agent_evaluation.py',
+             ROOT/'scripts/validate_live_sql_agent.py']+list((ROOT/'src/contractsql').glob('*.py'))
     manifest={'started_at':datetime.now(timezone.utc).isoformat(),
         'source_sha256':{str(p.relative_to(ROOT)):sha(p) for p in sources},
         'model':[m for m in models if m['name']=='qwen3:8b'],

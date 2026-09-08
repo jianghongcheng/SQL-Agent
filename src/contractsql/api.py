@@ -16,7 +16,7 @@ LOCAL_BENCHMARK_REPORT = Path(__file__).resolve().parents[2] / 'runtime/local-de
 
 def create_app(jobs=None, registry=None, authorizer=None):
     from fastapi import FastAPI, Header, HTTPException, Request, Response, Cookie
-    from fastapi.responses import HTMLResponse, PlainTextResponse, JSONResponse
+    from fastapi.responses import HTMLResponse, PlainTextResponse, JSONResponse, RedirectResponse
     from pydantic import BaseModel, Field, ConfigDict
 
     jobs = jobs if jobs is not None else job_repository_from_env()
@@ -24,7 +24,7 @@ def create_app(jobs=None, registry=None, authorizer=None):
     authorizer = authorizer if authorizer is not None else ApiKeyAuthorizer.from_env()
     sessions = BrowserSessions()
     metrics = HttpMetrics()
-    app = FastAPI(title="RadMeasure SQL Data Agent", version="0.5.0")
+    app = FastAPI(title="ContractSQL", version="0.6.0")
 
     class JobPayload(BaseModel):
         model_config = ConfigDict(extra="forbid")
@@ -73,8 +73,13 @@ def create_app(jobs=None, registry=None, authorizer=None):
 
     @app.get('/benchmark', response_class=HTMLResponse, include_in_schema=False)
     def benchmark_report():
-        if os.environ.get('RADMEASURE_LOCAL_DEMO') != '1' or not LOCAL_BENCHMARK_REPORT.is_file():
+        if os.environ.get('CONTRACTSQL_LOCAL_DEMO') != '1':
             raise HTTPException(404, 'local benchmark report unavailable')
+        if not LOCAL_BENCHMARK_REPORT.is_file():
+            return RedirectResponse(
+                'https://github.com/jianghongcheng/contractsql/blob/main/docs/EVALUATION.md',
+                status_code=307,
+            )
         return LOCAL_BENCHMARK_REPORT.read_text()
 
     @app.get("/health")

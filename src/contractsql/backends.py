@@ -22,8 +22,8 @@ class JobRepository(Protocol):
 
 
 def job_repository_from_env() -> JobRepository:
-    url = os.environ.get("RADMEASURE_DATABASE_URL") or os.environ.get("GEOMED_DATABASE_URL")
+    url = os.environ.get("CONTRACTSQL_DATABASE_URL")
     if url:
         from .postgres_jobs import PostgresJobRepository
         return PostgresJobRepository(url)
-    return SqliteJobRepository(Path(os.environ.get("RADMEASURE_JOB_DB", os.environ.get("GEOMED_JOB_DB", "runtime/sql-jobs.db"))))
+    return SqliteJobRepository(Path(os.environ.get("CONTRACTSQL_JOB_DB", "runtime/sql-jobs.db")))

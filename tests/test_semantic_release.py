@@ -1,8 +1,8 @@
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.sql_config import SQLTaskRegistry, SQLTask
-from geomed_copilot.data_agent import DataContract
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.jobs import SqliteJobRepository
+from contractsql.pipeline import JobPipeline
+from contractsql.sql_config import SQLTaskRegistry, SQLTask
+from contractsql.data_agent import DataContract
 
 
 def test_executable_wrong_answer_is_not_published_as_completed(tmp_path):
@@ -16,9 +16,9 @@ def test_executable_wrong_answer_is_not_published_as_completed(tmp_path):
 
 import sqlite3
 import pytest
-from geomed_copilot.data_agent import DataAgentLoop
-from geomed_copilot.semantic_review import SemanticSQLSession, IndependentSQLPlanner
-from geomed_copilot.sql_environment import demo_database
+from contractsql.data_agent import DataAgentLoop
+from contractsql.semantic_review import SemanticSQLSession, IndependentSQLPlanner
+from contractsql.sql_environment import demo_database
 
 
 def proposal(sql):
@@ -114,7 +114,7 @@ def test_same_snapshot_for_primary_and_check(tmp_path):
 
 
 def test_independent_prompt_excludes_candidate_and_reference():
-    from geomed_copilot.data_agent import PlanningContext, SQLPlanningEvidence
+    from contractsql.data_agent import PlanningContext, SQLPlanningEvidence
     class Model:
         def complete(self, prompt):
             assert 'secret_candidate' not in prompt
@@ -129,9 +129,9 @@ def test_independent_prompt_excludes_candidate_and_reference():
 
 def test_api_worker_persists_review_evidence_without_releasing_wrong_rows(tmp_path):
     from fastapi.testclient import TestClient
-    from geomed_copilot.api import create_app
-    from geomed_copilot.security import ApiKeyAuthorizer, Principal
-    from geomed_copilot.worker import Worker
+    from contractsql.api import create_app
+    from contractsql.security import ApiKeyAuthorizer, Principal
+    from contractsql.worker import Worker
     repo = SqliteJobRepository(tmp_path / 'jobs.sqlite')
     registry = SQLTaskRegistry((SQLTask('names', 'List names', DataContract(('name',))),))
     authorizer = ApiKeyAuthorizer({'test-key': Principal('test-operator', 'operator')})
@@ -170,7 +170,7 @@ def test_reviewer_timeout_is_not_a_repair_opportunity():
 
 def test_independent_planner_receives_application_output_contract():
     import json
-    from geomed_copilot.data_agent import PlanningContext, SQLPlanningEvidence
+    from contractsql.data_agent import PlanningContext, SQLPlanningEvidence
     class Model:
         def complete(self, prompt):
             payload = json.loads(prompt.split('\n', 1)[1])

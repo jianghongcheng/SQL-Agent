@@ -2,12 +2,12 @@ from dataclasses import replace
 from datetime import datetime,timezone
 import sqlite3
 import pytest
-from geomed_copilot.business_context import MetricDefinition,QualityCheck,retrieve_definitions,check_source_health
-from geomed_copilot.data_agent import ContractSQLSession,DataContract
-from geomed_copilot.sql_config import SQLTask,SQLTaskRegistry
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.bounded_runtime import ActionProposal
+from contractsql.business_context import MetricDefinition,QualityCheck,retrieve_definitions,check_source_health
+from contractsql.data_agent import ContractSQLSession,DataContract
+from contractsql.sql_config import SQLTask,SQLTaskRegistry
+from contractsql.jobs import SqliteJobRepository
+from contractsql.pipeline import JobPipeline
+from contractsql.bounded_runtime import ActionProposal
 
 D=MetricDefinition('net_revenue',('net revenue',),'Subtract recorded refunds from paid order amounts.','commerce-policy','1')
 
@@ -68,9 +68,9 @@ def test_pipeline_definition_evidence_and_blocking_preflight(tmp_path):
 
 def test_api_worker_review_has_context_and_audit(tmp_path):
  from fastapi.testclient import TestClient
- from geomed_copilot.api import create_app
- from geomed_copilot.security import ApiKeyAuthorizer,Principal
- from geomed_copilot.worker import Worker
+ from contractsql.api import create_app
+ from contractsql.security import ApiKeyAuthorizer,Principal
+ from contractsql.worker import Worker
  repo=SqliteJobRepository(tmp_path/'jobs.sqlite')
  task=SQLTask('names','List names',DataContract(('name',)),definitions=(replace(D,required=True),))
  registry=SQLTaskRegistry((task,));auth=ApiKeyAuthorizer({'admin':Principal('reviewer','admin'),'viewer':Principal('viewer','viewer')})

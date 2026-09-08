@@ -1,7 +1,7 @@
 import sqlite3
 import pytest
-from geomed_copilot.data_agent import ContractSQLSession,DataContract
-from geomed_copilot.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLSession,DataContract
+from contractsql.bounded_runtime import ActionProposal
 
 @pytest.mark.parametrize('sql,expected',[
  ("SELECT 'Ada' LIKE 'A%' AS value",1),

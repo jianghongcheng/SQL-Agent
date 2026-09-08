@@ -26,13 +26,13 @@ class Worker:
             self.repository.record_failure(job.job_id, code, message, retryable=retryable, claim=job)
         except RuntimeError:
             # A replacement owns the job now; do not overwrite its state.
-            logging.getLogger("geomed.worker").warning("stale_claim_discarded", extra={"job_id": job.job_id})
+            logging.getLogger("contractsql.worker").warning("stale_claim_discarded", extra={"job_id": job.job_id})
 
     def run_once(self) -> bool:
         job = self.repository.claim_next(self.worker_id, lease_seconds=self.lease_seconds)
         if job is None:
             return False
-        logger = logging.getLogger("geomed.worker")
+        logger = logging.getLogger("contractsql.worker")
         extra = {"job_id": job.job_id, "trace_id": job.payload.get("_trace_id"), "worker_id": self.worker_id}
         logger.info("job_claimed", extra={**extra, "event_type": "claimed"})
         stopped, lost = threading.Event(), threading.Event()

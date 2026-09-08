@@ -8,9 +8,9 @@ import json
 from pathlib import Path
 import shutil
 import urllib.request
-from geomed_copilot.paired_benchmark import Case
-from geomed_copilot import paired_benchmark as dev
-from geomed_copilot.planner import OllamaPlannerModel
+from contractsql.paired_benchmark import Case
+from contractsql import paired_benchmark as dev
+from contractsql.planner import OllamaPlannerModel
 from scripts import run_paired_sql_benchmark as runner
 from scripts import transfer_sql_cases as billing
 from scripts import run_manufacturing_transfer as manufacturing
@@ -29,7 +29,7 @@ def main():
             assert runner.sha_bytes((runner.ROOT/relative).read_bytes())==digest, 'runtime changed before matched configuration comparison'
     args.output.mkdir(parents=True,exist_ok=False)
     cases=[Case(**c) for c in origin['cases']]
-    sources=list((runner.ROOT/'src/geomed_copilot').glob('*.py'))+[Path(__file__),Path(runner.__file__),Path(billing.__file__),Path(manufacturing.__file__)]
+    sources=list((runner.ROOT/'src/contractsql').glob('*.py'))+[Path(__file__),Path(runner.__file__),Path(billing.__file__),Path(manufacturing.__file__)]
     hashes={str(p.resolve().relative_to(runner.ROOT)):runner.sha_bytes(p.read_bytes()) for p in sources}
     for source in sources:
         target=args.output/'source_snapshot'/source.resolve().relative_to(runner.ROOT)

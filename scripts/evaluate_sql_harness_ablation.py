@@ -11,9 +11,9 @@ import statistics
 import time
 from pathlib import Path
 
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.sql_environment import (
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.planner import OllamaPlannerModel
+from contractsql.sql_environment import (
     MUTATING,
     SQLiteRepairEnvironment,
     case_database,

@@ -3,13 +3,13 @@ import json
 
 import pytest
 
-from geomed_copilot.model_recovery import complete_json
-from geomed_copilot.planner import OllamaPlannerModel, OpenAICompatiblePlannerModel
-from geomed_copilot.telemetry import summarize_calls
+from contractsql.model_recovery import complete_json
+from contractsql.planner import OllamaPlannerModel, OpenAICompatiblePlannerModel
+from contractsql.telemetry import summarize_calls
 
 
 def test_retries_count_failed_response_tokens_without_leaking_content(monkeypatch):
-    monkeypatch.setattr('geomed_copilot.model_recovery.time.sleep', lambda _: None)
+    monkeypatch.setattr('contractsql.model_recovery.time.sleep', lambda _: None)
     class Model:
         model = 'test-model'
         responses = iter(['private malformed response', '{"action":"STOP"}'])
@@ -44,7 +44,7 @@ def test_missing_usage_is_unknown_not_free():
 
 
 def test_timeout_retries_are_counted_even_without_responses(monkeypatch):
-    monkeypatch.setattr('geomed_copilot.model_recovery.time.sleep', lambda _: None)
+    monkeypatch.setattr('contractsql.model_recovery.time.sleep', lambda _: None)
     class Model:
         def complete(self, prompt):
             raise TimeoutError('private connection details')

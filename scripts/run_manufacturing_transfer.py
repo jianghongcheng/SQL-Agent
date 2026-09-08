@@ -11,8 +11,8 @@ import shutil
 import sqlite3
 import urllib.request
 
-from geomed_copilot.paired_benchmark import Case
-from geomed_copilot.planner import OllamaPlannerModel
+from contractsql.paired_benchmark import Case
+from contractsql.planner import OllamaPlannerModel
 from scripts import run_paired_sql_benchmark as runner
 
 SCHEMA='''CREATE TABLE lots(id INTEGER PRIMARY KEY, plant TEXT, planned_units INTEGER);
@@ -58,7 +58,7 @@ def expected(case,data):
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args();args.output.mkdir(parents=True,exist_ok=False)
-    sources=list((runner.ROOT/'src/geomed_copilot').glob('*.py'))+[Path(__file__),Path(runner.__file__)]
+    sources=list((runner.ROOT/'src/contractsql').glob('*.py'))+[Path(__file__),Path(runner.__file__)]
     hashes={str(p.resolve().relative_to(runner.ROOT)):runner.sha_bytes(p.read_bytes()) for p in sources}
     for source in sources:
         target=args.output/'source_snapshot'/source.resolve().relative_to(runner.ROOT)

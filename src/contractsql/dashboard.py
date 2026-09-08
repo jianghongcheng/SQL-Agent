@@ -18,10 +18,10 @@ def render_dashboard() -> str:
 <p class="muted">A corrected question or SQL creates a new job. Original evidence remains in the previous job.</p></div>
 <div class="card"><h2>Open existing job</h2><input id="existing" placeholder="Job ID"><button id="open">Open job</button></div></aside>
 <main><div class="card"><h2 id="status">Ready</h2><p id="progress" class="muted">Submit an analysis or open an existing job.</p><p id="jobid" class="muted"></p><p id="release" class="alert">Generic queries require review. Model agreement is not proof of correctness.</p></div>
-<div class="card"><h2>Run performance</h2><div id="performance">Submit an analysis to see measured runtime and model usage.</div><p id="cost" class="muted"></p></div>
-<div class="card"><h2>Business definitions</h2><div id="definitions">No task result loaded.</div></div>
-<div class="card"><h2>Source health</h2><div id="health">No checks loaded.</div></div>
 <div class="card"><h2>Candidate result</h2><div id="output" class="scroll"></div><h2>Executed / proposed SQL</h2><pre id="queries"></pre></div>
+<div class="card"><h2>Run performance</h2><div id="performance">Submit an analysis to see measured runtime and model usage.</div><p id="cost" class="muted"></p></div>
+<details class="card"><summary>Business definitions</summary><div id="definitions">No task result loaded.</div></details>
+<details class="card"><summary>Source health</summary><div id="health">No checks loaded.</div></details>
 <div class="card"><h2>Human review</h2><p class="muted">Record your decision and rationale. Approval records a human decision; it does not turn model agreement into a correctness guarantee.</p><p id="review-help" class="muted">Review becomes available when a job needs review.</p><textarea id="notes" rows="3" placeholder="Review rationale, issues found, or corrections required"></textarea><div class="actions"><button id="approve" disabled>Approve review</button><button id="reject" disabled>Reject / request correction</button></div></div>
 <details class="card"><summary>Full evidence and audit history</summary><pre id="result"></pre><pre id="events"></pre></details></main></div></div>
 <script>
@@ -150,8 +150,8 @@ for(const decision of ['approve','reject'])el(decision).onclick=act(decision==='
 restoreSession();
 </script></html>'''
 
-    if os.environ.get('RADMEASURE_LOCAL_DEMO') == '1':
-        page = page.replace('<div class="grid">', '<p><a href="/benchmark">View benchmark evidence: methods, failures and runtime costs</a></p><div class="grid">')
+    if os.environ.get('CONTRACTSQL_LOCAL_DEMO') == '1':
+        page = page.replace('<div class="grid">', '<p><a href="/benchmark">Evaluation: results, methods and runtime costs</a></p><div class="grid">')
         page = page.replace('<div id="demo-access"></div>', '<div id="demo-access"><p class="muted">Local demo: sign in below without registering. This access is for the local demonstration only.</p><button id="demo-login">Enter local demo</button></div>')
         page = page.replace('<h1>ContractSQL</h1>', '<h1>ContractSQL · Local demo</h1><p class="alert">Synthetic commerce data · local-only demo credentials · real Ollama inference.</p>')
         page = page.replace('</script>', "el('demo-login').onclick=act('Signing in to local demo',async()=>{el('key').value='123';await loginWithKey();});</script>")

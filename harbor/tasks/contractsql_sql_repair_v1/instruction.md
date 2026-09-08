@@ -1,4 +1,4 @@
-# RadMeasure SQL Repair v1
+# ContractSQL SQL Repair v1
 
 Read `/app/cases.json` and produce `/app/submission.json` containing exactly one
 proposal for each of the 36 cases.

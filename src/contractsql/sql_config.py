@@ -65,7 +65,7 @@ class SQLTaskRegistry:
 
     @classmethod
     def from_env(cls) -> SQLTaskRegistry:
-        config = os.environ.get("RADMEASURE_SQL_TASKS")
+        config = os.environ.get("CONTRACTSQL_SQL_TASKS")
         if not config:
             return cls()
         path = Path(config).resolve()
@@ -108,32 +108,32 @@ class DemoSQLPlanner:
 
 
 def sql_planner_from_env():
-    base = os.environ.get("RADMEASURE_PLANNER_BASE_URL", "").strip()
-    model = os.environ.get("RADMEASURE_PLANNER_MODEL", "").strip()
+    base = os.environ.get("CONTRACTSQL_PLANNER_BASE_URL", "").strip()
+    model = os.environ.get("CONTRACTSQL_PLANNER_MODEL", "").strip()
     if not base and not model:
-        if os.environ.get("RADMEASURE_SQL_TASKS"):
+        if os.environ.get("CONTRACTSQL_SQL_TASKS"):
             raise ValueError("registered databases require an explicit model endpoint")
         return DemoSQLPlanner()
     if not base or not model:
         raise ValueError("both planner base URL and model must be configured")
-    thinking_value = os.environ.get("RADMEASURE_PLANNER_THINKING", "false")
+    thinking_value = os.environ.get("CONTRACTSQL_PLANNER_THINKING", "false")
     if thinking_value not in {"true", "false"}:
         raise ValueError("thinking must be true or false")
     thinking = thinking_value == "true"
-    timeout = float(os.environ.get("RADMEASURE_PLANNER_TIMEOUT_SECONDS", "120" if thinking else "30"))
-    generation_format = os.environ.get('RADMEASURE_SQL_GENERATION_FORMAT', 'json')
+    timeout = float(os.environ.get("CONTRACTSQL_PLANNER_TIMEOUT_SECONDS", "120" if thinking else "30"))
+    generation_format = os.environ.get('CONTRACTSQL_SQL_GENERATION_FORMAT', 'json')
     if generation_format not in {'json', 'sql'}:
         raise ValueError('unsupported SQL generation format')
-    provider = os.environ.get("RADMEASURE_PLANNER_PROVIDER", "ollama")
+    provider = os.environ.get("CONTRACTSQL_PLANNER_PROVIDER", "ollama")
     if provider == "ollama":
         adapter = OllamaPlannerModel(base, model, timeout=timeout,
-            max_tokens=int(os.environ.get('RADMEASURE_PLANNER_MAX_TOKENS', '8192' if thinking else ('2048' if generation_format == 'sql' else '256'))),
+            max_tokens=int(os.environ.get('CONTRACTSQL_PLANNER_MAX_TOKENS', '8192' if thinking else ('2048' if generation_format == 'sql' else '256'))),
             json_mode=generation_format == 'json', thinking=thinking)
     elif provider == "openai_compatible":
         if generation_format != 'json' or thinking:
             raise ValueError('SQL text profile currently requires Ollama')
         adapter = OpenAICompatiblePlannerModel(base, model,
-            api_key=os.environ.get("RADMEASURE_PLANNER_API_KEY", ""), timeout=timeout)
+            api_key=os.environ.get("CONTRACTSQL_PLANNER_API_KEY", ""), timeout=timeout)
     else:
         raise ValueError("unsupported planner provider")
     if generation_format == 'sql':

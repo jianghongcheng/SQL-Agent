@@ -1,7 +1,7 @@
 import sqlite3
 import pytest
-from geomed_copilot.data_agent import DataContract, ContractSQLSession, DataAgentLoop
-from geomed_copilot.bounded_runtime import ActionProposal
+from contractsql.data_agent import DataContract, ContractSQLSession, DataAgentLoop
+from contractsql.bounded_runtime import ActionProposal
 
 
 def test_wrong_business_answer_cannot_be_accepted():
@@ -48,7 +48,7 @@ def test_bad_or_oversized_verifier_fails_closed(check):
 
 
 def test_verifier_sql_not_sent_to_model_and_changes_hash():
-    from geomed_copilot.data_agent import ContractSQLPlanner
+    from contractsql.data_agent import ContractSQLPlanner
     class Model:
         def complete(self,prompt):
             assert 'SUM(amount)' not in prompt
@@ -65,7 +65,7 @@ def test_verifier_sql_not_sent_to_model_and_changes_hash():
 
 
 def test_question_cannot_escape_business_contract():
-    from geomed_copilot.sql_config import SQLTask
+    from contractsql.sql_config import SQLTask
     task=SQLTask('revenue','January revenue',DataContract(('total',),verification_sql='SELECT 1 AS total'))
     task.validate_question(None)
     task.validate_question('January revenue')
@@ -136,8 +136,8 @@ def test_real_model_http_timeout_uses_explicit_catalog_fallback():
     import threading
     import time
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-    from geomed_copilot.data_agent import ContractSQLPlanner
-    from geomed_copilot.planner import OllamaPlannerModel
+    from contractsql.data_agent import ContractSQLPlanner
+    from contractsql.planner import OllamaPlannerModel
     class SlowHandler(BaseHTTPRequestHandler):
         def do_POST(self):
             time.sleep(.3)

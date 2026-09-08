@@ -16,7 +16,7 @@ def main():
     parser.add_argument("--question", default=None)
     parser.add_argument("--sql", default="", help="Initial query to inspect or repair")
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="radmeasure-sql-") as directory:
+    with tempfile.TemporaryDirectory(prefix="contractsql-sql-") as directory:
         repository = SqliteJobRepository(Path(directory) / "jobs.db")
         pipeline = JobPipeline()
         task = pipeline.registry.get(args.task)

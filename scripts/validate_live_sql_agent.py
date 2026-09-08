@@ -15,9 +15,9 @@ import sqlite3
 import time
 import urllib.request
 
-from geomed_copilot.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from geomed_copilot.planner import OllamaPlannerModel
-import geomed_copilot.data_agent as data_agent_module
+from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
+from contractsql.planner import OllamaPlannerModel
+import contractsql.data_agent as data_agent_module
 
 
 def cases():

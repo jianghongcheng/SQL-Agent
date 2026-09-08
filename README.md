@@ -1,15 +1,81 @@
 # ContractSQL
 
-A SQL Data Agent that turns natural-language requests into **reviewable,
-read-only queries** over registered SQLite sources.
+**A tool-using SQL agent for business data analysis, with read-only execution, bounded repair, and human review.**
 
-The default `commerce_analysis` task supports totals, row lists and grouped
-results. A local model proposes SQL; the application controls execution,
-bounded repair, persistent jobs and human review.
+[![CI](https://github.com/jianghongcheng/contractsql/actions/workflows/ci.yml/badge.svg)](https://github.com/jianghongcheng/contractsql/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+Ask about revenue, orders, or customer activity. ContractSQL uses a local LLM to
+generate SQL against registered SQLite sources, executes it within explicit
+limits, and returns the result alongside the query and execution history.
+Failed attempts feed a bounded repair loop; general-analysis results go to review.
+
+[Quick start](#quick-start) · [Architecture](#architecture) · [Results](#evaluation) · [Usage](docs/USAGE.md)
+
+## Demo
+
+![ContractSQL dashboard with a synthetic commerce query](docs/assets/dashboard.png)
+
+The dashboard supports scalar answers, order lists, and grouped summaries.
+The screenshot shows synthetic commerce data; the walkthrough includes six
+[example questions and expected answers](docs/USAGE.md#six-questions-to-test-yourself).
+
+## Architecture
+
+```mermaid
+flowchart TD
+    A[Question and registered task] --> B[API: authorize and persist job]
+    B --> C[Worker claims job and renews lease]
+    C --> D[Collect schema and output constraints]
+    D --> E[Local LLM proposes SQL]
+    E --> F[Read-only execution and output checks]
+    F --> G{Execution outcome}
+    G -->|Repairable error, budget available| H[Add SQL and error feedback]
+    H --> E
+    G -->|Checks pass| I[Save candidate and execution record]
+    G -->|Denied or budget exhausted| J[Stop and retain failure evidence]
+    I --> K[Human review]
+    J --> K
+```
+
+The diagram shows the general-analysis path. SQL attempts within one job share
+a read snapshot. Passing runtime checks produces a reviewable candidate, not
+an automatically approved business answer.
+
+| Engineering decision | Implementation |
+| --- | --- |
+| Separate SQL proposals from execution authority | Registered sources, SQLite read-only authorization, query and output budgets |
+| Repair with observed feedback | Schema-aware generation and up to three SQL attempts; repeated proposals and denied actions stop early |
+| Recover background work | Persistent jobs, idempotency keys, renewable leases, retries, and stale-worker write protection |
+| Make results inspectable | SQL, errors, model usage, routing decisions, contract hashes, and review history |
+| Support multiple clients | Browser dashboard, FastAPI, CLI, and MCP |
+
+[Execution and recovery details](docs/RELIABILITY.md) · [Task registration](docs/USAGE.md#register-additional-tasks)
+
+## Evaluation
+
+Configuration comparison on **26 development questions × 2 database instances ×
+3 trials**, scored against independently calculated answers:
+
+| Configuration | Correct runs | p95 latency |
+| --- | ---: | ---: |
+| Coder 14B, single SQL attempt | 102/156 (65.4%) | 2.12 s |
+| Qwen3 14B, no thinking, repair enabled | 108/156 (69.2%) | 2.23 s |
+| Qwen3 14B, thinking and repair | **142/156 (91.0%)** | 74.83 s |
+
+The selected configuration trades latency for correctness, motivating asynchronous
+delivery. It still produced 13 incorrect candidates and one stop. These are
+repeated development runs, not 156 independent questions; model and execution
+settings differ between rows. See [protocols, failures, external BIRD results,
+and reproduction](docs/EVALUATION.md).
+
+Recovery tests exercise worker termination, lease expiry, duplicate submission,
+and stale-result rejection. They test service behavior separately from model accuracy.
 
 ## Quick start
 
-Requires Python 3.10+, local Ollama and the `qwen3:14b` model.
+Requires Python 3.10+, a running local Ollama service, and enough memory for
+`qwen3:14b`. Install Ollama separately, then:
 
 ```bash
 git clone https://github.com/jianghongcheng/contractsql.git
@@ -17,45 +83,28 @@ cd contractsql
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
-PYTHONPATH=src:. python scripts/local_demo.py start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
+ollama pull qwen3:14b
+python scripts/local_demo.py start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
 ```
 
-Open http://127.0.0.1:8765 and select **Enter local demo**. The public demo key
-`123` is only for loopback demonstrations, not deployment.
+Open **http://127.0.0.1:8765**, select **Enter local demo**, and use
+`commerce_analysis`. The local-only key is `123`. Inspect SQL and results when
+the job reaches `needs_review`, then record an approval or rejection.
 
-## How it works
+```bash
+python scripts/local_demo.py status
+python scripts/local_demo.py stop
+python -m pytest -q
+```
 
-Question + registered task → durable job → bounded SQL generation/execution/repair
-→ candidate + evidence → human review.
+**Stack:** Python, Ollama, SQLite, FastAPI, MCP, Docker, GitHub Actions.
 
-- API, browser dashboard, CLI and MCP interfaces.
-- Read-only authorization, query budgets and output checks.
-- Idempotent submission, worker leases, retries and stale-worker write protection.
-- SQL, errors, model usage and review records retained for inspection.
-- Separate offline scoring against reference answers.
+## Scope
 
-## Documentation
+This release supports registered SQLite analytical sources and local deployment.
+General SQL requires human review; fixed catalog tasks can use explicitly
+registered reference queries. Service-wide roles are implemented, not multi-tenant
+data isolation. See [operational limits](docs/RELIABILITY.md#operational-limits)
+before deploying beyond a local environment.
 
-- [Usage](docs/USAGE.md): setup, examples, task registration and interfaces.
-- [Evaluation](docs/EVALUATION.md): protocols, results, failures and reproduction.
-- [Reliability](docs/RELIABILITY.md): execution limits, recovery and review.
-
-## Boundaries
-
-Successful execution is not proof of a correct business answer. General-analysis
-candidates require review, including when structural checks pass. Fixed catalog
-metrics can use a separately registered reference query; that is not a general
-semantic verifier.
-
-This is a local prototype, without demonstrated customer adoption, sustained-load
-SLOs or production accuracy. Only SQLite analytical sources are supported.
-PostgreSQL job-store integration has not been validated against a live service.
-
-Code, tests, synthetic fixtures and evaluation scripts are public. Raw run logs,
-runtime databases, model weights and downloaded datasets are not bundled.
-
-Medical imaging is maintained separately in
-[RadMeasure](https://github.com/jianghongcheng/radmeasure-agent).
-Legacy `geomed_copilot` imports and `radmeasure` command aliases remain; install
-the two projects in separate virtual environments. Shared project history is
-still accessible in Git.
+[Usage](docs/USAGE.md) · [Evaluation](docs/EVALUATION.md) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)

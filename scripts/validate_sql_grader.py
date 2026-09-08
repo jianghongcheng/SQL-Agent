@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import sqlite3
-from geomed_copilot.agent_evaluation import compare_output
+from contractsql.agent_evaluation import compare_output
 
 
 def main():

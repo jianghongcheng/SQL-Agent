@@ -24,10 +24,10 @@ TOOL_SCHEMAS = [
 
 
 def api_call(path: str, payload: dict | None = None, idempotency_key: str | None = None):
-    key = os.environ.get("RADMEASURE_MCP_API_KEY")
+    key = os.environ.get("CONTRACTSQL_MCP_API_KEY")
     if not key:
-        raise ValueError("RADMEASURE_MCP_API_KEY is required")
-    base = os.environ.get("RADMEASURE_API_URL", "http://127.0.0.1:8000").rstrip("/")
+        raise ValueError("CONTRACTSQL_MCP_API_KEY is required")
+    base = os.environ.get("CONTRACTSQL_API_URL", "http://127.0.0.1:8000").rstrip("/")
     headers = {"x-api-key": key, "content-type": "application/json"}
     if idempotency_key:
         headers["idempotency-key"] = idempotency_key
@@ -51,7 +51,7 @@ def dispatch(message: dict) -> dict | None:
     try:
         if method == "initialize":
             return result({"protocolVersion": PROTOCOL_VERSION, "capabilities": {"tools": {"listChanged": False}},
-                           "serverInfo": {"name": "radmeasure-sql", "version": "0.5.0"}})
+                           "serverInfo": {"name": "contractsql", "version": "0.6.0"}})
         if method == "ping":
             return result({})
         if method == "tools/list":

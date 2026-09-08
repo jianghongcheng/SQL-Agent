@@ -7,10 +7,10 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLPlanner, DataAgentLoop, DataContract
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.semantic_review import IndependentSQLPlanner, SemanticSQLSession
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLPlanner, DataAgentLoop, DataContract
+from contractsql.planner import OllamaPlannerModel
+from contractsql.semantic_review import IndependentSQLPlanner, SemanticSQLSession
 try:
     from scripts.validate_live_sql_agent import cases, database, RecordingModel
 except ModuleNotFoundError:

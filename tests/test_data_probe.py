@@ -3,8 +3,8 @@ import sqlite3
 
 import pytest
 
-from geomed_copilot.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from geomed_copilot.data_probe import execute_probes
+from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
+from contractsql.data_probe import execute_probes
 
 
 @pytest.fixture

@@ -23,7 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
-from geomed_copilot.data_agent import DataContract
+from contractsql.data_agent import DataContract
 from scripts.commerce_acceptance_cases import QUESTIONS,COLUMNS,DEMO_QUESTIONS,fixture,create_database,oracle
 ROOT=Path(__file__).resolve().parents[1]
 KEY='acceptance-local-only'
@@ -105,12 +105,12 @@ class Harness:
                     except OSError:pass
         self.proxy=ThreadingHTTPServer(('127.0.0.1',0),Proxy)
         threading.Thread(target=self.proxy.serve_forever,daemon=True).start()
-        self.env={**os.environ,'PYTHONPATH':str(ROOT/'src')+':'+str(ROOT),'RADMEASURE_JOB_DB':str(out/'jobs.sqlite'),
-                  'RADMEASURE_SQL_TASKS':str(out/'tasks.json'),'RADMEASURE_PLANNER_PROVIDER':'ollama',
-                  'RADMEASURE_PLANNER_BASE_URL':'http://127.0.0.1:'+str(self.proxy.server_port),'RADMEASURE_PLANNER_MODEL':MODEL,
-                  'RADMEASURE_SQL_GENERATION_FORMAT':'sql','RADMEASURE_PLANNER_THINKING':'true','RADMEASURE_PLANNER_MAX_TOKENS':'8192',
-                  'RADMEASURE_PLANNER_TIMEOUT_SECONDS':'120','RADMEASURE_API_KEYS':json.dumps({KEY:{'name':'acceptance','role':'admin'}})}
-        for key in ('RADMEASURE_DATABASE_URL','GEOMED_DATABASE_URL','RADMEASURE_LOCAL_DEMO'):self.env.pop(key,None)
+        self.env={**os.environ,'PYTHONPATH':str(ROOT/'src')+':'+str(ROOT),'CONTRACTSQL_JOB_DB':str(out/'jobs.sqlite'),
+                  'CONTRACTSQL_SQL_TASKS':str(out/'tasks.json'),'CONTRACTSQL_PLANNER_PROVIDER':'ollama',
+                  'CONTRACTSQL_PLANNER_BASE_URL':'http://127.0.0.1:'+str(self.proxy.server_port),'CONTRACTSQL_PLANNER_MODEL':MODEL,
+                  'CONTRACTSQL_SQL_GENERATION_FORMAT':'sql','CONTRACTSQL_PLANNER_THINKING':'true','CONTRACTSQL_PLANNER_MAX_TOKENS':'8192',
+                  'CONTRACTSQL_PLANNER_TIMEOUT_SECONDS':'120','CONTRACTSQL_API_KEYS':json.dumps({KEY:{'name':'acceptance','role':'admin'}})}
+        for key in ('CONTRACTSQL_DATABASE_URL','CONTRACTSQL_LOCAL_DEMO'):self.env.pop(key,None)
         self.sampler=threading.Thread(target=self.sample_resources,daemon=True);self.sampler.start()
 
     def sample_resources(self):
@@ -130,9 +130,9 @@ class Harness:
             self.resources.append(row);self.stopped.wait(1)
 
     def start(self,name,timeout=120):
-        if name=='api':cmd=[sys.executable,'-m','uvicorn','geomed_copilot.api:create_app','--factory','--host','127.0.0.1','--port',self.base.rsplit(':',1)[1]]
-        else:cmd=[sys.executable,'-c','from geomed_copilot.worker import Worker; from geomed_copilot.backends import job_repository_from_env; from geomed_copilot.pipeline import JobPipeline; Worker(job_repository_from_env(),JobPipeline(),lease_seconds=3).run_forever(0.05)']
-        env={**self.env,'RADMEASURE_PLANNER_TIMEOUT_SECONDS':str(timeout)}
+        if name=='api':cmd=[sys.executable,'-m','uvicorn','contractsql.api:create_app','--factory','--host','127.0.0.1','--port',self.base.rsplit(':',1)[1]]
+        else:cmd=[sys.executable,'-c','from contractsql.worker import Worker; from contractsql.backends import job_repository_from_env; from contractsql.pipeline import JobPipeline; Worker(job_repository_from_env(),JobPipeline(),lease_seconds=3).run_forever(0.05)']
+        env={**self.env,'CONTRACTSQL_PLANNER_TIMEOUT_SECONDS':str(timeout)}
         with (self.out/(name+'.log')).open('ab') as log:self.procs[name]=subprocess.Popen(cmd,cwd=ROOT,env=env,stdout=log,stderr=log,start_new_session=True)
         if name=='api':
             end=time.monotonic()+10

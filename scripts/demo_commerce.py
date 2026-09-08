@@ -5,12 +5,12 @@ import json
 from pathlib import Path
 import sqlite3
 
-from geomed_copilot.data_agent import ContractSQLPlanner, DataContract
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.sql_config import SQLTask, SQLTaskRegistry
-from geomed_copilot.worker import Worker
+from contractsql.data_agent import ContractSQLPlanner, DataContract
+from contractsql.jobs import SqliteJobRepository
+from contractsql.pipeline import JobPipeline
+from contractsql.planner import OllamaPlannerModel
+from contractsql.sql_config import SQLTask, SQLTaskRegistry
+from contractsql.worker import Worker
 from validate_live_sql_agent import RecordingModel
 
 

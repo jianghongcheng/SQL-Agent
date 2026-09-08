@@ -1,8 +1,8 @@
 import json
 import urllib.error
 import pytest
-from geomed_copilot.data_agent import ContractSQLPlanner, DataContract, PlanningContext, SQLPlanningEvidence
-from geomed_copilot.semantic_review import IndependentSQLPlanner
+from contractsql.data_agent import ContractSQLPlanner, DataContract, PlanningContext, SQLPlanningEvidence
+from contractsql.semantic_review import IndependentSQLPlanner
 
 CTX=PlanningContext('List customer as item, ordered by id.', DataContract(('item',)),
     SQLPlanningEvidence((('orders','CREATE TABLE orders(id INTEGER, customer TEXT)'),),'hash'),1,2)
@@ -31,7 +31,7 @@ def test_explicit_stop_never_retried(planner):
 
 @pytest.mark.parametrize('planner',[ContractSQLPlanner,IndependentSQLPlanner])
 def test_persistent_failure_stops_after_three_attempts(planner,monkeypatch):
-    monkeypatch.setattr('geomed_copilot.model_recovery.time.sleep',lambda _:None)
+    monkeypatch.setattr('contractsql.model_recovery.time.sleep',lambda _:None)
     model=SequenceModel([TimeoutError('down')]*4)
     instance=planner(model)
     with pytest.raises(TimeoutError): instance(CTX)
@@ -53,7 +53,7 @@ def test_retry_after_outside_budget_stops(header):
 
 def test_retry_after_honored(monkeypatch):
     delays=[]
-    monkeypatch.setattr('geomed_copilot.model_recovery.time.sleep',delays.append)
+    monkeypatch.setattr('contractsql.model_recovery.time.sleep',delays.append)
     model=SequenceModel([urllib.error.HTTPError('test',429,'error',{'Retry-After':'1'},None),GOOD])
     assert IndependentSQLPlanner(model)(CTX).action=='REPAIR'
     assert delays==[1.0]
@@ -72,10 +72,10 @@ def test_alias_prompt_distinguishes_source_from_output():
 
 
 def test_pipeline_persists_exhaustion_and_does_not_release(tmp_path,monkeypatch):
-    from geomed_copilot.pipeline import JobPipeline
-    from geomed_copilot.sql_config import SQLTask,SQLTaskRegistry
-    from geomed_copilot.jobs import SqliteJobRepository
-    monkeypatch.setattr('geomed_copilot.model_recovery.time.sleep',lambda _:None)
+    from contractsql.pipeline import JobPipeline
+    from contractsql.sql_config import SQLTask,SQLTaskRegistry
+    from contractsql.jobs import SqliteJobRepository
+    monkeypatch.setattr('contractsql.model_recovery.time.sleep',lambda _:None)
     primary=SequenceModel(['{"action":"REPAIR","sql":"SELECT name FROM employees ORDER BY id"}']*2)
     checker=SequenceModel([TimeoutError('down')]*6)
     planner=ContractSQLPlanner(primary)

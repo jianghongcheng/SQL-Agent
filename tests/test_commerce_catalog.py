@@ -1,8 +1,8 @@
 import sqlite3
 import pytest
-from geomed_copilot.commerce_catalog import REFERENCES,make_task
-from geomed_copilot.data_agent import ContractSQLSession
-from geomed_copilot.bounded_runtime import ActionProposal
+from contractsql.commerce_catalog import REFERENCES,make_task
+from contractsql.data_agent import ContractSQLSession
+from contractsql.bounded_runtime import ActionProposal
 
 CASES=[([],[]),([(1,10000),(2,8000)],[(1,1000,'approved'),(1,2000,'pending')]),
        ([(1,10000),(2,8000)],[(1,1000,'approved'),(1,2000,'approved')]),

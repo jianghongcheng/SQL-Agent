@@ -13,10 +13,10 @@ import sqlite3
 import time
 import urllib.request
 
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLSession, DataAgentLoop, DataContract
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.model_recovery import complete_json
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLSession, DataAgentLoop, DataContract
+from contractsql.planner import OllamaPlannerModel
+from contractsql.model_recovery import complete_json
 try:
     from scripts.validate_live_sql_agent import RecordingModel
 except ModuleNotFoundError:
@@ -116,7 +116,7 @@ def main():
     suite = select_cases(rows, all_cases=args.all_domains, full=args.full)
     previous_110_ids = {r['question_id'] for r in select_cases(rows, all_cases=True)}
     prior_ids = {r['question_id'] for r in select_cases(rows)}
-    source_dir = Path(__file__).resolve().parents[1] / 'src/geomed_copilot'
+    source_dir = Path(__file__).resolve().parents[1] / 'src/contractsql'
     production_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source_dir.glob('*.py'))}
     args.output.mkdir(parents=True, exist_ok=False)
     source = json.loads((databases / 'manifest.json').read_text())

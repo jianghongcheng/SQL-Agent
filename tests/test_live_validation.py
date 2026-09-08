@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from geomed_copilot.bounded_runtime import ActionProposal, BoundedAgentRuntime, RuntimeOutcome
-from geomed_copilot.data_agent import ContractSQLSession, DataContract
+from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime, RuntimeOutcome
+from contractsql.data_agent import ContractSQLSession, DataContract
 from scripts.validate_live_sql_agent import database, grade
 
 

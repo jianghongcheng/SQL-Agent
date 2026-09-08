@@ -8,7 +8,7 @@ import urllib.request
 
 from scripts import run_paired_sql_benchmark as runner
 from scripts import transfer_sql_cases as suite
-from geomed_copilot.planner import OllamaPlannerModel
+from contractsql.planner import OllamaPlannerModel
 
 
 def main():
@@ -17,7 +17,7 @@ def main():
     parser.add_argument('--models',nargs='+',required=True)
     args=parser.parse_args()
     args.output.mkdir(parents=True,exist_ok=False)
-    sources=list((runner.ROOT/'src/geomed_copilot').glob('*.py'))+[Path(__file__),Path(suite.__file__),Path(runner.__file__)]
+    sources=list((runner.ROOT/'src/contractsql').glob('*.py'))+[Path(__file__),Path(suite.__file__),Path(runner.__file__)]
     hashes={str(p.resolve().relative_to(runner.ROOT)):runner.sha_bytes(p.read_bytes()) for p in sources}
     for source in sources:
         target=args.output/'source_snapshot'/source.resolve().relative_to(runner.ROOT)

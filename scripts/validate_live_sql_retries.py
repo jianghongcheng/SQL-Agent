@@ -13,9 +13,9 @@ import argparse
 import urllib.request
 
 from validate_live_sql_agent import database, RecordingModel
-from geomed_copilot.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from geomed_copilot.planner import OllamaPlannerModel
-import geomed_copilot.data_agent as implementation
+from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
+from contractsql.planner import OllamaPlannerModel
+import contractsql.data_agent as implementation
 
 
 class DriftSession(ContractSQLSession):

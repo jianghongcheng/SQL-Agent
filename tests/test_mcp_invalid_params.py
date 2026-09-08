@@ -1,5 +1,5 @@
 import pytest
-from geomed_copilot.mcp_server import dispatch
+from contractsql.mcp_server import dispatch
 
 @pytest.mark.parametrize('params',[None,[1],1,'invalid'])
 def test_malformed_tool_params_do_not_terminate_server(params):
@@ -14,7 +14,7 @@ def test_stdio_survives_bad_tool_call_and_bad_json():
     import sys
     messages=[json.dumps({'jsonrpc':'2.0','id':1,'method':'tools/call','params':[1]}),
               'not JSON',json.dumps({'jsonrpc':'2.0','id':2,'method':'ping'})]
-    process=subprocess.run([sys.executable,'-m','geomed_copilot.mcp_server'],
+    process=subprocess.run([sys.executable,'-m','contractsql.mcp_server'],
         input='\n'.join(messages)+'\n',text=True,capture_output=True,timeout=10)
     assert process.returncode==0,process.stderr
     responses=[json.loads(line) for line in process.stdout.splitlines()]

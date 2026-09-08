@@ -10,11 +10,11 @@ from pathlib import Path
 import sqlite3
 import urllib.request
 
-from geomed_copilot.bounded_runtime import ActionProposal, BoundedAgentRuntime
-from geomed_copilot.data_agent import DataContract
-from geomed_copilot.execution_record import digest
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.semantic_review import IndependentSQLPlanner, SemanticSQLSession
+from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime
+from contractsql.data_agent import DataContract
+from contractsql.execution_record import digest
+from contractsql.planner import OllamaPlannerModel
+from contractsql.semantic_review import IndependentSQLPlanner, SemanticSQLSession
 try:
     from scripts.validate_bird_external import file_hash
     from scripts.validate_live_sql_agent import RecordingModel
@@ -37,7 +37,7 @@ def main():
     databases = args.data / 'databases_full'
     for item in manifest['source']['files']:
         assert file_hash(databases / item['path']) == item['sha256']
-    source_dir = Path(__file__).resolve().parents[1] / 'src/geomed_copilot'
+    source_dir = Path(__file__).resolve().parents[1] / 'src/contractsql'
     hashes = {p.name: file_hash(p) for p in source_dir.glob('*.py')}
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=10) as response:
         model_info = [m for m in json.load(response)['models'] if m['name'] == 'qwen3:8b']

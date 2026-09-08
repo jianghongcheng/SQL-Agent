@@ -1,9 +1,8 @@
 # Evaluation
 
-These are distinct historical experiments, not one cumulative accuracy score.
-Known development questions, repeated runs, software tests and injected faults
-must not be counted as independent unseen questions or production traffic.
-No new model benchmark was run during documentation consolidation.
+This document separates model configuration comparisons, product acceptance,
+external-dataset evaluation, and software verification. Each result retains its
+own dataset, denominator, and execution conditions.
 
 ## Software verification
 
@@ -59,7 +58,7 @@ measurements. See [acceptance runner](../scripts/run_product_acceptance.py),
 [independent fixtures](../scripts/commerce_acceptance_cases.py); inspect each
 runner's `--help` for parameters before starting a new run.
 
-## Optional strategies: results did not establish a default-path improvement
+## Alternative strategies
 
 | Experiment | Scope | Result |
 | --- | --- | --- |

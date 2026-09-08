@@ -1,6 +1,6 @@
 import sqlite3
 import pytest
-from geomed_copilot.jobs import SqliteJobRepository
+from contractsql.jobs import SqliteJobRepository
 
 
 def expire(path, job_id):
@@ -48,8 +48,8 @@ def test_operational_retry_budget(tmp_path):
 
 
 def test_expired_worker_does_not_crash_or_overwrite_new_result(tmp_path):
-    from geomed_copilot.worker import Worker
-    from geomed_copilot.pipeline import PipelineOutcome
+    from contractsql.worker import Worker
+    from contractsql.pipeline import PipelineOutcome
     path = tmp_path / 'jobs.db'
     repo = SqliteJobRepository(path)
     job, _ = repo.submit('sql_analysis', {}, 'key')
@@ -75,8 +75,8 @@ def test_renewal_cannot_resurrect_expired_claim(tmp_path):
 
 def test_heartbeat_keeps_long_task_owned(tmp_path):
     import time
-    from geomed_copilot.worker import Worker
-    from geomed_copilot.pipeline import PipelineOutcome
+    from contractsql.worker import Worker
+    from contractsql.pipeline import PipelineOutcome
     repo=SqliteJobRepository(tmp_path/'jobs.db')
     job,_=repo.submit('sql_analysis',{},'long')
     class Slow:
@@ -92,8 +92,8 @@ def test_heartbeat_keeps_long_task_owned(tmp_path):
 def test_killed_worker_is_recovered_after_real_lease_expiration(tmp_path):
     import multiprocessing
     import time
-    from geomed_copilot.worker import Worker
-    from geomed_copilot.pipeline import JobPipeline
+    from contractsql.worker import Worker
+    from contractsql.pipeline import JobPipeline
     path=tmp_path/'jobs.db'
     repo=SqliteJobRepository(path)
     job,_=repo.submit('sql_analysis',{'task_id':'employee_names'},'crash',max_attempts=2)

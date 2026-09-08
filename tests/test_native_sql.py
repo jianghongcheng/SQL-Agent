@@ -1,6 +1,6 @@
 import pytest
-from geomed_copilot.native_sql import extract_sql, NativeSQLPlanner
-from geomed_copilot.data_agent import DataContract, SQLPlanningEvidence, PlanningContext
+from contractsql.native_sql import extract_sql, NativeSQLPlanner
+from contractsql.data_agent import DataContract, SQLPlanningEvidence, PlanningContext
 
 
 @pytest.mark.parametrize('raw', ['SELECT 1', 'Explanation\n```sql\nSELECT 1\n```', '```\nSELECT 1\n```'])

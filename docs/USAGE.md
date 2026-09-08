@@ -203,7 +203,7 @@ Create an application-owned JSON file, e.g. `tasks.json`:
 ```
 
 Database paths resolve relative to this JSON file. The database must already
-exist. Set `RADMEASURE_SQL_TASKS=/absolute/path/tasks.json` in API and worker.
+exist. Set `CONTRACTSQL_SQL_TASKS=/absolute/path/tasks.json` in API and worker.
 Configure a real planner endpoint for custom tasks. The default scripted planner
 is intentionally limited to the synthetic employee-name demonstration.
 
@@ -229,7 +229,7 @@ API-key clients remain supported; never publish real keys.
 
 For direct stdio MCP, configure the same registered tasks and model environment
 as the API and worker, then run `contractsql-mcp`.
-See [MCP implementation](../src/geomed_copilot/mcp_server.py) for tool schemas.
+See [MCP implementation](../src/contractsql/mcp_server.py) for tool schemas.
 The stdio process must be able to access its configured job store.
 
 The browser exchanges a configured access key for an in-memory session.
@@ -240,8 +240,19 @@ Login does not add per-dataset permissions or multi-tenant isolation.
 
 The launcher writes generated databases, job state and logs under
 `runtime/local-demo/`. Models are installed separately through Ollama.
-The historical benchmark dashboard requires locally generated evaluation artifacts;
-a public clone does not contain those raw runs. See [evaluation](EVALUATION.md).
+The benchmark link opens a local report when one has been generated; otherwise
+it opens the public [evaluation documentation](EVALUATION.md).
+
+## Upgrading from 0.5
+
+Version 0.6 uses the `contractsql` Python package, `contractsql*` commands, and
+`CONTRACTSQL_*` environment variables. Replace earlier package imports and
+environment names in your launcher configuration. Create a fresh virtual
+environment when upgrading to avoid stale entry points from editable installs.
+The package and command names are now independent of other applications.
+The optional Compose stack also uses `contractsql` database and role names.
+Existing PostgreSQL volumes retain their original roles and databases; update
+the connection configuration or migrate them explicitly before upgrading.
 
 ## Testing
 

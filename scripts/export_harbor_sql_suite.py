@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-TASK = ROOT / "harbor/tasks/radmeasure_sql_repair_v1"
+TASK = ROOT / "harbor/tasks/contractsql_sql_repair_v1"
 
 REPAIRS = {
     "fix-column": "SELECT name FROM employees WHERE department='Systems'",

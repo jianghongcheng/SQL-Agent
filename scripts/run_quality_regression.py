@@ -13,7 +13,7 @@ from scripts import run_paired_sql_benchmark as runner
 from scripts import transfer_sql_cases as billing
 from scripts import run_manufacturing_transfer as manufacturing
 from scripts.quality_profile import QualityModel, OPTIONS
-from geomed_copilot import paired_benchmark as dev
+from contractsql import paired_benchmark as dev
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     args=parser.parse_args()
     if args.repeats<1:parser.error('repeats must be positive')
     args.output.mkdir(parents=True,exist_ok=False)
-    sources=list((runner.ROOT/'src/geomed_copilot').glob('*.py')) + [Path(__file__),Path(runner.__file__),Path(billing.__file__),Path(manufacturing.__file__),runner.ROOT/'scripts/quality_profile.py']
+    sources=list((runner.ROOT/'src/contractsql').glob('*.py')) + [Path(__file__),Path(runner.__file__),Path(billing.__file__),Path(manufacturing.__file__),runner.ROOT/'scripts/quality_profile.py']
     hashes={str(p.resolve().relative_to(runner.ROOT)):runner.sha_bytes(p.read_bytes()) for p in sources}
     for source in sources:
         target=args.output/'source_snapshot'/source.resolve().relative_to(runner.ROOT)

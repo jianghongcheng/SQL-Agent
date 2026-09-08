@@ -3,9 +3,9 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from geomed_copilot.sql_environment import demo_database
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
+from contractsql.sql_environment import demo_database
 
 
 @pytest.fixture

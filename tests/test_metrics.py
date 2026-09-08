@@ -1,4 +1,4 @@
-from geomed_copilot.metrics import HttpMetrics, normalized_path
+from contractsql.metrics import HttpMetrics, normalized_path
 
 
 def test_metrics_normalize_job_ids_and_render_prometheus():
@@ -9,7 +9,7 @@ def test_metrics_normalize_job_ids_and_render_prometheus():
     output = metrics.render({"queued": 2})
     assert "secret-id" not in output
     assert 'path="/v1/jobs/{job_id}"' in output
-    assert 'geomed_jobs{status="queued"} 2' in output
+    assert 'contractsql_jobs{status="queued"} 2' in output
 
 
 def test_metrics_storage_bounded_across_unique_jobs_and_unknown_urls():
@@ -32,7 +32,7 @@ def test_histogram_boundaries_counts_and_sum():
     for value in (.005, .012, 7):
         m.observe('GET', '/health', 200, value)
     text = m.render({})
-    prefix = 'geomed_http_request_duration_seconds'
+    prefix = 'contractsql_http_request_duration_seconds'
     labels = 'method="GET",path="/health",status="200"'
     assert f'{prefix}_bucket{{{labels},le="0.005"}} 1' in text
     assert f'{prefix}_bucket{{{labels},le="0.025"}} 2' in text

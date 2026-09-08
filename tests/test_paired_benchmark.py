@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from geomed_copilot.paired_benchmark import CASES, create_database, expected, fixture
+from contractsql.paired_benchmark import CASES, create_database, expected, fixture
 from scripts.run_paired_sql_benchmark import (CALL_LIMIT, CallBudgetExceeded, ObservedModel,
                                             paired_difference, run_episode, score_sql, summarize)
 
@@ -75,7 +75,7 @@ def test_error_retry_can_fix_where_one_shot_stops(tmp_path):
 
 
 def test_relational_plan_pipeline_records_both_calls_and_draft(tmp_path):
-    from geomed_copilot.relational_plan import FIELDS
+    from contractsql.relational_plan import FIELDS
     case = next(c for c in CASES if c.case_id == 'march_closed')
     dbs, data = sources(tmp_path, case)
 
@@ -99,7 +99,7 @@ def test_relational_plan_pipeline_records_both_calls_and_draft(tmp_path):
 
 @pytest.mark.parametrize('fault', ['timeout','429'])
 def test_injected_fault_recorded_and_recovers(tmp_path, monkeypatch, fault):
-    monkeypatch.setattr('geomed_copilot.model_recovery.time.sleep', lambda _: None)
+    monkeypatch.setattr('contractsql.model_recovery.time.sleep', lambda _: None)
     case = next(c for c in CASES if c.case_id == 'march_closed')
     dbs, data = sources(tmp_path, case)
     result = run_episode(case,0,'checked_agent','transient',0,fault,dbs,data,FakeModel([GOOD]*2))

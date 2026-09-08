@@ -14,8 +14,8 @@ BASE='http://127.0.0.1:8765'
 
 
 def exchange(messages,key='123'):
-    env={**os.environ,'PYTHONPATH':str(ROOT/'src'),'RADMEASURE_API_URL':BASE,'RADMEASURE_MCP_API_KEY':key}
-    result=subprocess.run([sys.executable,'-m','geomed_copilot.mcp_server'],
+    env={**os.environ,'PYTHONPATH':str(ROOT/'src'),'CONTRACTSQL_API_URL':BASE,'CONTRACTSQL_MCP_API_KEY':key}
+    result=subprocess.run([sys.executable,'-m','contractsql.mcp_server'],
         input='\n'.join(json.dumps(m) for m in messages)+'\n',text=True,
         capture_output=True,env=env,timeout=30)
     if result.returncode:raise RuntimeError(result.stderr)

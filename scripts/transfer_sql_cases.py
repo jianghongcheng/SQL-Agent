@@ -4,7 +4,7 @@ Operator motifs overlap development tasks. This tests schema/task transfer, not
 unseen SQL operators or absence from model training. Oracles are Python arithmetic.
 """
 import sqlite3
-from geomed_copilot.paired_benchmark import Case
+from contractsql.paired_benchmark import Case
 
 SCHEMA = '''CREATE TABLE invoices(id INTEGER PRIMARY KEY, account TEXT, amount INTEGER, due_day TEXT);
 CREATE TABLE receipts(id INTEGER PRIMARY KEY, invoice_id INTEGER, amount INTEGER, state TEXT);

@@ -11,9 +11,9 @@ import random
 import shutil
 import sqlite3
 
-from geomed_copilot.agent_evaluation import compare_output
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLSession
+from contractsql.agent_evaluation import compare_output
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLSession
 from scripts import transfer_sql_cases as billing
 from scripts.render_model_comparison import ROOT, load_run
 
@@ -74,7 +74,7 @@ def main():
         inputs[name]=[r for r in rows if r['domain']=='billing']
         assert len(inputs[name])==48
         for p in (ROOT/'outputs/validation'/name).glob('episode_*.json'):episode_hashes[str(p.relative_to(ROOT))]=digest(p)
-    sources=list((ROOT/'src/geomed_copilot').glob('*.py'))+[Path(__file__),Path(billing.__file__)]
+    sources=list((ROOT/'src/contractsql').glob('*.py'))+[Path(__file__),Path(billing.__file__)]
     hashes={str(p.resolve().relative_to(ROOT)):digest(p) for p in sources}
     for p in sources:
         target=args.output/'source_snapshot'/p.resolve().relative_to(ROOT)

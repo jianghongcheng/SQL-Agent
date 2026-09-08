@@ -6,14 +6,14 @@ import json
 from pathlib import Path
 import sqlite3
 
-from geomed_copilot.business_context import MetricDefinition,QualityCheck
-from geomed_copilot.data_agent import DataContract,ContractSQLPlanner
-from geomed_copilot.planner import OllamaPlannerModel
-from geomed_copilot.sql_config import SQLTask,SQLTaskRegistry
-from geomed_copilot.pipeline import JobPipeline
-from geomed_copilot.jobs import SqliteJobRepository
-from geomed_copilot.worker import Worker
-from geomed_copilot.execution_record import digest
+from contractsql.business_context import MetricDefinition,QualityCheck
+from contractsql.data_agent import DataContract,ContractSQLPlanner
+from contractsql.planner import OllamaPlannerModel
+from contractsql.sql_config import SQLTask,SQLTaskRegistry
+from contractsql.pipeline import JobPipeline
+from contractsql.jobs import SqliteJobRepository
+from contractsql.worker import Worker
+from contractsql.execution_record import digest
 from scripts.validate_live_sql_agent import RecordingModel
 
 

@@ -1,8 +1,8 @@
 """A concurrent writer must not change the data between collection and repair."""
 import sqlite3
 import pytest
-from geomed_copilot.bounded_runtime import ActionProposal
-from geomed_copilot.data_agent import ContractSQLSession, DataContract
+from contractsql.bounded_runtime import ActionProposal
+from contractsql.data_agent import ContractSQLSession, DataContract
 
 
 def test_general_sql_session_keeps_collection_snapshot(tmp_path):
