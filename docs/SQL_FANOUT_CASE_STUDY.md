@@ -3,7 +3,7 @@
 账单 11 的金额为 100，两笔已结算收款为 30 和 20，两笔贷项为 5 和 7。问题要求余额，因此答案是 `100 − 30 − 20 − 5 − 7 = 38`。
 
 一次真实模型输出却算成 −24。原始记录是
-[`billing_transfer_v1/episode_0098.json`](../outputs/validation/billing_transfer_v1/episode_0098.json)，模型为 `qwen2.5-coder:14b`，使用当时的 SQL 文本 v1 提示。
+`outputs/validation/billing_transfer_v1/episode_0098.json`（本地运行记录，不随公开仓库分发），模型为 `qwen2.5-coder:14b`，使用当时的 SQL 文本 v1 提示。
 
 关键错误结构如下：
 
@@ -39,7 +39,7 @@ ORDER BY i.id;
 ```
 
 这是后续 Qwen3 14B 推理预检中实际生成的结构，见
-[`quality_pilot_14b_v2/invoice_balance.json`](../outputs/validation/quality_pilot_14b_v2/invoice_balance.json)。它不是写进运行时的答案模板。预检只是已知问题的成功案例；配置是否值得采用，要看完整回归以及延迟。
+`outputs/validation/quality_pilot_14b_v2/invoice_balance.json`（本地运行记录，不随公开仓库分发）。它不是写进运行时的答案模板。预检只是已知问题的成功案例；配置是否值得采用，要看完整回归以及延迟。
 
 完整回归也保留了反例：`quality_regression_v1/episode_0026.json` 的同模型查询正确预聚合了明细，却漏掉 `state = 'settled'`。因此，避免重复计数和保留所有业务条件是两个不同问题。展示中的显式业务词典不会混入无词典回归成绩。
 
@@ -52,4 +52,4 @@ ORDER BY i.id;
 - 既记录错误结果，也记录停止与重试；不把停止当成答对。
 - 通用 SQL 保持人工审核。固定业务参考查询属于另一种验证模式，不能混入盲测成绩。
 
-面试时可以用这一例解释为什么需要评估、为什么执行反馈有边界，以及为什么“加一个 Agent”不自动解决数据语义。
+这一案例说明了独立评估的必要性，以及执行反馈无法自动识别所有业务语义错误的限制。

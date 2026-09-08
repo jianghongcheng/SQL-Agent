@@ -1,7 +1,7 @@
 # Measured operations and regression evidence
 
-Checked 2026-09-06. Motivated by [employer requirements](MARKET_ALIGNMENT_2026_09.md)
-for evaluation, observability, backend reliability and cost/latency judgment.
+Checked 2026-09-06. This report covers evaluation, observability, backend
+reliability, and cost/latency measurements.
 
 ## Implemented changes
 

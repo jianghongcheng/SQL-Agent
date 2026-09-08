@@ -17,14 +17,6 @@
 
 产物目录：`outputs/validation/relational_plan_v1/`，包含 `manifest.json`、源码快照、144 份 episode、`summary.json`、`completion_audit.json` 和可逐条展开计划/SQL 的 `report.html`。全套回归 174 项通过，随后新增的 pipeline 计划轨迹测试连同相关测试 21 项通过。
 
-## 面试的一分钟说明
-
-“我做的是有执行边界和可复现评估的 SQL Data Agent。早期对照发现，SQL 即使执行成功，也可能因为重复连接、错误的统计粒度或否定条件而算错；执行重试无法发现这些问题。
-
-我实现了一个可选的关系计划步骤：先明确输出粒度、表之间的关系、统计对象、过滤条件、零值保留和排序，再交给原来的生成器写 SQL。计划和最终 SQL 都保留在轨迹里，便于定位是理解阶段错了，还是 SQL 转换阶段错了。
-
-我用同一模型、同一数据、同一安全策略对比直接生成和先规划再生成，并同时报告正确率与额外调用成本。模型计划不是真值，未验证的策略不会替换默认路径。”
-
 ## 只有三个阶段
 
 ```mermaid
@@ -53,19 +45,17 @@ flowchart LR
 在仓库根目录、有本地 qwen3:8b 的情况下：
 
 ```bash
-PYTHONPATH=src:. /tmp/radmeasure-sql-venv/bin/python scripts/run_paired_sql_benchmark.py \
+PYTHONPATH=src:. python scripts/run_paired_sql_benchmark.py \
   --output outputs/validation/relational_plan_new \
   --methods one_shot plan_then_sql --profiles clean --repeats 3
 ```
 
 输出目录必须不存在。全部 24 个问题/数据组合 × 3 次完整重复 × 2 种策略 = 144 次运行。两种策略各只有一次最终 SQL 生成；规划策略多一次模型调用，不是等成本比较。共同传输恢复与九次调用尝试上限仍生效。此次先隔离语义生成因素，不重复注入已经评估过的暂态故障。
 
-这些题已经用于开发，不是新的留出集。先通过本轮回归判断是否值得继续；最终简历里的泛化提升需要新冻结的问题/schema 验证。不能将开发集变化称为 BIRD 提升或生产效果。
+这些题已经用于开发，不是新的留出集。先通过本轮回归判断是否值得继续；泛化提升需要新冻结的问题/schema 验证。不能将开发集变化称为 BIRD 提升或生产效果。
 
 每条 `episode_*.json` 包含计划、SQL、响应、用量、结果和跨数据实例评分；`summary.json` 包含完整汇总。挑一条成功和一条失败，分别解释计划与 SQL 是否一致，比只展示一个准确率更有说服力。
 
-## 可以与不可以写进简历
+## 证据边界
 
-已实现可描述为：为 SQL Agent 增加可审计的关系规划阶段，并建立同模型的配对评估，覆盖多数据实例、重复运行、错误输出和调用成本。
-
-只有实验确实支持时才能补充准确率提升数字；没有真实用户、线上流量与 SLO 数据，就不写生产部署收益、用户增长或生产准确率。
+当前结果支持在有限开发数据上分析正确性与调用成本，不证明生产准确率、未见数据泛化或线上收益。

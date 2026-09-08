@@ -67,7 +67,7 @@ execution records are in `outputs/validation/live_sql_retry_drift_v1/`.
 existing output directory.
 
 ```bash
-PYTHONPATH=src:. /tmp/radmeasure-sql-venv/bin/python \
+PYTHONPATH=src:. python \
   scripts/validate_live_sql_retries.py \
   --output outputs/validation/live_sql_retry_drift_new
 ```

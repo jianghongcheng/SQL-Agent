@@ -40,7 +40,7 @@ PYTHONPATH=src:. python scripts/local_demo.py status
 PYTHONPATH=src:. python scripts/local_demo.py stop
 ```
 
-In this workspace the Python executable is `/tmp/radmeasure-sql-venv/bin/python`.
+Use Python from the virtual environment where you installed the project.
 The launcher does not download models. It binds the API to loopback and uses the
 intentionally public `123` credential. Restarting refreshes disposable
 source fixtures and ingestion times; job history remains in

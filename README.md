@@ -21,12 +21,11 @@ evaluation data. It is not a claim of customer adoption or production SQL accura
 
 ## Start here
 
-- [Five-minute demo, architecture and interview questions](docs/INTERVIEW_DEMO_GUIDE.md)
-- [Interview narrative, evidence requirements and truthful resume wording](docs/INTERVIEW_READINESS.md)
 - [Local demo setup and walkthrough](docs/LOCAL_DEMO.md)
 - [Flexible analysis and small-scale product acceptance](docs/PRODUCT_ACCEPTANCE.md)
 - [Configuration results and data robustness](docs/QUALITY_PROFILE_RESULTS.md)
-- [Market evidence and remaining gaps](docs/MARKET_ALIGNMENT_2026_09.md)
+- [Task registration and configuration](docs/SQL_TASKS.md)
+- [Reliability and recovery boundaries](docs/RELIABILITY.md)
 
 ## Run the local demo
 
@@ -326,7 +325,7 @@ SQL-text model evaluation is another controlled comparison.
 | Completed experiment | Evidence-backed conclusion |
 |---|---|
 | [432-episode paired comparison](docs/PAIRED_SQL_BENCHMARK_RESULTS.md) | Independent checking rejected wrong and correct candidates; no answer-quality gain established |
-| [Relational planning](docs/RELATIONAL_PLAN_INTERVIEW.md) | 42/72 correct versus 39/72, twice the calls; small development result with substantial uncertainty |
+| [Relational planning](docs/RELATIONAL_PLAN_EVALUATION.md) | 42/72 correct versus 39/72, twice the calls; small development result with substantial uncertainty |
 | [Bounded data probes](docs/SQL_AGENT_WALKTHROUGH.md) | 137 successful probe queries; 38/72 correct versus 39/72, so not promoted |
 | [Paper and implementation review](docs/SQL_ACCURACY_METHODS_RESEARCH.md) | Motivation and limitations, not locally reproduced paper scores |
 
@@ -344,7 +343,7 @@ Benchmark runners write immutable run directories containing inputs, manifests,
 source snapshots, responses, per-task outcomes and summaries. Follow the commands
 in each dated report; do not overwrite a prior run or omit failed episodes.
 
-For MCP configuration, deployment options and earlier experiments, see
-[historical implementation notes](docs/PROJECT_HISTORY.md). Portfolio name:
-**ContractSQL**; existing `radmeasure` commands and `geomed_copilot` imports remain
-compatible. This SQL project does not include the earlier medical project.
+For setup, see [local demo](docs/LOCAL_DEMO.md) and
+[task configuration](docs/SQL_TASKS.md). Existing `radmeasure` commands and
+`geomed_copilot` imports remain compatible. The current tree is SQL-only;
+shared medical-project history remains accessible in Git.

@@ -19,7 +19,7 @@
 
 产物在 `outputs/validation/data_probe_v1/`：源码快照、manifest、144 份原始 episode、summary、completion_audit、report.html 与 report.png。报告生成器拒绝缺项、重复及主要汇总计数不一致；Chrome 已验证 144 条轨迹和展开的探查证据。182 项回归测试通过。
 
-## 面试讲解顺序
+## 执行流程
 
 1. 用户提出问题，应用提供 schema 和输出契约。
 2. 可选数据探查阶段：模型选择最多两条小型 SELECT，查看实际值、空值或关联键重复情况。
@@ -62,7 +62,7 @@ flowchart LR
 两种方法调用上限相同，但实际调用与数据库读次数不同。必须一起报告正确保留、错误保留、停止、token、延迟、探查次数/失败/截断；不能把额外计算的收益归结为免费改进。
 
 ```bash
-PYTHONPATH=src:. /tmp/radmeasure-sql-venv/bin/python scripts/run_paired_sql_benchmark.py \
+PYTHONPATH=src:. python scripts/run_paired_sql_benchmark.py \
   --output outputs/validation/data_probe_new \
   --methods one_shot probe_then_sql --profiles clean --repeats 3
 ```
@@ -72,11 +72,9 @@ PYTHONPATH=src:. /tmp/radmeasure-sql-venv/bin/python scripts/run_paired_sql_benc
 完整运行后导出展示页面：
 
 ```bash
-PYTHONPATH=src:. /tmp/radmeasure-sql-venv/bin/python scripts/render_data_probe_report.py outputs/validation/data_probe_new
+PYTHONPATH=src:. python scripts/render_data_probe_report.py outputs/validation/data_probe_new
 ```
 
-## 简历表达边界
+## 评估边界
 
-可描述已实现的工程能力：构建 SQL Agent 的有预算数据探查、只读执行、同快照观察和可审计轨迹，并用配对实验评估正确性与成本。
-
-是否能写“提升准确率”取决于完成的实验结果及评估范围。没有真实用户、线上运行与 SLO 证据，不写生产落地收益。
+已实现有预算的数据探查、只读执行、同快照观察和可审计轨迹。当前配对实验未证明准确率收益；结果不代表生产效果。
