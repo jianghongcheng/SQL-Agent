@@ -110,7 +110,7 @@ describing the entire system as production-proven.
 The service now withholds unverified general SQL from automatic completion and
 runs independent query checking for model-backed tasks. Agreement is not proof;
 results remain review-required without trusted business verification. See
-[the implementation and paired evaluation](SEMANTIC_CORRECTNESS.md). Historical
+[the evaluation summary](EVALUATION.md). Historical
 benchmark scores above are preserved and are not replaced with abstention rates.
 
 ## SQLite 读取一致性与 MCP 输入边界
