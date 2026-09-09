@@ -30,7 +30,7 @@ flowchart TD
     D --> E[Local LLM proposes SQL]
     E --> F[Read-only execution and output checks]
     F --> G{Execution outcome}
-    G -->|Repairable error, budget available| H[Add SQL and error feedback]
+    G -->|Retry allowed| H[Add SQL and error feedback]
     H --> E
     G -->|Checks pass| I[Save candidate and execution record]
     G -->|Denied or budget exhausted| J[Stop and retain failure evidence]
@@ -41,6 +41,7 @@ flowchart TD
 The diagram shows the general-analysis path. SQL attempts within one job share
 a read snapshot. Passing runtime checks produces a reviewable candidate, not
 an automatically approved business answer.
+Retry is allowed only for repairable errors while the SQL attempt budget remains.
 
 | Engineering decision | Implementation |
 | --- | --- |
