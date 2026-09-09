@@ -22,21 +22,7 @@ The screenshot shows synthetic commerce data; the walkthrough includes six
 
 ## Architecture
 
-```mermaid
-flowchart TD
-    A[Question and registered task] --> B[API: authorize and persist job]
-    B --> C[Worker claims job and renews lease]
-    C --> D[Collect schema and output constraints]
-    D --> E[Local LLM proposes SQL]
-    E --> F[Read-only execution and output checks]
-    F --> G{Execution outcome}
-    G -->|Retry allowed| H[Add SQL and error feedback]
-    H --> E
-    G -->|Checks pass| I[Save candidate and execution record]
-    G -->|Denied or budget exhausted| J[Stop and retain failure evidence]
-    I --> K[Human review]
-    J --> K
-```
+![Agent execution and review workflow](docs/assets/workflow.svg)
 
 The diagram shows the general-analysis path. SQL attempts within one job share
 a read snapshot. Passing runtime checks produces a reviewable candidate, not
