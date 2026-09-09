@@ -53,49 +53,17 @@ The screenshot shows synthetic commerce data; the walkthrough includes six
 
 ## Architecture
 
-![Agent execution and review workflow](docs/assets/workflow.svg)
+![SQL-Agent system architecture: request delivery, LangGraph orchestration, read verification, approved changes and evaluation](docs/assets/workflow.svg)
 
-The diagram shows the contracted analysis executor, whose SQL attempts share
-a read snapshot. Direct database requests use separate bounded read connections.
-Passing runtime checks produces a reviewable candidate, not
-an automatically approved business answer.
-Retry is allowed only for repairable errors while the SQL attempt budget remains.
+The main path is **request → durable worker → scoped retrieval → schema linking →
+Planner → read execution → independent Verifier → human review**. Database changes
+branch into impact preview, administrator approval and transactional execution.
+Clarification pauses the graph and resumes from persisted state.
 
-| Engineering decision | Implementation |
-| --- | --- |
-| Separate SQL proposals from execution authority | Registered sources, SQLite read-only authorization, query and output budgets |
-| Repair with observed feedback | Schema-aware generation and up to three SQL attempts; repeated proposals and denied actions stop early |
-| Recover background work | Persistent jobs, idempotency keys, renewable leases, retries, and stale-worker write protection |
-| Make results inspectable | SQL, errors, model usage, routing decisions, contract hashes, and review history |
-| Support multiple clients | Browser dashboard, FastAPI, CLI, and MCP |
-| Separate query and mutation authority | LangGraph validation → preview → approval interrupt → transaction; exact proposal hashes and atomic execution receipts |
-
-The detailed diagram above expands the contracted analysis executor. The shared
-graph keeps that snapshot-preserving executor as one node alongside direct
-database planning, reading and approved mutations:
-
-```mermaid
-flowchart LR
-    U[Question or SQL] --> Q[Request API and durable queue]
-    Q --> A[Validate source and request]
-    A -->|Contracted task| X[Analyze: schema, model, bounded repair]
-    A -->|Database source| K[Retrieve source-scoped knowledge]
-    K --> SL[Authorized schema selection and context budget]
-    SL --> P[Planner: SQL or clarification]
-    P --> B{Classify SQL}
-    B -->|SELECT| C[Read-only query]
-    C -->|Eligible error, budget available| L[Rejected SQL ledger]
-    L --> P
-    B -->|Change| D[Preview impact]
-    D --> E[Persist proposal]
-    E --> F[Pause for admin approval]
-    F -->|Approve| G[Executor or optional isolated Gateway]
-    F -->|Reject| H[No database change]
-    G --> I[Commit change and receipt together]
-    X --> R[Result and contract review]
-    C -->|Executed| V[Independent SQL Verifier: advisory]
-    V --> HR[Candidate and evidence: human review]
-```
+The Verifier is advisory. General queries use separate bounded database reads;
+registered contracted analysis tasks retain their own snapshot-preserving executor.
+Only eligible SQL errors enter the bounded repair loop. The accounting layer records
+input/output tokens across Planner, Verifier, failures and retries.
 
 General database queries never auto-complete based on execution or model
 agreement alone. SQLite natural-language requests receive an independent,
