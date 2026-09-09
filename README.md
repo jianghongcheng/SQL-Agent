@@ -1,21 +1,21 @@
 # SQL-Agent
 
-**A tool-using SQL agent with read-only analysis and separately approved database changes.**
+**A LangGraph SQL agent with hybrid RAG, a Planner–Verifier workflow, and reproducible evaluation.**
 
 [![CI](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Ask about revenue, orders, or customer activity. SQL-Agent uses a local LLM to
-generate SQL against registered SQLite sources, executes it within explicit
-limits, and returns the result alongside the query and execution history.
-Failed attempts feed a bounded repair loop; general-analysis results go to review.
+Turn business questions into SQL with scoped retrieval, schema-aware planning,
+bounded repair, and an advisory independent Verifier for SQLite queries. Inspect
+the generated SQL, execution history, and observed input/output token usage,
+including failed calls and retries.
 
-One **LangGraph workflow** serves the browser and MCP through an asynchronous
-request API. Submit a question or SQL against a configured source: SELECT reads,
-while INSERT, UPDATE, DELETE, CREATE TABLE and DROP TABLE require an impact
-preview and administrator approval. SQLite and PostgreSQL adapters enforce their
-own supported SQL profiles. MCP cannot approve changes.
-See [setup and supported SQL boundaries](docs/USAGE.md#approved-database-changes).
+The browser and MCP share a checkpointed **LangGraph workflow** through an
+asynchronous request API. Registered SQLite and PostgreSQL sources support
+bounded queries and separately approved changes. Evaluation reports task accuracy,
+verifier false accepts, latency, and tokens per correct task with public evidence.
+
+[Supported database operations and approval boundaries](docs/USAGE.md#approved-database-changes)
 
 [Quick start](#quick-start) · [Architecture](#architecture) · [Results](#evaluation) · [Usage](docs/USAGE.md)
 
