@@ -10,13 +10,13 @@ import math
 from pathlib import Path
 import sqlite3
 
-from contractsql.commerce_catalog import make_task
-from contractsql.data_agent import ContractSQLPlanner
-from contractsql.jobs import SqliteJobRepository
-from contractsql.pipeline import JobPipeline
-from contractsql.planner import OllamaPlannerModel
-from contractsql.sql_config import SQLTaskRegistry
-from contractsql.worker import Worker
+from sql_agent.commerce_catalog import make_task
+from sql_agent.data_agent import SQLAgentPlanner
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.pipeline import JobPipeline
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.sql_config import SQLTaskRegistry
+from sql_agent.worker import Worker
 
 FIXTURES = {
     'empty': ([], []),
@@ -68,7 +68,7 @@ def main():
                     model = TimeoutOnce(model)
                 repo = SqliteJobRepository(args.output / (episode + '_jobs.sqlite'))
                 job, _ = repo.submit('sql_analysis', {'task_id': metric}, episode)
-                worker = Worker(repo, JobPipeline(SQLTaskRegistry((task,)), ContractSQLPlanner(model)))
+                worker = Worker(repo, JobPipeline(SQLTaskRegistry((task,)), SQLAgentPlanner(model)))
                 worker.run_once()
                 job = repo.get(job.job_id)
                 result = job.result or {}

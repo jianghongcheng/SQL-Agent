@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime, RuntimeOutcome
-from contractsql.data_agent import ContractSQLSession, DataContract
+from sql_agent.bounded_runtime import ActionProposal, BoundedAgentRuntime, RuntimeOutcome
+from sql_agent.data_agent import SQLAgentSession, DataContract
 from scripts.validate_live_sql_agent import database, grade
 
 
@@ -22,7 +22,7 @@ def test_transfer_reference_queries_satisfy_predeclared_contracts():
         db = database(case)
         try:
             result = BoundedAgentRuntime().run(ActionProposal("REPAIR", "sql_query", {"sql": case["gold_sql"]}),
-                ContractSQLSession(db, DataContract(**case["contract"])))
+                SQLAgentSession(db, DataContract(**case["contract"])))
             assert result.decision == "KEEP", case["id"]
             assert grade(case, result)["success"], case["id"]
         finally:

@@ -15,9 +15,9 @@ import sqlite3
 import time
 import urllib.request
 
-from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from contractsql.planner import OllamaPlannerModel
-import contractsql.data_agent as data_agent_module
+from sql_agent.data_agent import SQLAgentPlanner, SQLAgentSession, DataAgentLoop, DataContract
+from sql_agent.planner import OllamaPlannerModel
+import sql_agent.data_agent as data_agent_module
 
 
 def cases():
@@ -101,7 +101,7 @@ def main():
     with urllib.request.urlopen(args.base_url.rstrip("/") + "/api/tags", timeout=5) as response:
         tags = json.loads(response.read())
     manifest = {"started_at": datetime.now(timezone.utc).isoformat(), "model": args.model,
-                "prompt_version": ContractSQLPlanner.PROMPT_VERSION,
+                "prompt_version": SQLAgentPlanner.PROMPT_VERSION,
                 "planner_source_sha256": hashlib.sha256(Path(data_agent_module.__file__).read_bytes()).hexdigest(),
                 "model_details": [m for m in tags["models"] if m["name"] == args.model],
                 "suite_sha256": hashlib.sha256(raw_suite.encode()).hexdigest(),
@@ -115,8 +115,8 @@ def main():
         db = database(case)
         start = time.perf_counter()
         try:
-            bounded = DataAgentLoop(3).run(case["goal"], ContractSQLPlanner(model),
-                ContractSQLSession(db, DataContract(**case["contract"])), initial_sql=case["initial_sql"])
+            bounded = DataAgentLoop(3).run(case["goal"], SQLAgentPlanner(model),
+                SQLAgentSession(db, DataContract(**case["contract"])), initial_sql=case["initial_sql"])
         finally:
             db.close()
         elapsed = (time.perf_counter() - start) * 1000
@@ -129,8 +129,8 @@ def main():
 
         db = database(case)
         try:
-            single = DataAgentLoop(1).run(case["goal"], ContractSQLPlanner(FirstProposal()),
-                ContractSQLSession(db, DataContract(**case["contract"])), initial_sql=case["initial_sql"])
+            single = DataAgentLoop(1).run(case["goal"], SQLAgentPlanner(FirstProposal()),
+                SQLAgentSession(db, DataContract(**case["contract"])), initial_sql=case["initial_sql"])
         finally:
             db.close()
         row = {"id": case["id"], "kind": case["kind"], "expected": case["expected"],

@@ -13,12 +13,12 @@ import statistics
 import time
 import urllib.request
 
-from contractsql.data_agent import ContractSQLPlanner, DataContract
-from contractsql.jobs import SqliteJobRepository
-from contractsql.pipeline import JobPipeline
-from contractsql.planner import OllamaPlannerModel
-from contractsql.sql_config import SQLTask, SQLTaskRegistry
-from contractsql.worker import Worker
+from sql_agent.data_agent import SQLAgentPlanner, DataContract
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.pipeline import JobPipeline
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.sql_config import SQLTask, SQLTaskRegistry
+from sql_agent.worker import Worker
 from validate_live_sql_agent import RecordingModel
 
 
@@ -40,8 +40,8 @@ def main():
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=10) as response:
         model_info = [m for m in json.load(response)['models'] if m['name'] == 'qwen3:8b']
     manifest = {'source': source_manifest, 'database_hashes': database_hashes,
-        'agent_source_sha256': hashlib.sha256((Path(__file__).resolve().parents[1] / 'src/contractsql/data_agent.py').read_bytes()).hexdigest(),
-        'model': model_info, 'prompt_version': ContractSQLPlanner.PROMPT_VERSION,
+        'agent_source_sha256': hashlib.sha256((Path(__file__).resolve().parents[1] / 'src/sql_agent/data_agent.py').read_bytes()).hexdigest(),
+        'model': model_info, 'prompt_version': SQLAgentPlanner.PROMPT_VERSION,
         'tasks_sha256': hashlib.sha256((args.data / 'tasks.json').read_bytes()).hexdigest(),
         'repeats': args.repeats, 'unique_tasks': len(tasks),
         'protocol': 'Same first live response in exploratory and verified arms; production worker path; no online tuning.',
@@ -70,7 +70,7 @@ def main():
                     DataContract(**config), (args.data / task['database']).resolve()),))
                 job, _ = repo.submit('sql_analysis', {'task_id': task['task_id']}, f'{repeat}:{task["task_id"]}:{mode}')
                 started = time.perf_counter()
-                Worker(repo, JobPipeline(registry, ContractSQLPlanner(Paired()))).run_once()
+                Worker(repo, JobPipeline(registry, SQLAgentPlanner(Paired()))).run_once()
                 elapsed = (time.perf_counter()-started)*1000
                 stored = repo.get(job.job_id)
                 if mode == 'exploratory':

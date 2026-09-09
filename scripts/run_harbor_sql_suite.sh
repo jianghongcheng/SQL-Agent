@@ -9,23 +9,23 @@ fi
 mode="${1:-frozen}"
 case "$mode" in
   frozen)
-    agent="contractsql.harbor_agent:ContractSQLFrozenPlannerAgent"
+    agent="sql_agent.harbor_agent:SQLAgentFrozenPlannerAgent"
     output="outputs/harbor/frozen_qwen"
     ;;
   oracle)
     agent="oracle"
     output="outputs/harbor/oracle"
-    task_path="harbor/tasks/contractsql_sql_repair_v1"
+    task_path="harbor/tasks/sql_agent_repair_v1"
     ;;
   v3-frozen)
-    agent="contractsql.harbor_agent:ContractSQLV3FrozenPlannerAgent"
+    agent="sql_agent.harbor_agent:SQLAgentV3FrozenPlannerAgent"
     output="outputs/harbor/v3_frozen_qwen"
-    task_path="harbor/tasks/contractsql_sql_repair_v3"
+    task_path="harbor/tasks/sql_agent_repair_v3"
     ;;
   v3-oracle)
     agent="oracle"
     output="outputs/harbor/v3_oracle"
-    task_path="harbor/tasks/contractsql_sql_repair_v3"
+    task_path="harbor/tasks/sql_agent_repair_v3"
     ;;
   *)
     echo "usage: $0 [frozen|oracle|v3-frozen|v3-oracle]" >&2
@@ -33,7 +33,7 @@ case "$mode" in
     ;;
 esac
 
-task_path="${task_path:-harbor/tasks/contractsql_sql_repair_v1}"
+task_path="${task_path:-harbor/tasks/sql_agent_repair_v1}"
 
 PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}src" \
   harbor run \

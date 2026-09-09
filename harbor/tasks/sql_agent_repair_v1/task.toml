@@ -2,7 +2,7 @@ schema_version = "1.4"
 artifacts = ["/app/submission.json"]
 
 [task]
-name = "contractsql/sql-repair-v1"
+name = "sql_agent/sql-repair-v1"
 version = "1.0.0"
 description = "Evaluate policy-gated SQL repair over 36 frozen normal and adversarial cases."
 authors = [{ name = "Hongcheng Jiang", email = "hongcheng.jiang@outlook.com" }]
@@ -11,7 +11,7 @@ keywords = ["agent-evaluation", "sql-repair", "policy", "verifier", "safety"]
 [metadata]
 category = "healthcare-agent-reliability"
 difficulty = "medium"
-tags = ["contractsql", "sql", "keep-repair-stop", "separate-verifier"]
+tags = ["sql_agent", "sql", "keep-repair-stop", "separate-verifier"]
 
 [agent]
 timeout_sec = 300.0

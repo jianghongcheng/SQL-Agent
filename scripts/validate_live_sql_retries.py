@@ -13,12 +13,12 @@ import argparse
 import urllib.request
 
 from validate_live_sql_agent import database, RecordingModel
-from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from contractsql.planner import OllamaPlannerModel
-import contractsql.data_agent as implementation
+from sql_agent.data_agent import SQLAgentPlanner, SQLAgentSession, DataAgentLoop, DataContract
+from sql_agent.planner import OllamaPlannerModel
+import sql_agent.data_agent as implementation
 
 
-class DriftSession(ContractSQLSession):
+class DriftSession(SQLAgentSession):
     def __init__(self, db, contract, migrations, frozen=False):
         super().__init__(db, contract)
         self.migrations = migrations
@@ -113,7 +113,7 @@ def main():
             db = database(case)
             session = DriftSession(db, DataContract(**case["contract"]), case["migrations"], frozen)
             try:
-                outcome = DataAgentLoop(attempts).run(case["goal"], ContractSQLPlanner(PairedModel()), session)
+                outcome = DataAgentLoop(attempts).run(case["goal"], SQLAgentPlanner(PairedModel()), session)
             finally:
                 db.close()
             if label == "feedback_3":

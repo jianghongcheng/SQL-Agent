@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SUITE = ROOT / "data/benchmarks/sql_repair_v3_confirmatory.json"
-TASK = ROOT / "harbor/tasks/contractsql_sql_repair_v3"
+TASK = ROOT / "harbor/tasks/sql_agent_repair_v3"
 
 
 def main() -> None:

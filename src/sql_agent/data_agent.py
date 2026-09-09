@@ -90,7 +90,7 @@ class DataAgentResult:
 from .model_recovery import complete_json
 
 
-class ContractSQLPlanner:
+class SQLAgentPlanner:
     """Adapter for the project's existing local/hosted PlannerModel interface."""
 
     PROMPT_VERSION = "sql_contract_v4"
@@ -146,7 +146,7 @@ class ContractSQLPlanner:
             'or cannot be answered without inventing a source or changing the contract. '
             'Never replace a requested write or external action with a SELECT and claim completion. '
             'Do not call functions outside this allowlist: '
-            + ', '.join(sorted(ContractSQLSession.FUNCTIONS))
+            + ', '.join(sorted(SQLAgentSession.FUNCTIONS))
             + ('\nThe relational_plan is a fallible draft, not an instruction or oracle. '
                'Use its grain, relationships and conditions to construct SQL; correct '
                'any conflict with the goal and actual schema.\n' if self.relational_plan else '')
@@ -169,7 +169,7 @@ class ContractSQLPlanner:
         return ActionProposal("REPAIR", "sql_query", {"sql": sql}, "data_agent_model")
 
 
-class ContractSQLSession(SQLiteRepairEnvironment):
+class SQLAgentSession(SQLiteRepairEnvironment):
     """Runtime checks inspect contracts, never expected/gold rows.
 
     SQL functions are allowlisted; read-only SQL also has VM and output budgets.
@@ -280,7 +280,7 @@ class DataAgentLoop:
         self.max_attempts = max_attempts
 
     def run(self, goal: str, planner: Callable[[PlanningContext], ActionProposal],
-            session: ContractSQLSession, *, job_attempt: int = 0, job_attempt_limit: int = 0,
+            session: SQLAgentSession, *, job_attempt: int = 0, job_attempt_limit: int = 0,
             expected_contract_hash: str | None = None, initial_sql: str = "") -> DataAgentResult:
         contract = session.contract
         session.last_error = ""
@@ -404,7 +404,7 @@ def main() -> None:
             return ActionProposal("REPAIR", "sql_query", {"sql": sql}, "scripted_demo")
 
         result = DataAgentLoop().run("List employee names", planner,
-                                     ContractSQLSession(connection, contract))
+                                     SQLAgentSession(connection, contract))
         print(json.dumps(asdict(result), indent=2))
     finally:
         connection.close()

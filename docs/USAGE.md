@@ -5,8 +5,8 @@
 With Python 3.10+, Ollama running locally, and `qwen3:14b` installed:
 
 ```bash
-git clone https://github.com/jianghongcheng/contractsql.git
-cd contractsql
+git clone https://github.com/jianghongcheng/SQL-Agent.git
+cd SQL-Agent
 pip install -e '.[dev]'
 PYTHONPATH=src:. python scripts/local_demo.py start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
 ```
@@ -203,7 +203,7 @@ Create an application-owned JSON file, e.g. `tasks.json`:
 ```
 
 Database paths resolve relative to this JSON file. The database must already
-exist. Set `CONTRACTSQL_SQL_TASKS=/absolute/path/tasks.json` in API and worker.
+exist. Set `SQL_AGENT_SQL_TASKS=/absolute/path/tasks.json` in API and worker.
 Configure a real planner endpoint for custom tasks. The default scripted planner
 is intentionally limited to the synthetic employee-name demonstration.
 
@@ -228,8 +228,8 @@ Use the dashboard to submit a task, inspect its SQL and record approval or rejec
 API-key clients remain supported; never publish real keys.
 
 For direct stdio MCP, configure the same registered tasks and model environment
-as the API and worker, then run `contractsql-mcp`.
-See [MCP implementation](../src/contractsql/mcp_server.py) for tool schemas.
+as the API and worker, then run `sql-agent-mcp`.
+See [MCP implementation](../src/sql_agent/mcp_server.py) for tool schemas.
 The stdio process must be able to access its configured job store.
 
 The browser exchanges a configured access key for an in-memory session.
@@ -243,14 +243,16 @@ The launcher writes generated databases, job state and logs under
 The benchmark link opens a local report when one has been generated; otherwise
 it opens the public [evaluation documentation](EVALUATION.md).
 
-## Upgrading from 0.5
+## Upgrading from ContractSQL
 
-Version 0.6 uses the `contractsql` Python package, `contractsql*` commands, and
-`CONTRACTSQL_*` environment variables. Replace earlier package imports and
+Version 0.7 is named SQL-Agent. It uses the `sql_agent` Python package,
+`sql-agent`, `sql-agent-mcp`, and `sql-agent-worker` commands, and
+`SQL_AGENT_*` environment variables. Replace `contractsql` imports and
+`CONTRACTSQL_*` configuration from 0.6, or earlier package imports and
 environment names in your launcher configuration. Create a fresh virtual
 environment when upgrading to avoid stale entry points from editable installs.
 The package and command names are now independent of other applications.
-The optional Compose stack also uses `contractsql` database and role names.
+The optional Compose stack also uses `sql_agent` database and role names.
 Existing PostgreSQL volumes retain their original roles and databases; update
 the connection configuration or migrate them explicitly before upgrading.
 

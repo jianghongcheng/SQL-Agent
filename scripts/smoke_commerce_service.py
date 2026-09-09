@@ -24,14 +24,14 @@ def main():
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     env = os.environ.copy()
-    for key in ('CONTRACTSQL_DATABASE_URL',):
+    for key in ('SQL_AGENT_DATABASE_URL',):
         env.pop(key, None)
     token = secrets.token_hex(24)
-    env.update(CONTRACTSQL_SQL_TASKS=str(args.tasks.resolve()),
-        CONTRACTSQL_JOB_DB=str((args.output / 'jobs.sqlite').resolve()),
-        CONTRACTSQL_API_KEYS=json.dumps({token: {'name': 'smoke', 'role': 'operator'}}),
-        CONTRACTSQL_PLANNER_PROVIDER='ollama', CONTRACTSQL_PLANNER_BASE_URL='http://127.0.0.1:11434',
-        CONTRACTSQL_PLANNER_MODEL='qwen3:8b')
+    env.update(SQL_AGENT_SQL_TASKS=str(args.tasks.resolve()),
+        SQL_AGENT_JOB_DB=str((args.output / 'jobs.sqlite').resolve()),
+        SQL_AGENT_API_KEYS=json.dumps({token: {'name': 'smoke', 'role': 'operator'}}),
+        SQL_AGENT_PLANNER_PROVIDER='ollama', SQL_AGENT_PLANNER_BASE_URL='http://127.0.0.1:11434',
+        SQL_AGENT_PLANNER_MODEL='qwen3:8b')
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
@@ -50,7 +50,7 @@ def main():
     try:
         with (args.output / 'service.log').open('w') as log:
             processes.append(subprocess.Popen([sys.executable, '-m', 'uvicorn',
-                'contractsql.api:create_app', '--factory', '--host', '127.0.0.1',
+                'sql_agent.api:create_app', '--factory', '--host', '127.0.0.1',
                 '--port', str(port)], env=env, stdout=log, stderr=log))
             deadline = time.monotonic() + 20
             while True:
@@ -80,7 +80,7 @@ def main():
                 except urllib.error.HTTPError as exc:
                     assert exc.code == 422
             # Submission before worker start checks durable queuing.
-            processes.append(subprocess.Popen([sys.executable, '-m', 'contractsql.worker'],
+            processes.append(subprocess.Popen([sys.executable, '-m', 'sql_agent.worker'],
                 env=env, stdout=log, stderr=log))
             deadline = time.monotonic() + 120
             while True:

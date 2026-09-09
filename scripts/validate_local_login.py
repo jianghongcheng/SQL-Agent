@@ -34,9 +34,9 @@ def main():
                 assert 'local-presenter' in page.locator('#identity').inner_text()
                 assert context.request.get('http://127.0.0.1:8765/v1/tasks').status == 200
                 cookies = context.cookies()
-                cookie = next(c for c in cookies if c['name'] == 'contractsql_session')
+                cookie = next(c for c in cookies if c['name'] == 'sql_agent_session')
                 assert cookie['httpOnly'] and cookie['sameSite'] == 'Strict'
-                assert 'contractsql_session' not in page.evaluate('document.cookie')
+                assert 'sql_agent_session' not in page.evaluate('document.cookie')
                 report['checks'].append('Demo login creates an authenticated HttpOnly session')
                 page.reload()
                 page.wait_for_function("document.querySelectorAll('#task option').length===8")
@@ -48,7 +48,7 @@ def main():
                 page.click('#logout')
                 page.wait_for_function("document.querySelector('#workspace').hidden")
                 assert context.request.get('http://127.0.0.1:8765/v1/tasks').status == 401
-                replay_response = context.request.get('http://127.0.0.1:8765/v1/tasks', headers={'cookie':'contractsql_session='+cookie['value']})
+                replay_response = context.request.get('http://127.0.0.1:8765/v1/tasks', headers={'cookie':'sql_agent_session='+cookie['value']})
                 assert replay_response.status == 401
                 report['checks'].append('Sign out revokes the old session on the server')
                 page.reload()

@@ -32,13 +32,13 @@ def main():
     args.output.mkdir(parents=True, exist_ok=False)
     token = secrets.token_hex(24)
     env = os.environ.copy()
-    for key in ('CONTRACTSQL_DATABASE_URL',):
+    for key in ('SQL_AGENT_DATABASE_URL',):
         env.pop(key, None)
-    env.update(CONTRACTSQL_SQL_TASKS=str((args.data / 'tasks.json').resolve()),
-        CONTRACTSQL_JOB_DB=str((args.output / 'jobs.sqlite').resolve()),
-        CONTRACTSQL_API_KEYS=json.dumps({token: {'name': 'load-check', 'role': 'operator'}}),
-        CONTRACTSQL_PLANNER_PROVIDER='ollama', CONTRACTSQL_PLANNER_MODEL='qwen3:8b',
-        CONTRACTSQL_PLANNER_BASE_URL='http://127.0.0.1:11434', CONTRACTSQL_PLANNER_TIMEOUT_SECONDS='30')
+    env.update(SQL_AGENT_SQL_TASKS=str((args.data / 'tasks.json').resolve()),
+        SQL_AGENT_JOB_DB=str((args.output / 'jobs.sqlite').resolve()),
+        SQL_AGENT_API_KEYS=json.dumps({token: {'name': 'load-check', 'role': 'operator'}}),
+        SQL_AGENT_PLANNER_PROVIDER='ollama', SQL_AGENT_PLANNER_MODEL='qwen3:8b',
+        SQL_AGENT_PLANNER_BASE_URL='http://127.0.0.1:11434', SQL_AGENT_PLANNER_TIMEOUT_SECONDS='30')
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0)); port = sock.getsockname()[1]
     base = f'http://127.0.0.1:{port}'
@@ -52,7 +52,7 @@ def main():
     try:
         with (args.output / 'service.log').open('w') as log:
             processes.append(subprocess.Popen([sys.executable, '-m', 'uvicorn',
-                'contractsql.api:create_app', '--factory', '--host', '127.0.0.1', '--port', str(port)],
+                'sql_agent.api:create_app', '--factory', '--host', '127.0.0.1', '--port', str(port)],
                 env=env, stdout=log, stderr=log))
             deadline = time.monotonic() + 20
             while True:
@@ -63,7 +63,7 @@ def main():
                         raise RuntimeError('API startup failed')
                     time.sleep(.2)
             for _ in range(2):
-                processes.append(subprocess.Popen([sys.executable, '-m', 'contractsql.worker'],
+                processes.append(subprocess.Popen([sys.executable, '-m', 'sql_agent.worker'],
                     env=env, stdout=log, stderr=log))
             started = time.perf_counter()
             def run(index):

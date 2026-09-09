@@ -1,8 +1,8 @@
 """A concurrent writer must not change the data between collection and repair."""
 import sqlite3
 import pytest
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.data_agent import ContractSQLSession, DataContract
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.data_agent import SQLAgentSession, DataContract
 
 
 def test_general_sql_session_keeps_collection_snapshot(tmp_path):
@@ -13,7 +13,7 @@ def test_general_sql_session_keeps_collection_snapshot(tmp_path):
         writer.execute('INSERT INTO readings VALUES (1)');writer.commit()
         reader=sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)
         try:
-            session=ContractSQLSession(reader,DataContract(('value',)))
+            session=SQLAgentSession(reader,DataContract(('value',)))
             session.collect()
             with pytest.raises(sqlite3.OperationalError):
                 session.execute(ActionProposal('REPAIR','sql_query',{'sql':'SELECT missing FROM readings'}))

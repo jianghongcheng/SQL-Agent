@@ -11,9 +11,9 @@ import random
 import shutil
 import sqlite3
 
-from contractsql.agent_evaluation import compare_output
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.data_agent import ContractSQLSession
+from sql_agent.agent_evaluation import compare_output
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.data_agent import SQLAgentSession
 from scripts import transfer_sql_cases as billing
 from scripts.render_model_comparison import ROOT, load_run
 
@@ -53,7 +53,7 @@ def score(case,sql,path,data):
     if not sql:return {'correct':False,'error':'no accepted original candidate','executed':False}
     with closing(sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)) as connection:
         try:
-            session=ContractSQLSession(connection,case.task(path).contract)
+            session=SQLAgentSession(connection,case.task(path).contract)
             action=ActionProposal('REPAIR','sql_query',{'sql':sql})
             allowed,reason=session.authorize(action)
             if not allowed:return {'correct':False,'error':reason,'executed':False}
@@ -74,7 +74,7 @@ def main():
         inputs[name]=[r for r in rows if r['domain']=='billing']
         assert len(inputs[name])==48
         for p in (ROOT/'outputs/validation'/name).glob('episode_*.json'):episode_hashes[str(p.relative_to(ROOT))]=digest(p)
-    sources=list((ROOT/'src/contractsql').glob('*.py'))+[Path(__file__),Path(billing.__file__)]
+    sources=list((ROOT/'src/sql_agent').glob('*.py'))+[Path(__file__),Path(billing.__file__)]
     hashes={str(p.resolve().relative_to(ROOT)):digest(p) for p in sources}
     for p in sources:
         target=args.output/'source_snapshot'/p.resolve().relative_to(ROOT)

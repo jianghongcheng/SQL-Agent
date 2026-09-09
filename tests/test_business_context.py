@@ -2,12 +2,12 @@ from dataclasses import replace
 from datetime import datetime,timezone
 import sqlite3
 import pytest
-from contractsql.business_context import MetricDefinition,QualityCheck,retrieve_definitions,check_source_health
-from contractsql.data_agent import ContractSQLSession,DataContract
-from contractsql.sql_config import SQLTask,SQLTaskRegistry
-from contractsql.jobs import SqliteJobRepository
-from contractsql.pipeline import JobPipeline
-from contractsql.bounded_runtime import ActionProposal
+from sql_agent.business_context import MetricDefinition,QualityCheck,retrieve_definitions,check_source_health
+from sql_agent.data_agent import SQLAgentSession,DataContract
+from sql_agent.sql_config import SQLTask,SQLTaskRegistry
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.pipeline import JobPipeline
+from sql_agent.bounded_runtime import ActionProposal
 
 D=MetricDefinition('net_revenue',('net revenue',),'Subtract recorded refunds from paid order amounts.','commerce-policy','1')
 
@@ -26,7 +26,7 @@ def test_policy_validation_and_hash_pinning():
 
 
 def test_missing_invalid_and_stale_data_fail_closed():
- db=sqlite3.connect(':memory:');session=ContractSQLSession(db,DataContract(('x',)))
+ db=sqlite3.connect(':memory:');session=SQLAgentSession(db,DataContract(('x',)))
  try:
   checks=(QualityCheck('stale',"SELECT '2020-01-01T00:00:00Z'",'freshness',24,'blocking','Daily ingestion'),
    QualityCheck('missing','SELECT missing FROM absent','violation_count',0,'blocking','Required source'),
@@ -42,7 +42,7 @@ def test_quality_sql_remains_read_only_and_bounded():
  db=sqlite3.connect(':memory:');db.executescript('CREATE TABLE x(n); INSERT INTO x VALUES(1);')
  try:
   checks=(QualityCheck('write','DELETE FROM x','violation_count',0,'blocking','Do not allow writes'),)
-  assert check_source_health(ContractSQLSession(db,DataContract(('x',))),checks)['blocked']
+  assert check_source_health(SQLAgentSession(db,DataContract(('x',))),checks)['blocked']
   assert db.execute('SELECT count(*) FROM x').fetchone()[0]==1
  finally:db.close()
 
@@ -68,9 +68,9 @@ def test_pipeline_definition_evidence_and_blocking_preflight(tmp_path):
 
 def test_api_worker_review_has_context_and_audit(tmp_path):
  from fastapi.testclient import TestClient
- from contractsql.api import create_app
- from contractsql.security import ApiKeyAuthorizer,Principal
- from contractsql.worker import Worker
+ from sql_agent.api import create_app
+ from sql_agent.security import ApiKeyAuthorizer,Principal
+ from sql_agent.worker import Worker
  repo=SqliteJobRepository(tmp_path/'jobs.sqlite')
  task=SQLTask('names','List names',DataContract(('name',)),definitions=(replace(D,required=True),))
  registry=SQLTaskRegistry((task,));auth=ApiKeyAuthorizer({'admin':Principal('reviewer','admin'),'viewer':Principal('viewer','viewer')})

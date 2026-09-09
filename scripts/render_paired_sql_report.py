@@ -111,12 +111,12 @@ def make_report(directory):
     markdown += ['', '## Interpretation limits', ''] + ['- '+n for n in notes]
     blocks.append('<section><h2>Evidence boundaries</h2><ul>'+''.join('<li>'+escape(n)+'</li>' for n in notes)+'</ul></section>')
     html = ('''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ContractSQL | Benchmark evidence</title><style>
+<title>SQL-Agent | Benchmark evidence</title><style>
 body{font:15px system-ui;max-width:1120px;margin:36px auto;padding:0 20px;color:#183441;background:#f2f6f8}
 h1{font-size:30px}h2{font-size:20px}p,li{line-height:1.6}section{background:white;padding:24px;border:1px solid #d7e1e7;border-radius:12px;margin:20px 0}
 .note{color:#536873}.warning{border-left:4px solid #b46c21;padding:12px;background:#fff4df}.bar{display:flex;height:18px;border-radius:4px;overflow:hidden;background:#dce4e8;margin:6px 0 18px}.correct{background:#147c82}.wrong{background:#c44940}.held{background:#dce4e8}
 .barlabel{font-weight:600}table{border-collapse:collapse;width:100%;margin-top:22px;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid #dbe4e8}.scroll{overflow:auto}details{padding:12px 0;border-bottom:1px solid #e0e8ec}summary{cursor:pointer;font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}a{color:#12636e}
-</style><h1>ContractSQL · Benchmark evidence</h1>'''+f'<p>{len(rows)} episodes · {families} question families · {pairs} question/database pairs · {repeats} full trials</p>'+
+</style><h1>SQL-Agent · Benchmark evidence</h1>'''+f'<p>{len(rows)} episodes · {families} question families · {pairs} question/database pairs · {repeats} full trials</p>'+
         '<p class="warning">Synthetic evaluation. Correct retained candidates are not automatically published results. No production accuracy or SLO claim.</p>'+
         '<p class="note">Teal: correct retained · Red: wrong retained · Gray: held or stopped</p>'+''.join(blocks)+'</html>')
     (directory/'report.md').write_text('\n'.join(markdown)+'\n')

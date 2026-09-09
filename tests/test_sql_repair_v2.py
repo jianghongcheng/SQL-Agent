@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime
-from contractsql.sql_environment import SQLiteRepairEnvironment, case_database, expected_output
+from sql_agent.bounded_runtime import ActionProposal, BoundedAgentRuntime
+from sql_agent.sql_environment import SQLiteRepairEnvironment, case_database, expected_output
 from scripts.evaluate_sql_harness_ablation import evaluate_layer
 
 

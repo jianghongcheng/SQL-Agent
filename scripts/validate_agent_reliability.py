@@ -14,14 +14,14 @@ import time
 import urllib.error
 import urllib.request
 
-from contractsql.agent_evaluation import compare_output, public_task_audit, summarize
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.data_agent import ContractSQLPlanner, DataContract
-from contractsql.jobs import SqliteJobRepository
-from contractsql.pipeline import JobPipeline
-from contractsql.planner import OllamaPlannerModel
-from contractsql.semantic_review import IndependentSQLPlanner
-from contractsql.sql_config import SQLTask, SQLTaskRegistry
+from sql_agent.agent_evaluation import compare_output, public_task_audit, summarize
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.data_agent import SQLAgentPlanner, DataContract
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.pipeline import JobPipeline
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.semantic_review import IndependentSQLPlanner
+from sql_agent.sql_config import SQLTask, SQLTaskRegistry
 from scripts.validate_live_sql_agent import cases, RecordingModel
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -62,7 +62,7 @@ def run_episode(case, profile, trial, model):
             question = f"Return all {case['contract']['columns'][0]} values from {case['domain']} in ascending id order."
         primary = FaultModel(model, 'timeout' if profile == 'primary_timeout' else None)
         check = FaultModel(model, {'checker_partial':'partial_json', 'checker_429':'429'}.get(profile))
-        planner = ContractSQLPlanner(primary)
+        planner = SQLAgentPlanner(primary)
         injected = []
         def plan(context):
             if profile == 'wrong_sql' and context.attempt == 1:
@@ -119,8 +119,8 @@ def main():
     plans += [(c,'wrong_sql') for c in suite if c['kind']=='wrong_filter']
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags',timeout=5) as response:
         models=json.load(response)['models']
-    sources=[Path(__file__), ROOT/'src/contractsql/agent_evaluation.py',
-             ROOT/'scripts/validate_live_sql_agent.py']+list((ROOT/'src/contractsql').glob('*.py'))
+    sources=[Path(__file__), ROOT/'src/sql_agent/agent_evaluation.py',
+             ROOT/'scripts/validate_live_sql_agent.py']+list((ROOT/'src/sql_agent').glob('*.py'))
     manifest={'started_at':datetime.now(timezone.utc).isoformat(),
         'source_sha256':{str(p.relative_to(ROOT)):sha(p) for p in sources},
         'model':[m for m in models if m['name']=='qwen3:8b'],

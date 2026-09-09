@@ -1,6 +1,6 @@
 # Contributing
 
-ContractSQL is a SQL Data Agent prototype. Keep changes focused on registered
+SQL-Agent is a SQL Data Agent prototype. Keep changes focused on registered
 read-only tasks, explicit contracts, evidence, evaluation and reliable execution.
 
 - Keep offline evaluation answers out of planner prompts and general-query validation.

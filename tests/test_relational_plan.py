@@ -3,8 +3,8 @@ import sqlite3
 
 import pytest
 
-from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from contractsql.relational_plan import FIELDS
+from sql_agent.data_agent import SQLAgentPlanner, SQLAgentSession, DataAgentLoop, DataContract
+from sql_agent.relational_plan import FIELDS
 
 
 class Model:
@@ -22,8 +22,8 @@ def run(model, contract):
     with sqlite3.connect(':memory:') as db:
         db.executescript('CREATE TABLE items(id INTEGER); INSERT INTO items VALUES(1),(2);')
         return DataAgentLoop().run('List item IDs in ascending order',
-                                  ContractSQLPlanner(model, relational_plan=True),
-                                  ContractSQLSession(db, contract))
+                                  SQLAgentPlanner(model, relational_plan=True),
+                                  SQLAgentSession(db, contract))
 
 
 def test_plan_is_traced_and_oracle_not_sent_to_either_call():

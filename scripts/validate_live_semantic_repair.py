@@ -7,10 +7,10 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.data_agent import ContractSQLPlanner, DataAgentLoop, DataContract
-from contractsql.planner import OllamaPlannerModel
-from contractsql.semantic_review import IndependentSQLPlanner, SemanticSQLSession
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.data_agent import SQLAgentPlanner, DataAgentLoop, DataContract
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.semantic_review import IndependentSQLPlanner, SemanticSQLSession
 try:
     from scripts.validate_live_sql_agent import cases, database, RecordingModel
 except ModuleNotFoundError:
@@ -31,7 +31,7 @@ def main():
     for case in suite:
         repair = RecordingModel(OllamaPlannerModel('http://127.0.0.1:11434', 'qwen3:8b', timeout=30))
         checker = RecordingModel(OllamaPlannerModel('http://127.0.0.1:11434', 'qwen3:8b', timeout=30))
-        planner = ContractSQLPlanner(repair)
+        planner = SQLAgentPlanner(repair)
         def injected(ctx):
             if ctx.attempt == 1:
                 return ActionProposal('REPAIR', 'sql_query', {'sql': case['initial_sql']}, 'injected_semantic_fault')

@@ -23,7 +23,7 @@ import time
 import urllib.error
 import urllib.request
 
-from contractsql.data_agent import DataContract
+from sql_agent.data_agent import DataContract
 from scripts.commerce_acceptance_cases import QUESTIONS,COLUMNS,DEMO_QUESTIONS,fixture,create_database,oracle
 ROOT=Path(__file__).resolve().parents[1]
 KEY='acceptance-local-only'
@@ -105,12 +105,12 @@ class Harness:
                     except OSError:pass
         self.proxy=ThreadingHTTPServer(('127.0.0.1',0),Proxy)
         threading.Thread(target=self.proxy.serve_forever,daemon=True).start()
-        self.env={**os.environ,'PYTHONPATH':str(ROOT/'src')+':'+str(ROOT),'CONTRACTSQL_JOB_DB':str(out/'jobs.sqlite'),
-                  'CONTRACTSQL_SQL_TASKS':str(out/'tasks.json'),'CONTRACTSQL_PLANNER_PROVIDER':'ollama',
-                  'CONTRACTSQL_PLANNER_BASE_URL':'http://127.0.0.1:'+str(self.proxy.server_port),'CONTRACTSQL_PLANNER_MODEL':MODEL,
-                  'CONTRACTSQL_SQL_GENERATION_FORMAT':'sql','CONTRACTSQL_PLANNER_THINKING':'true','CONTRACTSQL_PLANNER_MAX_TOKENS':'8192',
-                  'CONTRACTSQL_PLANNER_TIMEOUT_SECONDS':'120','CONTRACTSQL_API_KEYS':json.dumps({KEY:{'name':'acceptance','role':'admin'}})}
-        for key in ('CONTRACTSQL_DATABASE_URL','CONTRACTSQL_LOCAL_DEMO'):self.env.pop(key,None)
+        self.env={**os.environ,'PYTHONPATH':str(ROOT/'src')+':'+str(ROOT),'SQL_AGENT_JOB_DB':str(out/'jobs.sqlite'),
+                  'SQL_AGENT_SQL_TASKS':str(out/'tasks.json'),'SQL_AGENT_PLANNER_PROVIDER':'ollama',
+                  'SQL_AGENT_PLANNER_BASE_URL':'http://127.0.0.1:'+str(self.proxy.server_port),'SQL_AGENT_PLANNER_MODEL':MODEL,
+                  'SQL_AGENT_SQL_GENERATION_FORMAT':'sql','SQL_AGENT_PLANNER_THINKING':'true','SQL_AGENT_PLANNER_MAX_TOKENS':'8192',
+                  'SQL_AGENT_PLANNER_TIMEOUT_SECONDS':'120','SQL_AGENT_API_KEYS':json.dumps({KEY:{'name':'acceptance','role':'admin'}})}
+        for key in ('SQL_AGENT_DATABASE_URL','SQL_AGENT_LOCAL_DEMO'):self.env.pop(key,None)
         self.sampler=threading.Thread(target=self.sample_resources,daemon=True);self.sampler.start()
 
     def sample_resources(self):
@@ -130,9 +130,9 @@ class Harness:
             self.resources.append(row);self.stopped.wait(1)
 
     def start(self,name,timeout=120):
-        if name=='api':cmd=[sys.executable,'-m','uvicorn','contractsql.api:create_app','--factory','--host','127.0.0.1','--port',self.base.rsplit(':',1)[1]]
-        else:cmd=[sys.executable,'-c','from contractsql.worker import Worker; from contractsql.backends import job_repository_from_env; from contractsql.pipeline import JobPipeline; Worker(job_repository_from_env(),JobPipeline(),lease_seconds=3).run_forever(0.05)']
-        env={**self.env,'CONTRACTSQL_PLANNER_TIMEOUT_SECONDS':str(timeout)}
+        if name=='api':cmd=[sys.executable,'-m','uvicorn','sql_agent.api:create_app','--factory','--host','127.0.0.1','--port',self.base.rsplit(':',1)[1]]
+        else:cmd=[sys.executable,'-c','from sql_agent.worker import Worker; from sql_agent.backends import job_repository_from_env; from sql_agent.pipeline import JobPipeline; Worker(job_repository_from_env(),JobPipeline(),lease_seconds=3).run_forever(0.05)']
+        env={**self.env,'SQL_AGENT_PLANNER_TIMEOUT_SECONDS':str(timeout)}
         with (self.out/(name+'.log')).open('ab') as log:self.procs[name]=subprocess.Popen(cmd,cwd=ROOT,env=env,stdout=log,stderr=log,start_new_session=True)
         if name=='api':
             end=time.monotonic()+10

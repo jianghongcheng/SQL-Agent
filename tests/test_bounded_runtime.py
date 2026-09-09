@@ -1,5 +1,5 @@
-from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime
-from contractsql.sql_environment import (
+from sql_agent.bounded_runtime import ActionProposal, BoundedAgentRuntime
+from sql_agent.sql_environment import (
     SQLiteRepairEnvironment,
     case_database,
     demo_database,

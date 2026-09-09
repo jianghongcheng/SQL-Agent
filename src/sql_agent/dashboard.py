@@ -1,12 +1,12 @@
 def render_dashboard() -> str:
     import os
-    page = '''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ContractSQL | Analysis & Review</title>
+    page = '''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SQL-Agent | Analysis & Review</title>
 <style>
 :root{font:15px system-ui;color:#152f3e;background:#f1f5f7}body{max-width:1200px;margin:2rem auto;padding:0 1rem}h1{margin-bottom:.3rem}h2{font-size:1.1rem}p{line-height:1.5}.grid{display:grid;grid-template-columns:320px 1fr;gap:1.3rem}.card{background:white;border:1px solid #dbe4e9;border-radius:12px;padding:1.2rem;margin:1rem 0}label{display:block;margin:.8rem 0 .3rem}input,select,textarea,button{font:inherit;padding:.65rem;box-sizing:border-box;width:100%;border:1px solid #c5d3db;border-radius:6px}button{cursor:pointer;margin-top:.7rem;background:#155766;color:white}button:disabled{opacity:.5;cursor:default}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:400px;overflow:auto;font-size:.85rem}table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #e5ecef;padding:.5rem;vertical-align:top;overflow-wrap:anywhere}.muted{color:#617680}.actions{display:flex;gap:.6rem}.alert{border-left:4px solid #c27822;padding:.7rem;background:#fff7e8}.scroll{overflow:auto}@media(max-width:800px){.grid{display:block}}
 [hidden]{display:none!important}#login-panel{max-width:480px}#session-panel{display:flex;align-items:center;justify-content:space-between;gap:1rem}#logout{width:auto;margin:0}
 #feedback{position:sticky;top:8px;z-index:2;border:1px solid #b8d5dc;padding:.8rem;background:#eef8fb;border-radius:8px}#feedback[data-error="true"]{background:#fff0ef;border-color:#c25d53}button[aria-busy="true"]{cursor:wait}
 #definitions th:first-child{width:18%}#definitions th:last-child{width:21%}#health th:first-child{width:22%}
-</style><h1>ContractSQL</h1><p class="muted">Business definitions, source health, and reviewable SQL analysis.</p>
+</style><h1>SQL-Agent</h1><p class="muted">Business definitions, source health, and reviewable SQL analysis.</p>
 <p id="feedback" role="status" aria-live="polite">Sign in to begin.</p>
 <section id="login-panel" class="card"><h2>Sign in</h2><p>Use your configured access key to sign in to this workspace.</p><label>Access key<input id="key" type="password" autocomplete="off" placeholder="Enter your access key"></label><button id="login">Sign in</button><div id="demo-access"></div></section>
 <section id="session-panel" class="card" hidden><span id="identity"></span><button id="logout">Sign out</button></section><noscript>This application requires JavaScript. Enable it and reload this page.</noscript><div id="workspace" hidden><div class="grid"><aside><div class="card"><h2>Analysis request</h2>
@@ -150,9 +150,9 @@ for(const decision of ['approve','reject'])el(decision).onclick=act(decision==='
 restoreSession();
 </script></html>'''
 
-    if os.environ.get('CONTRACTSQL_LOCAL_DEMO') == '1':
+    if os.environ.get('SQL_AGENT_LOCAL_DEMO') == '1':
         page = page.replace('<div class="grid">', '<p><a href="/benchmark">Evaluation: results, methods and runtime costs</a></p><div class="grid">')
         page = page.replace('<div id="demo-access"></div>', '<div id="demo-access"><p class="muted">Local demo: sign in below without registering. This access is for the local demonstration only.</p><button id="demo-login">Enter local demo</button></div>')
-        page = page.replace('<h1>ContractSQL</h1>', '<h1>ContractSQL · Local demo</h1><p class="alert">Synthetic commerce data · local-only demo credentials · real Ollama inference.</p>')
+        page = page.replace('<h1>SQL-Agent</h1>', '<h1>SQL-Agent · Local demo</h1><p class="alert">Synthetic commerce data · local-only demo credentials · real Ollama inference.</p>')
         page = page.replace('</script>', "el('demo-login').onclick=act('Signing in to local demo',async()=>{el('key').value='123';await loginWithKey();});</script>")
     return page

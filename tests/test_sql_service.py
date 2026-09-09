@@ -4,13 +4,13 @@ import sqlite3
 import pytest
 from fastapi.testclient import TestClient
 
-from contractsql.api import create_app
-from contractsql.jobs import SqliteJobRepository
-from contractsql.pipeline import JobPipeline
-from contractsql.security import ApiKeyAuthorizer, Principal
-from contractsql.sql_config import DemoSQLPlanner, SQLTaskRegistry
-from contractsql.worker import Worker
-from contractsql import mcp_server
+from sql_agent.api import create_app
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.pipeline import JobPipeline
+from sql_agent.security import ApiKeyAuthorizer, Principal
+from sql_agent.sql_config import DemoSQLPlanner, SQLTaskRegistry
+from sql_agent.worker import Worker
+from sql_agent import mcp_server
 
 
 @pytest.fixture
@@ -30,14 +30,14 @@ def headers(key="write", ident="request-1"):
 
 
 def test_benchmark_report_only_available_in_local_demo(service, tmp_path, monkeypatch):
-    import contractsql.api as api
+    import sql_agent.api as api
     client, _, _ = service
     path = tmp_path/'report.html'
     path.write_text('<h1>Synthetic evaluation evidence</h1>')
     monkeypatch.setattr(api, 'LOCAL_BENCHMARK_REPORT', path)
-    monkeypatch.delenv('CONTRACTSQL_LOCAL_DEMO', raising=False)
+    monkeypatch.delenv('SQL_AGENT_LOCAL_DEMO', raising=False)
     assert client.get('/benchmark').status_code == 404
-    monkeypatch.setenv('CONTRACTSQL_LOCAL_DEMO', '1')
+    monkeypatch.setenv('SQL_AGENT_LOCAL_DEMO', '1')
     response = client.get('/benchmark')
     assert response.status_code == 200 and 'Synthetic evaluation evidence' in response.text
     assert 'href="/benchmark"' in client.get('/').text
@@ -113,7 +113,7 @@ def test_registered_database_opens_read_only(tmp_path, monkeypatch):
         c.execute("CREATE TABLE items(name TEXT)")
     config = tmp_path / "tasks.json"
     config.write_text(json.dumps([{"task_id": "items", "question": "List items", "database": "source.db", "contract": {"columns": ["name"]}}]))
-    monkeypatch.setenv("CONTRACTSQL_SQL_TASKS", str(config))
+    monkeypatch.setenv("SQL_AGENT_SQL_TASKS", str(config))
     registry = SQLTaskRegistry.from_env()
     class Job:
         payload = {"task_id": "items"}
@@ -152,12 +152,12 @@ def test_browser_login_session_refresh_and_logout(service):
     assert signed_in.json() == {'name': 'admin', 'role': 'admin'}
     cookie = signed_in.headers['set-cookie']
     assert 'HttpOnly' in cookie and 'SameSite=strict' in cookie
-    token = client.cookies.get('contractsql_session')
+    token = client.cookies.get('sql_agent_session')
     assert client.get('/v1/auth/session').json()['role'] == 'admin'
     assert client.get('/v1/tasks').status_code == 200
     assert client.post('/v1/auth/logout').status_code == 200
     assert client.get('/v1/tasks').status_code == 401
-    client.cookies.set('contractsql_session', token)
+    client.cookies.set('sql_agent_session', token)
     assert client.get('/v1/tasks').status_code == 401
 
 

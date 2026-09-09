@@ -45,25 +45,25 @@ class HttpMetrics:
 
     def render(self, job_counts: dict[str, int]) -> str:
         lines = [
-            "# HELP contractsql_http_requests_total HTTP requests by method, normalized path, and status.",
-            "# TYPE contractsql_http_requests_total counter",
+            "# HELP sql_agent_http_requests_total HTTP requests by method, normalized path, and status.",
+            "# TYPE sql_agent_http_requests_total counter",
         ]
         with self._lock:
             for key, count in sorted(self._requests.items()):
                 labels = self._labels(key)
-                lines.append(f"contractsql_http_requests_total{{{labels}}} {count}")
+                lines.append(f"sql_agent_http_requests_total{{{labels}}} {count}")
             lines += [
-                "# HELP contractsql_http_request_duration_seconds HTTP request latency.",
-                "# TYPE contractsql_http_request_duration_seconds histogram",
+                "# HELP sql_agent_http_request_duration_seconds HTTP request latency.",
+                "# TYPE sql_agent_http_request_duration_seconds histogram",
             ]
             for key, values in sorted(self._durations.items()):
                 labels = self._labels(key)
                 for bucket, count in zip(self.BUCKETS, values['buckets']):
-                    lines.append(f'contractsql_http_request_duration_seconds_bucket{{{labels},le="{bucket}"}} {count}')
-                lines.append(f'contractsql_http_request_duration_seconds_bucket{{{labels},le="+Inf"}} {values["count"]}')
-                lines.append(f"contractsql_http_request_duration_seconds_sum{{{labels}}} {values['sum']}")
-                lines.append(f"contractsql_http_request_duration_seconds_count{{{labels}}} {values['count']}")
-        lines += ["# HELP contractsql_jobs Jobs by current status.", "# TYPE contractsql_jobs gauge"]
+                    lines.append(f'sql_agent_http_request_duration_seconds_bucket{{{labels},le="{bucket}"}} {count}')
+                lines.append(f'sql_agent_http_request_duration_seconds_bucket{{{labels},le="+Inf"}} {values["count"]}')
+                lines.append(f"sql_agent_http_request_duration_seconds_sum{{{labels}}} {values['sum']}")
+                lines.append(f"sql_agent_http_request_duration_seconds_count{{{labels}}} {values['count']}")
+        lines += ["# HELP sql_agent_jobs Jobs by current status.", "# TYPE sql_agent_jobs gauge"]
         for status, count in sorted(job_counts.items()):
-            lines.append(f'contractsql_jobs{{status="{status}"}} {count}')
+            lines.append(f'sql_agent_jobs{{status="{status}"}} {count}')
         return "\n".join(lines) + "\n"

@@ -1,6 +1,6 @@
 import pytest
-from contractsql.native_sql import extract_sql, NativeSQLPlanner
-from contractsql.data_agent import DataContract, SQLPlanningEvidence, PlanningContext
+from sql_agent.native_sql import extract_sql, NativeSQLPlanner
+from sql_agent.data_agent import DataContract, SQLPlanningEvidence, PlanningContext
 
 
 @pytest.mark.parametrize('raw', ['SELECT 1', 'Explanation\n```sql\nSELECT 1\n```', '```\nSELECT 1\n```'])

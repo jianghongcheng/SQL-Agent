@@ -1,11 +1,11 @@
-# ContractSQL
+# SQL-Agent
 
 **A tool-using SQL agent for business data analysis, with read-only execution, bounded repair, and human review.**
 
-[![CI](https://github.com/jianghongcheng/contractsql/actions/workflows/ci.yml/badge.svg)](https://github.com/jianghongcheng/contractsql/actions/workflows/ci.yml)
+[![CI](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Ask about revenue, orders, or customer activity. ContractSQL uses a local LLM to
+Ask about revenue, orders, or customer activity. SQL-Agent uses a local LLM to
 generate SQL against registered SQLite sources, executes it within explicit
 limits, and returns the result alongside the query and execution history.
 Failed attempts feed a bounded repair loop; general-analysis results go to review.
@@ -14,7 +14,7 @@ Failed attempts feed a bounded repair loop; general-analysis results go to revie
 
 ## Demo
 
-![ContractSQL dashboard with a synthetic commerce query](docs/assets/dashboard.png)
+![SQL-Agent dashboard with a synthetic commerce query](docs/assets/dashboard.png)
 
 The dashboard supports scalar answers, order lists, and grouped summaries.
 The screenshot shows synthetic commerce data; the walkthrough includes six
@@ -65,8 +65,8 @@ Requires Python 3.10+, a running local Ollama service, and enough memory for
 `qwen3:14b`. Install Ollama separately, then:
 
 ```bash
-git clone https://github.com/jianghongcheng/contractsql.git
-cd contractsql
+git clone https://github.com/jianghongcheng/SQL-Agent.git
+cd SQL-Agent
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'

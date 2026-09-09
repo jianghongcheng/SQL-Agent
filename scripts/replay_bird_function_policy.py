@@ -4,8 +4,8 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 import sqlite3
-from contractsql.bounded_runtime import ActionProposal,BoundedAgentRuntime
-from contractsql.data_agent import DataContract,ContractSQLSession
+from sql_agent.bounded_runtime import ActionProposal,BoundedAgentRuntime
+from sql_agent.data_agent import DataContract,SQLAgentSession
 from scripts.validate_bird_external import BenchmarkSession,file_hash,reference_rows,score
 
 
@@ -16,9 +16,9 @@ def main():
  assert file_hash(data/'sqlite.jsonl')==manifest['question_file_sha256']
  for item in manifest['source']['files']:assert file_hash(databases/item['path'])==item['sha256']
  args.output.mkdir(parents=True,exist_ok=False)
- source=Path('src/contractsql/data_agent.py')
+ source=Path('src/sql_agent/data_agent.py')
  protocol={'n':500,'design':'Replay final frozen proposals through modified read-only executor. No new generation or semantic screening; baseline reference errors stay unknown.',
-  'function_allowlist':sorted(ContractSQLSession.FUNCTIONS),'source_sha256':file_hash(source),'runner_sha256':file_hash(Path(__file__)),
+  'function_allowlist':sorted(SQLAgentSession.FUNCTIONS),'source_sha256':file_hash(source),'runner_sha256':file_hash(Path(__file__)),
   'baseline_manifest_sha256':file_hash(baseline/'manifest.json'),'baseline_records_sha256':{str(i):file_hash(baseline/f'{i}.json') for i in manifest['question_ids']}}
  (args.output/'manifest.json').write_text(json.dumps(protocol,indent=2))
  rows=[]

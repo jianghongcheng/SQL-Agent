@@ -40,12 +40,12 @@ def request_probes(model, context, events):
 
 
 def execute_probes(connection, queries):
-    from .data_agent import ContractSQLSession, DataContract
+    from .data_agent import SQLAgentSession, DataContract
     if len(queries) > MAX_PROBES:
         raise ValueError('probe budget exceeded')
     # Separate session bookkeeping, same connection and snapshot. Never verify
     # against the application's business query or mark a probe as final output.
-    session = ContractSQLSession(connection, DataContract(('probe',), max_rows=MAX_ROWS))
+    session = SQLAgentSession(connection, DataContract(('probe',), max_rows=MAX_ROWS))
     results = []
     for sql in queries:
         item = {'sql': sql, 'status': 'error'}

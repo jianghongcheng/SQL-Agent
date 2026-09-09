@@ -12,7 +12,7 @@ from harbor.models.agent.context import AgentContext
 from .harbor_export import frozen_sql_submission
 
 
-class ContractSQLFrozenPlannerAgent(BaseAgent):
+class SQLAgentFrozenPlannerAgent(BaseAgent):
     """Replay the frozen Qwen3-8B proposals through a Harbor task.
 
     This agent deliberately performs no new model inference. It allows the exact
@@ -22,7 +22,7 @@ class ContractSQLFrozenPlannerAgent(BaseAgent):
 
     @staticmethod
     def name() -> str:
-        return "contractsql-frozen-planner"
+        return "sql_agent-frozen-planner"
 
     def version(self) -> str:
         return "0.1.0"
@@ -59,12 +59,12 @@ class ContractSQLFrozenPlannerAgent(BaseAgent):
         }
 
 
-class ContractSQLV3FrozenPlannerAgent(BaseAgent):
+class SQLAgentV3FrozenPlannerAgent(BaseAgent):
     """Replay the preregistered v3 Qwen3-8B proposals in Harbor."""
 
     @staticmethod
     def name() -> str:
-        return "contractsql-v3-frozen-planner"
+        return "sql_agent-v3-frozen-planner"
 
     def version(self) -> str:
         return "0.1.0"

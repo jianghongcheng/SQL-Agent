@@ -6,14 +6,14 @@ import json
 from pathlib import Path
 import sqlite3
 
-from contractsql.business_context import MetricDefinition,QualityCheck
-from contractsql.data_agent import DataContract,ContractSQLPlanner
-from contractsql.planner import OllamaPlannerModel
-from contractsql.sql_config import SQLTask,SQLTaskRegistry
-from contractsql.pipeline import JobPipeline
-from contractsql.jobs import SqliteJobRepository
-from contractsql.worker import Worker
-from contractsql.execution_record import digest
+from sql_agent.business_context import MetricDefinition,QualityCheck
+from sql_agent.data_agent import DataContract,SQLAgentPlanner
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.sql_config import SQLTask,SQLTaskRegistry
+from sql_agent.pipeline import JobPipeline
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.worker import Worker
+from sql_agent.execution_record import digest
 from scripts.validate_live_sql_agent import RecordingModel
 
 
@@ -34,7 +34,7 @@ def main():
   (args.output/(scenario+'_tasks.json')).write_text(json.dumps(config,indent=2))
   model=RecordingModel(OllamaPlannerModel('http://127.0.0.1:11434','qwen3:8b'))
   repo=SqliteJobRepository(args.output/(scenario+'_jobs.sqlite'));job,_=repo.submit('sql_analysis',{'task_id':task.task_id,'_business_context_sha256':task.context_sha256},scenario)
-  worker=Worker(repo,JobPipeline(SQLTaskRegistry((task,)),ContractSQLPlanner(model)));worker.run_once();result=repo.get(job.job_id).to_dict();r=result['result'] or {}
+  worker=Worker(repo,JobPipeline(SQLTaskRegistry((task,)),SQLAgentPlanner(model)));worker.run_once();result=repo.get(job.job_id).to_dict();r=result['result'] or {}
   candidate=r.get('candidate_output');expected_healthy=scenario.startswith('healthy')
   correct=candidate is not None and candidate['rows']==[[170.0]]
   success=(correct and r.get('routing',{}).get('decision')=='KEEP') if expected_healthy else r.get('source_health',{}).get('blocked') is True and len(model.calls)==0

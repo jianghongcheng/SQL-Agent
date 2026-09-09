@@ -26,7 +26,7 @@ def make_task(metric, path, *, task_id=None, verified=True):
         'Net revenue is gross revenue minus approved refunds. Count each order once; '
         'an order with no approved refunds contributes its full amount. Multiple refund rows '
         'must not multiply order amounts. An empty sum is zero.',
-        'ContractSQL local commerce policy', '1', True)
+        'SQL-Agent local commerce policy', '1', True)
     checks = (
         QualityCheck('valid_order_amounts', 'SELECT COUNT(*) FROM orders WHERE amount_cents IS NULL OR amount_cents < 0 OR typeof(amount_cents) != \'integer\'', 'violation_count',0,'blocking','Local policy requires nonnegative integer-cent order amounts.'),
         QualityCheck('valid_refunds', "SELECT COUNT(*) FROM refunds WHERE amount_cents IS NULL OR amount_cents < 0 OR typeof(amount_cents) != 'integer' OR status IS NULL OR status NOT IN ('approved','pending')",'violation_count',0,'blocking','Local policy requires valid cents and an explicit refund status.'),

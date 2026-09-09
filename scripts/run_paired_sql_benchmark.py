@@ -14,16 +14,16 @@ import time
 import urllib.error
 import urllib.request
 
-from contractsql.agent_evaluation import compare_output
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession
-from contractsql.jobs import SqliteJobRepository
-from contractsql.paired_benchmark import CASES, SCHEMAS, create_database, expected, fixture
-from contractsql.pipeline import JobPipeline
-from contractsql.planner import OllamaPlannerModel
-from contractsql.native_sql import NativeSQLPlanner
-from contractsql.semantic_review import IndependentSQLPlanner
-from contractsql.sql_config import SQLTaskRegistry
+from sql_agent.agent_evaluation import compare_output
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.data_agent import SQLAgentPlanner, SQLAgentSession
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.paired_benchmark import CASES, SCHEMAS, create_database, expected, fixture
+from sql_agent.pipeline import JobPipeline
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.native_sql import NativeSQLPlanner
+from sql_agent.semantic_review import IndependentSQLPlanner
+from sql_agent.sql_config import SQLTaskRegistry
 
 ROOT = Path(__file__).resolve().parents[1]
 METHODS = ('one_shot', 'execution_retry', 'checked_agent')
@@ -79,7 +79,7 @@ def score_sql(case, sql, databases, data):
         import sqlite3
         connection = sqlite3.connect(databases[variant].as_uri() + '?mode=ro', uri=True)
         try:
-            session = ContractSQLSession(connection, case.task(databases[variant]).contract)
+            session = SQLAgentSession(connection, case.task(databases[variant]).contract)
             proposal = ActionProposal('REPAIR', 'sql_query', {'sql': sql})
             allowed, reason = session.authorize(proposal)
             if not allowed:
@@ -96,7 +96,7 @@ def score_sql(case, sql, databases, data):
 
 def run_episode(case, variant, method, profile, trial, fault, databases, data, delegate):
     state = {'calls': [], 'denied': 0, 'fault': fault if profile == 'transient' else None}
-    primary = ContractSQLPlanner(ObservedModel(delegate, state, 'primary'),
+    primary = SQLAgentPlanner(ObservedModel(delegate, state, 'primary'),
                                  relational_plan=method == 'plan_then_sql', data_probe=method == 'probe_then_sql')
     if method in ('native_sql', 'native_sql_guided', 'native_sql_repair'):
         primary = NativeSQLPlanner(ObservedModel(delegate, state, 'primary'),
@@ -240,7 +240,7 @@ def main():
         create_database = lambda path, domain, data: billing.create_database(path, data)
         extra_sources = [Path(billing.__file__).resolve()]
     args.output.mkdir(parents=True, exist_ok=False)
-    sources = list((ROOT/'src/contractsql').glob('*.py')) + [Path(__file__).resolve()] + extra_sources
+    sources = list((ROOT/'src/sql_agent').glob('*.py')) + [Path(__file__).resolve()] + extra_sources
     hashes = {str(p.relative_to(ROOT)): sha_bytes(p.read_bytes()) for p in sources}
     snapshot = args.output/'source_snapshot'
     for path in sources:

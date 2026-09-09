@@ -1,9 +1,9 @@
 import sqlite3
 import pytest
 from dataclasses import asdict
-from contractsql.data_agent import DataContract, ContractSQLSession
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.execution_record import ContractSnapshot
+from sql_agent.data_agent import DataContract, SQLAgentSession
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.execution_record import ContractSnapshot
 
 
 def test_fixed_contract_hash_remains_compatible():
@@ -15,7 +15,7 @@ def test_fixed_contract_hash_remains_compatible():
 def test_dynamic_contract_supports_scalar_list_and_grouped_outputs():
     conn=sqlite3.connect(':memory:')
     conn.executescript("CREATE TABLE orders(id INTEGER, amount INTEGER, month TEXT); INSERT INTO orders VALUES(1,10,'2026-01'),(2,20,'2026-01'),(3,30,'2026-02');")
-    session=ContractSQLSession(conn,DataContract((),dynamic_columns=True,max_rows=20))
+    session=SQLAgentSession(conn,DataContract((),dynamic_columns=True,max_rows=20))
     try:
         for sql,columns,rows in [
             ('SELECT SUM(amount) AS total FROM orders',('total',),((60,),)),
@@ -36,7 +36,7 @@ def test_dynamic_contract_cannot_enable_business_release_or_unbounded_columns():
     with pytest.raises(ValueError):DataContract((),dynamic_columns=True,verification_sql='SELECT 1')
     with pytest.raises(ValueError):DataContract(())
     conn=sqlite3.connect(':memory:')
-    session=ContractSQLSession(conn,DataContract((),dynamic_columns=True,max_rows=2))
+    session=SQLAgentSession(conn,DataContract((),dynamic_columns=True,max_rows=2))
     p=ActionProposal('REPAIR','sql_query',{'sql':'SELECT 1'})
     assert not session.verify(p,{'columns':tuple('c'+str(i) for i in range(51)),'rows':()})[0]
     assert not session.verify(p,{'columns':('x',),'rows':((1,),(2,),(3,))})[0]

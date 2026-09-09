@@ -2,21 +2,21 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: contractsql
-      POSTGRES_USER: contractsql
-      POSTGRES_PASSWORD: ${CONTRACTSQL_DB_PASSWORD:-local-demo-password}
+      POSTGRES_DB: sql_agent
+      POSTGRES_USER: sql_agent
+      POSTGRES_PASSWORD: ${SQL_AGENT_DB_PASSWORD:-local-demo-password}
     volumes:
       - sql-jobs:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U contractsql -d contractsql"]
+      test: ["CMD-SHELL", "pg_isready -U sql_agent -d sql_agent"]
       interval: 3s
       timeout: 3s
       retries: 20
   api:
     build: .
     environment:
-      CONTRACTSQL_DATABASE_URL: postgresql://contractsql:${CONTRACTSQL_DB_PASSWORD:-local-demo-password}@postgres:5432/contractsql
-      CONTRACTSQL_API_KEYS: '${CONTRACTSQL_API_KEYS:-{"viewer-local":{"name":"viewer","role":"viewer"},"operator-local":{"name":"operator","role":"operator"},"admin-local":{"name":"admin","role":"admin"}}}'
+      SQL_AGENT_DATABASE_URL: postgresql://sql_agent:${SQL_AGENT_DB_PASSWORD:-local-demo-password}@postgres:5432/sql_agent
+      SQL_AGENT_API_KEYS: '${SQL_AGENT_API_KEYS:-{"viewer-local":{"name":"viewer","role":"viewer"},"operator-local":{"name":"operator","role":"operator"},"admin-local":{"name":"admin","role":"admin"}}}'
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -24,13 +24,13 @@ services:
         condition: service_healthy
   worker:
     build: .
-    command: ["contractsql-worker", "--poll-seconds", "0.25"]
+    command: ["sql-agent-worker", "--poll-seconds", "0.25"]
     environment:
-      CONTRACTSQL_DATABASE_URL: postgresql://contractsql:${CONTRACTSQL_DB_PASSWORD:-local-demo-password}@postgres:5432/contractsql
-      CONTRACTSQL_PLANNER_BASE_URL: ${CONTRACTSQL_PLANNER_BASE_URL:-}
-      CONTRACTSQL_PLANNER_MODEL: ${CONTRACTSQL_PLANNER_MODEL:-}
-      CONTRACTSQL_PLANNER_PROVIDER: ${CONTRACTSQL_PLANNER_PROVIDER:-ollama}
-      CONTRACTSQL_PLANNER_API_KEY: ${CONTRACTSQL_PLANNER_API_KEY:-}
+      SQL_AGENT_DATABASE_URL: postgresql://sql_agent:${SQL_AGENT_DB_PASSWORD:-local-demo-password}@postgres:5432/sql_agent
+      SQL_AGENT_PLANNER_BASE_URL: ${SQL_AGENT_PLANNER_BASE_URL:-}
+      SQL_AGENT_PLANNER_MODEL: ${SQL_AGENT_PLANNER_MODEL:-}
+      SQL_AGENT_PLANNER_PROVIDER: ${SQL_AGENT_PLANNER_PROVIDER:-ollama}
+      SQL_AGENT_PLANNER_API_KEY: ${SQL_AGENT_PLANNER_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:

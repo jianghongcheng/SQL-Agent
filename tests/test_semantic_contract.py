@@ -1,7 +1,7 @@
 import sqlite3
 import pytest
-from contractsql.data_agent import DataContract, ContractSQLSession, DataAgentLoop
-from contractsql.bounded_runtime import ActionProposal
+from sql_agent.data_agent import DataContract, SQLAgentSession, DataAgentLoop
+from sql_agent.bounded_runtime import ActionProposal
 
 
 def test_wrong_business_answer_cannot_be_accepted():
@@ -9,7 +9,7 @@ def test_wrong_business_answer_cannot_be_accepted():
     db.executescript('CREATE TABLE orders(id INTEGER, amount INTEGER); INSERT INTO orders VALUES(1,100),(2,200);')
     contract=DataContract(('total',), verification_sql='SELECT SUM(amount) AS total FROM orders')
     try:
-        result=DataAgentLoop().run('total', lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'SELECT COUNT(*) AS total FROM orders'}), ContractSQLSession(db,contract))
+        result=DataAgentLoop().run('total', lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'SELECT COUNT(*) AS total FROM orders'}), SQLAgentSession(db,contract))
         assert result.decision == 'STOP'
         assert result.output is None
     finally:
@@ -26,7 +26,7 @@ def test_semantic_feedback_repairs_on_current_data():
             assert ctx.evidence.previous_error == 'business_result_mismatch'
         return ActionProposal('REPAIR','sql_query',{'sql':'SELECT COUNT(*) AS total FROM orders' if ctx.attempt==1 else 'SELECT SUM(amount) AS total FROM orders'})
     try:
-        result=DataAgentLoop().run('total',planner,ContractSQLSession(db,contract))
+        result=DataAgentLoop().run('total',planner,SQLAgentSession(db,contract))
         assert result.decision=='KEEP'
         assert result.output['rows']==((18,),)
         assert result.reason=='business_contract_verified'
@@ -40,7 +40,7 @@ def test_bad_or_oversized_verifier_fails_closed(check):
     db.executescript('CREATE TABLE orders(amount INTEGER); INSERT INTO orders VALUES(7),(11);')
     try:
         contract=DataContract(('total',),max_rows=2,verification_sql=check)
-        r=DataAgentLoop().run('total',lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'SELECT 18 AS total FROM orders LIMIT 1'}),ContractSQLSession(db,contract))
+        r=DataAgentLoop().run('total',lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'SELECT 18 AS total FROM orders LIMIT 1'}),SQLAgentSession(db,contract))
         assert r.decision=='STOP' and r.output is None
         assert db.execute('SELECT COUNT(*) FROM orders').fetchone()[0]==2
     finally:
@@ -48,7 +48,7 @@ def test_bad_or_oversized_verifier_fails_closed(check):
 
 
 def test_verifier_sql_not_sent_to_model_and_changes_hash():
-    from contractsql.data_agent import ContractSQLPlanner
+    from sql_agent.data_agent import SQLAgentPlanner
     class Model:
         def complete(self,prompt):
             assert 'SUM(amount)' not in prompt
@@ -59,13 +59,13 @@ def test_verifier_sql_not_sent_to_model_and_changes_hash():
     b=DataContract(('total',),verification_sql='SELECT COUNT(*) AS total FROM orders')
     assert a.snapshot().sha256 != b.snapshot().sha256
     try:
-        DataAgentLoop().run('total',ContractSQLPlanner(Model()),ContractSQLSession(db,a))
+        DataAgentLoop().run('total',SQLAgentPlanner(Model()),SQLAgentSession(db,a))
     finally:
         db.close()
 
 
 def test_question_cannot_escape_business_contract():
-    from contractsql.sql_config import SQLTask
+    from sql_agent.sql_config import SQLTask
     task=SQLTask('revenue','January revenue',DataContract(('total',),verification_sql='SELECT 1 AS total'))
     task.validate_question(None)
     task.validate_question('January revenue')
@@ -79,7 +79,7 @@ def test_verification_uses_same_read_snapshot(tmp_path):
     reader.execute('PRAGMA journal_mode=WAL')
     reader.executescript('CREATE TABLE orders(amount INTEGER); INSERT INTO orders VALUES(7),(11);')
     writer=sqlite3.connect(p)
-    session=ContractSQLSession(reader,DataContract(('total',),verification_sql='SELECT SUM(amount) AS total FROM orders'))
+    session=SQLAgentSession(reader,DataContract(('total',),verification_sql='SELECT SUM(amount) AS total FROM orders'))
     proposal=ActionProposal('REPAIR','sql_query',{'sql':'SELECT SUM(amount) AS total FROM orders'})
     try:
         output=session.execute(proposal)
@@ -102,7 +102,7 @@ def test_saved_wrong_customer_and_date_queries_are_rejected():
         sql=queries[name]
         db=sqlite3.connect(':memory:'); db.executescript(case['setup_sql'])
         try:
-            r=DataAgentLoop().run(case['goal'],lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':sql}),ContractSQLSession(db,DataContract(**case['contract'],verification_sql=case['gold_sql'])))
+            r=DataAgentLoop().run(case['goal'],lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':sql}),SQLAgentSession(db,DataContract(**case['contract'],verification_sql=case['gold_sql'])))
             assert r.decision=='STOP' and r.output is None
         finally:
             db.close()
@@ -113,7 +113,7 @@ def test_explicit_catalog_fallback_is_audited_not_model_success():
     db.executescript('CREATE TABLE orders(amount INTEGER); INSERT INTO orders VALUES(7),(11);')
     try:
         c=DataContract(('total',),verification_sql='SELECT SUM(amount) AS total FROM orders',fallback_to_verified_query=True)
-        r=DataAgentLoop().run('total',lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'SELECT COUNT(*) AS total FROM orders'}),ContractSQLSession(db,c))
+        r=DataAgentLoop().run('total',lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'SELECT COUNT(*) AS total FROM orders'}),SQLAgentSession(db,c))
         assert r.reason=='registered_business_fallback_verified'
         assert r.output['rows']==((18,),)
         assert any(t['step']=='catalog_fallback' for t in r.trajectory)
@@ -125,7 +125,7 @@ def test_write_denial_never_triggers_catalog_fallback():
     db=sqlite3.connect(':memory:'); db.execute('CREATE TABLE orders(amount INTEGER)')
     try:
         c=DataContract(('total',),verification_sql='SELECT COUNT(*) AS total FROM orders',fallback_to_verified_query=True)
-        r=DataAgentLoop().run('total',lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'DELETE FROM orders'}),ContractSQLSession(db,c))
+        r=DataAgentLoop().run('total',lambda ctx: ActionProposal('REPAIR','sql_query',{'sql':'DELETE FROM orders'}),SQLAgentSession(db,c))
         assert r.decision=='STOP' and r.reason=='read_only_policy_violation'
         assert not any(t['step']=='catalog_fallback' for t in r.trajectory)
     finally:
@@ -136,8 +136,8 @@ def test_real_model_http_timeout_uses_explicit_catalog_fallback():
     import threading
     import time
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-    from contractsql.data_agent import ContractSQLPlanner
-    from contractsql.planner import OllamaPlannerModel
+    from sql_agent.data_agent import SQLAgentPlanner
+    from sql_agent.planner import OllamaPlannerModel
     class SlowHandler(BaseHTTPRequestHandler):
         def do_POST(self):
             time.sleep(.3)
@@ -149,9 +149,9 @@ def test_real_model_http_timeout_uses_explicit_catalog_fallback():
     db=sqlite3.connect(':memory:')
     db.executescript('CREATE TABLE orders(amount INTEGER); INSERT INTO orders VALUES(7),(11);')
     try:
-        planner=ContractSQLPlanner(OllamaPlannerModel(f'http://127.0.0.1:{server.server_port}','test',timeout=.05))
+        planner=SQLAgentPlanner(OllamaPlannerModel(f'http://127.0.0.1:{server.server_port}','test',timeout=.05))
         contract=DataContract(('total',),verification_sql='SELECT SUM(amount) AS total FROM orders',fallback_to_verified_query=True)
-        result=DataAgentLoop().run('total',planner,ContractSQLSession(db,contract))
+        result=DataAgentLoop().run('total',planner,SQLAgentSession(db,contract))
         assert result.reason=='registered_business_fallback_verified'
         assert result.output['rows']==((18,),)
         event=next(t for t in result.trajectory if t['step']=='catalog_fallback')

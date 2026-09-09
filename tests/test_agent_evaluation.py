@@ -1,5 +1,5 @@
 import pytest
-from contractsql.agent_evaluation import compare_output, public_task_audit, summarize
+from sql_agent.agent_evaluation import compare_output, public_task_audit, summarize
 
 
 def test_oracle_missing_is_unknown_but_empty_result_is_valid():

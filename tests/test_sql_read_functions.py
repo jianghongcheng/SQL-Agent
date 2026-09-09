@@ -1,7 +1,7 @@
 import sqlite3
 import pytest
-from contractsql.data_agent import ContractSQLSession,DataContract
-from contractsql.bounded_runtime import ActionProposal
+from sql_agent.data_agent import SQLAgentSession,DataContract
+from sql_agent.bounded_runtime import ActionProposal
 
 @pytest.mark.parametrize('sql,expected',[
  ("SELECT 'Ada' LIKE 'A%' AS value",1),
@@ -14,7 +14,7 @@ from contractsql.bounded_runtime import ActionProposal
 def test_builtin_read_functions_work_under_production_authorizer(sql,expected):
  db=sqlite3.connect(':memory:')
  try:
-  session=ContractSQLSession(db,DataContract(('value',)))
+  session=SQLAgentSession(db,DataContract(('value',)))
   p=ActionProposal('REPAIR','sql_query',{'sql':sql})
   assert session.authorize(p)[0]
   assert session.execute(p)['rows']==((expected,),)
@@ -24,6 +24,6 @@ def test_builtin_read_functions_work_under_production_authorizer(sql,expected):
 def test_external_and_unbounded_allocating_functions_remain_denied(sql):
  db=sqlite3.connect(':memory:')
  try:
-  session=ContractSQLSession(db,DataContract(('value',)))
+  session=SQLAgentSession(db,DataContract(('value',)))
   with pytest.raises(sqlite3.DatabaseError):session.execute(ActionProposal('REPAIR','sql_query',{'sql':sql}))
  finally:db.close()

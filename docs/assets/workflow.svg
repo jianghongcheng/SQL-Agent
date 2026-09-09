@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="870" viewBox="0 0 960 870" role="img" aria-labelledby="title desc">
-<title id="title">contractsql workflow</title><desc id="desc">Agent execution paths with explicit repair, stop, and review decisions.</desc>
+<title id="title">sql_agent workflow</title><desc id="desc">Agent execution paths with explicit repair, stop, and review decisions.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10Z" fill="#52677c"/></marker></defs>
 <style>text{font-family:Arial,Helvetica,sans-serif;font-size:16px;fill:#20364b} .label{font-weight:700;font-size:17px} .edge{fill:none;stroke:#52677c;stroke-width:2;marker-end:url(#arrow)} .node{fill:#f0f5fa;stroke:#9aafc3;stroke-width:1.5} .keep{fill:#eaf7f0;stroke:#70ad8e} .repair{fill:#fff5e5;stroke:#c9a45f} .stop{fill:#fcefed;stroke:#c89991}</style>
 <rect width="960" height="870" rx="12" fill="#fff"/>

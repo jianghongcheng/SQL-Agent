@@ -1,4 +1,4 @@
-# ContractSQL SQL Repair v3
+# SQL-Agent SQL Repair v3
 
 Read `/app/cases.json` and produce `/app/submission.json` containing exactly one
 proposal for each of the 108 cases. Each proposal must contain `id`, `action`

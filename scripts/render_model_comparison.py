@@ -73,7 +73,7 @@ def render_robustness():
 
 
 def render():
-    body=['<h1>ContractSQL: Model selection and transfer evaluation</h1>',
+    body=['<h1>SQL-Agent: Model selection and transfer evaluation</h1>',
           '<p>Historical SQL-text comparisons: 2048 tokens and one SQL round. Two newer Qwen3 14B profiles: 8192 tokens and up to three SQL rounds, with reasoning enabled or disabled. No additional probing or model checker. '
           'All general results still require review; these are not production accuracy claims.</p>']
     loaded={name:load_run(name) for name in RUNS}
@@ -124,7 +124,7 @@ def render():
         body.append('</details>')
     body.append(f'<p id="total">All {total} episodes. Models ran in sequential blocks, without randomized latency interleaving; model size and quantization also differ. '
                 'The original JSON baseline of 39/72 used a different protocol from the SQL-text runs here; not all changes can be attributed to the model.</p>')
-    return ('<!doctype html><html lang="en"><meta charset="utf-8"><title>ContractSQL Model Evidence</title>'
+    return ('<!doctype html><html lang="en"><meta charset="utf-8"><title>SQL-Agent Model Evidence</title>'
             '<style>body{font:16px system-ui;max-width:1100px;margin:40px auto;padding:20px;color:#183343}'
             'table{width:100%;border-collapse:collapse}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}'
             'details{margin:10px 0;padding:10px;background:#f3f6f8}summary{cursor:pointer}'

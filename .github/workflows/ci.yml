@@ -14,4 +14,4 @@ jobs:
       - run: pytest -q
       - run: python -m compileall -q src
       - run: python scripts/export_harbor_sql_suite.py
-      - run: git diff --exit-code -- harbor/tasks/contractsql_sql_repair_v1
+      - run: git diff --exit-code -- harbor/tasks/sql_agent_repair_v1

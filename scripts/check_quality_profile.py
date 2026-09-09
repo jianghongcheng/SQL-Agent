@@ -5,7 +5,7 @@ from pathlib import Path
 from scripts.quality_profile import QualityModel, OPTIONS
 from scripts import run_paired_sql_benchmark as runner
 from scripts import transfer_sql_cases as billing
-from contractsql import paired_benchmark as dev
+from sql_agent import paired_benchmark as dev
 
 
 def main():

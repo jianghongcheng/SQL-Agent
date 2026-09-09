@@ -34,7 +34,7 @@ def main():
         'scoring': 'No aggregate accuracy across these different tracks. No claim of production SLA or full BIRD leaderboard score.',
         'not_run': ['BIRD-Critic official correctness scoring', 'Spider 2.0'],
         'source_hashes': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-            for p in sorted((root / 'src/contractsql').glob('*.py'))}}
+            for p in sorted((root / 'src/sql_agent').glob('*.py'))}}
     (args.output / 'protocol.json').write_text(json.dumps(protocol, indent=2))
     report = {'protocol': 'protocol.json', 'tracks': {}}
     env = os.environ.copy()
@@ -54,7 +54,7 @@ def main():
         (args.output / 'summary.json').write_text(json.dumps(report, indent=2))
         print('END ' + name + ' exit=' + str(result.returncode), flush=True)
     current = {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
-               for p in sorted((root / 'src/contractsql').glob('*.py'))}
+               for p in sorted((root / 'src/sql_agent').glob('*.py'))}
     report['production_source_unchanged'] = current == protocol['source_hashes']
     report['completed_at'] = datetime.now(timezone.utc).isoformat()
     (args.output / 'summary.json').write_text(json.dumps(report, indent=2))

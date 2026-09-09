@@ -5,7 +5,7 @@ No model calls: these tests isolate browser state and HTTP interaction semantics
 import json
 import shutil
 import pytest
-from contractsql.dashboard import render_dashboard
+from sql_agent.dashboard import render_dashboard
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def ui(monkeypatch):
     chrome = shutil.which('google-chrome')
     if not chrome:
         pytest.skip('Chrome is required for browser interaction tests')
-    monkeypatch.delenv('CONTRACTSQL_LOCAL_DEMO', raising=False)
+    monkeypatch.delenv('SQL_AGENT_LOCAL_DEMO', raising=False)
     state = {'signed_in': True, 'posts': [], 'reads': 0, 'hold_submit': False, 'pending': [], 'task_error': False, 'reviews': [],
              'tasks': [{'task_id': 'sample', 'question': 'List names', 'contract': {'specification': {}}}],
              'job': {'job_id': 'job-1', 'status': 'queued', 'result': None}}

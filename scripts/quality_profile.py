@@ -1,5 +1,5 @@
 """Benchmark uses the same bounded thinking adapter as the local service."""
-from contractsql.planner import OllamaPlannerModel
+from sql_agent.planner import OllamaPlannerModel
 OPTIONS={'temperature':0.6,'top_p':0.95,'top_k':20,'min_p':0,'num_predict':8192,'num_ctx':16384}
 class QualityModel(OllamaPlannerModel):
     def __init__(self,model='qwen3:14b',seed=917):

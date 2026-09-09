@@ -2,8 +2,8 @@ import json
 import hashlib
 from pathlib import Path
 
-from contractsql.bounded_runtime import ActionProposal, BoundedAgentRuntime
-from contractsql.sql_environment import SQLiteRepairEnvironment, case_database, expected_output
+from sql_agent.bounded_runtime import ActionProposal, BoundedAgentRuntime
+from sql_agent.sql_environment import SQLiteRepairEnvironment, case_database, expected_output
 
 
 ROOT = Path(__file__).resolve().parents[1]

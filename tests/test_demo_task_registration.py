@@ -1,13 +1,13 @@
 import json
 from scripts import local_demo
-from contractsql.sql_config import SQLTaskRegistry
-from contractsql.business_context import retrieve_definitions
+from sql_agent.sql_config import SQLTaskRegistry
+from sql_agent.business_context import retrieve_definitions
 
 
 def test_billing_demo_uses_visible_dictionary_without_answer_verifier(tmp_path,monkeypatch):
     monkeypatch.setattr(local_demo,'RUNTIME',tmp_path)
     local_demo.prepare()
-    monkeypatch.setenv('CONTRACTSQL_SQL_TASKS',str(tmp_path/'tasks.json'))
+    monkeypatch.setenv('SQL_AGENT_SQL_TASKS',str(tmp_path/'tasks.json'))
     task=SQLTaskRegistry.from_env().get('invoice_balance')
     assert not task.contract.verification_sql and not task.contract.fallback_to_verified_query
     definitions=retrieve_definitions(task.question,task.definitions)

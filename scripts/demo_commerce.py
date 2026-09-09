@@ -5,12 +5,12 @@ import json
 from pathlib import Path
 import sqlite3
 
-from contractsql.data_agent import ContractSQLPlanner, DataContract
-from contractsql.jobs import SqliteJobRepository
-from contractsql.pipeline import JobPipeline
-from contractsql.planner import OllamaPlannerModel
-from contractsql.sql_config import SQLTask, SQLTaskRegistry
-from contractsql.worker import Worker
+from sql_agent.data_agent import SQLAgentPlanner, DataContract
+from sql_agent.jobs import SqliteJobRepository
+from sql_agent.pipeline import JobPipeline
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.sql_config import SQLTask, SQLTaskRegistry
+from sql_agent.worker import Worker
 from validate_live_sql_agent import RecordingModel
 
 
@@ -46,7 +46,7 @@ def main():
         DataContract(**t['contract']), db_path) for t in tasks))
     recorder = RecordingModel(OllamaPlannerModel(args.base_url, args.model, timeout=120))
     repository = SqliteJobRepository(args.output / 'jobs.sqlite')
-    worker = Worker(repository, JobPipeline(registry, ContractSQLPlanner(recorder)))
+    worker = Worker(repository, JobPipeline(registry, SQLAgentPlanner(recorder)))
     failed = False
     selected = {'commerce:net_revenue', 'commerce:repair_column', 'commerce:deny_write'}
     for case in suite:

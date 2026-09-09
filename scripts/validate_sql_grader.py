@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 import sqlite3
-from contractsql.agent_evaluation import compare_output
+from sql_agent.agent_evaluation import compare_output
 
 
 def main():

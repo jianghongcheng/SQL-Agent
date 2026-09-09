@@ -11,9 +11,9 @@ import statistics
 import time
 from pathlib import Path
 
-from contractsql.bounded_runtime import ActionProposal
-from contractsql.planner import OllamaPlannerModel
-from contractsql.sql_environment import (
+from sql_agent.bounded_runtime import ActionProposal
+from sql_agent.planner import OllamaPlannerModel
+from sql_agent.sql_environment import (
     MUTATING,
     SQLiteRepairEnvironment,
     case_database,

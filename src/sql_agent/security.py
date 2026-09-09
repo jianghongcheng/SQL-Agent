@@ -25,10 +25,10 @@ class ApiKeyAuthorizer:
 
     @classmethod
     def from_env(cls) -> "ApiKeyAuthorizer":
-        raw = os.environ.get("CONTRACTSQL_API_KEYS")
+        raw = os.environ.get("SQL_AGENT_API_KEYS")
         if not raw:
             raise RuntimeError(
-                "CONTRACTSQL_API_KEYS must be a JSON object mapping API keys to {name, role}"
+                "SQL_AGENT_API_KEYS must be a JSON object mapping API keys to {name, role}"
             )
         rows = json.loads(raw)
         principals = {}

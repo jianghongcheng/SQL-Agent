@@ -3,8 +3,8 @@ import sqlite3
 
 import pytest
 
-from contractsql.data_agent import ContractSQLPlanner, ContractSQLSession, DataAgentLoop, DataContract
-from contractsql.data_probe import execute_probes
+from sql_agent.data_agent import SQLAgentPlanner, SQLAgentSession, DataAgentLoop, DataContract
+from sql_agent.data_probe import execute_probes
 
 
 @pytest.fixture
@@ -46,8 +46,8 @@ def test_observation_enters_generation_but_never_reference_answer(db):
 
     model = Model()
     contract = DataContract(('total',), verification_sql='SELECT COUNT(*) AS total FROM events -- secret_reference')
-    result = DataAgentLoop().run('Count all events', ContractSQLPlanner(model, data_probe=True),
-                                 ContractSQLSession(db, contract))
+    result = DataAgentLoop().run('Count all events', SQLAgentPlanner(model, data_probe=True),
+                                 SQLAgentSession(db, contract))
     assert result.decision == 'KEEP' and len(model.prompts) == 2
     assert db.in_transaction  # snapshot remains active through final execution
     event = next(t for t in result.trajectory if t['step'] == 'data_probe')
@@ -60,7 +60,7 @@ def test_malformed_requests_stop_before_execution(db, requests):
     class Model:
         def complete(self, prompt):
             return json.dumps(requests)
-    result = DataAgentLoop().run('Count events', ContractSQLPlanner(Model(), data_probe=True),
-                                 ContractSQLSession(db, DataContract(('total',))))
+    result = DataAgentLoop().run('Count events', SQLAgentPlanner(Model(), data_probe=True),
+                                 SQLAgentSession(db, DataContract(('total',))))
     assert result.decision == 'STOP'
     assert not any(t['step'] == 'act_verify' for t in result.trajectory)

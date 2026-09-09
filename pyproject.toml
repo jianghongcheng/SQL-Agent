@@ -3,8 +3,8 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "contractsql"
-version = "0.6.0"
+name = "sql-agent"
+version = "0.7.0"
 description = "Contract-driven SQL Data Agent with bounded repair and auditable execution"
 requires-python = ">=3.10"
 dependencies = []
@@ -17,9 +17,9 @@ dev = ["pytest>=8", "fastapi>=0.115,<1", "httpx>=0.28,<1", "uvicorn>=0.30,<1"]
 harbor = ["harbor>=0.22,<1"]
 
 [project.scripts]
-contractsql = "contractsql.cli:main"
-contractsql-mcp = "contractsql.mcp_server:main"
-contractsql-worker = "contractsql.worker:main"
+sql-agent = "sql_agent.cli:main"
+sql-agent-mcp = "sql_agent.mcp_server:main"
+sql-agent-worker = "sql_agent.worker:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

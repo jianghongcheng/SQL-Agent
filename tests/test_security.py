@@ -1,4 +1,4 @@
-from contractsql.security import ApiKeyAuthorizer, Principal
+from sql_agent.security import ApiKeyAuthorizer, Principal
 
 
 def test_api_key_roles_enforce_minimum_permission():

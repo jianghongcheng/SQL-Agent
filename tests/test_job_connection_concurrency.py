@@ -10,7 +10,7 @@ def test_parallel_queue_reads_do_not_hang_opening_or_closing_connections(tmp_pat
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import sys
-from contractsql.jobs import SqliteJobRepository
+from sql_agent.jobs import SqliteJobRepository
 repo=SqliteJobRepository(Path(sys.argv[1]))
 job,_=repo.submit('sql_analysis',{'task_id':'employee_names'},'parallel-read')
 with ThreadPoolExecutor(max_workers=4) as pool:

@@ -3,13 +3,13 @@ import json
 
 import pytest
 
-from contractsql.model_recovery import complete_json
-from contractsql.planner import OllamaPlannerModel, OpenAICompatiblePlannerModel
-from contractsql.telemetry import summarize_calls
+from sql_agent.model_recovery import complete_json
+from sql_agent.planner import OllamaPlannerModel, OpenAICompatiblePlannerModel
+from sql_agent.telemetry import summarize_calls
 
 
 def test_retries_count_failed_response_tokens_without_leaking_content(monkeypatch):
-    monkeypatch.setattr('contractsql.model_recovery.time.sleep', lambda _: None)
+    monkeypatch.setattr('sql_agent.model_recovery.time.sleep', lambda _: None)
     class Model:
         model = 'test-model'
         responses = iter(['private malformed response', '{"action":"STOP"}'])
@@ -44,7 +44,7 @@ def test_missing_usage_is_unknown_not_free():
 
 
 def test_timeout_retries_are_counted_even_without_responses(monkeypatch):
-    monkeypatch.setattr('contractsql.model_recovery.time.sleep', lambda _: None)
+    monkeypatch.setattr('sql_agent.model_recovery.time.sleep', lambda _: None)
     class Model:
         def complete(self, prompt):
             raise TimeoutError('private connection details')

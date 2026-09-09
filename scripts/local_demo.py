@@ -1,4 +1,4 @@
-"""Start/stop a loopback-only ContractSQL demo using the current Python interpreter."""
+"""Start/stop a loopback-only SQL-Agent demo using the current Python interpreter."""
 import argparse
 from dataclasses import asdict, replace
 from datetime import datetime,timezone,timedelta
@@ -13,10 +13,10 @@ import sys
 import time
 import urllib.request
 
-from contractsql.commerce_catalog import make_task
-from contractsql.business_context import MetricDefinition
-from contractsql.data_agent import DataContract
-from contractsql.sql_config import SQLTask
+from sql_agent.commerce_catalog import make_task
+from sql_agent.business_context import MetricDefinition
+from sql_agent.data_agent import DataContract
+from sql_agent.sql_config import SQLTask
 
 ROOT=Path(__file__).resolve().parents[1]
 RUNTIME=ROOT/'runtime/local-demo'
@@ -89,7 +89,7 @@ def main():
         for name,pid in state.get('pids',{}).items():
             # Check ownership marker to avoid terminating a reused/unrelated PID.
             cmd=Path(f'/proc/{pid}/cmdline')
-            if cmd.exists() and b'contractsql' in cmd.read_bytes():os.kill(pid,signal.SIGTERM)
+            if cmd.exists() and b'sql_agent' in cmd.read_bytes():os.kill(pid,signal.SIGTERM)
         for _ in range(30):
             if all(not Path(f'/proc/{pid}').exists() or 'Z' in Path(f'/proc/{pid}/stat').read_text().split()[2] for pid in state.get('pids',{}).values()):break
             time.sleep(.1)
@@ -105,18 +105,18 @@ def main():
         if not any(m['name']==args.model for m in json.load(response)['models']):raise SystemExit('Requested model is not installed in Ollama.')
     prepare()
     env=os.environ.copy()
-    for key in ('CONTRACTSQL_DATABASE_URL',):env.pop(key,None)
-    env.update(PYTHONPATH=str(ROOT/'src'),CONTRACTSQL_JOB_DB=str(RUNTIME/'jobs.sqlite'),
-        CONTRACTSQL_SQL_TASKS=str(RUNTIME/'tasks.json'),CONTRACTSQL_PLANNER_PROVIDER='ollama',
-        CONTRACTSQL_PLANNER_BASE_URL='http://127.0.0.1:11434',CONTRACTSQL_PLANNER_MODEL=args.model,
-        CONTRACTSQL_SQL_GENERATION_FORMAT=args.generation_format,
-        CONTRACTSQL_PLANNER_THINKING='true' if args.thinking else 'false',
-        CONTRACTSQL_PLANNER_TIMEOUT_SECONDS='120' if args.thinking else '30',
-        CONTRACTSQL_PLANNER_MAX_TOKENS=str(max_tokens),
-        CONTRACTSQL_LOCAL_DEMO='1',CONTRACTSQL_API_KEYS=json.dumps({'123':{'name':'local-presenter','role':'admin'}}))
+    for key in ('SQL_AGENT_DATABASE_URL',):env.pop(key,None)
+    env.update(PYTHONPATH=str(ROOT/'src'),SQL_AGENT_JOB_DB=str(RUNTIME/'jobs.sqlite'),
+        SQL_AGENT_SQL_TASKS=str(RUNTIME/'tasks.json'),SQL_AGENT_PLANNER_PROVIDER='ollama',
+        SQL_AGENT_PLANNER_BASE_URL='http://127.0.0.1:11434',SQL_AGENT_PLANNER_MODEL=args.model,
+        SQL_AGENT_SQL_GENERATION_FORMAT=args.generation_format,
+        SQL_AGENT_PLANNER_THINKING='true' if args.thinking else 'false',
+        SQL_AGENT_PLANNER_TIMEOUT_SECONDS='120' if args.thinking else '30',
+        SQL_AGENT_PLANNER_MAX_TOKENS=str(max_tokens),
+        SQL_AGENT_LOCAL_DEMO='1',SQL_AGENT_API_KEYS=json.dumps({'123':{'name':'local-presenter','role':'admin'}}))
     procs={}
-    commands={'api':[sys.executable,'-m','uvicorn','contractsql.api:create_app','--factory','--host','127.0.0.1','--port',str(PORT)],
-              'worker':[sys.executable,'-m','contractsql.worker']}
+    commands={'api':[sys.executable,'-m','uvicorn','sql_agent.api:create_app','--factory','--host','127.0.0.1','--port',str(PORT)],
+              'worker':[sys.executable,'-m','sql_agent.worker']}
     try:
         for name,cmd in commands.items():
             with (RUNTIME/(name+'.log')).open('ab') as log:

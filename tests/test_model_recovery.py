@@ -1,8 +1,8 @@
 import json
 import urllib.error
 import pytest
-from contractsql.data_agent import ContractSQLPlanner, DataContract, PlanningContext, SQLPlanningEvidence
-from contractsql.semantic_review import IndependentSQLPlanner
+from sql_agent.data_agent import SQLAgentPlanner, DataContract, PlanningContext, SQLPlanningEvidence
+from sql_agent.semantic_review import IndependentSQLPlanner
 
 CTX=PlanningContext('List customer as item, ordered by id.', DataContract(('item',)),
     SQLPlanningEvidence((('orders','CREATE TABLE orders(id INTEGER, customer TEXT)'),),'hash'),1,2)
@@ -16,22 +16,22 @@ class SequenceModel:
         if isinstance(value,Exception): raise value
         return value
 
-@pytest.mark.parametrize('planner',[ContractSQLPlanner,IndependentSQLPlanner])
+@pytest.mark.parametrize('planner',[SQLAgentPlanner,IndependentSQLPlanner])
 @pytest.mark.parametrize('fault',[TimeoutError('transient'),urllib.error.HTTPError('test',429,'limited',{},None),'{"action":'])
 def test_transient_model_failure_recovers_with_same_evidence(planner,fault):
     model=SequenceModel([fault,GOOD])
     assert planner(model)(CTX).action=='REPAIR'
     assert len(model.calls)==2 and model.calls[0]==model.calls[1]
 
-@pytest.mark.parametrize('planner',[ContractSQLPlanner,IndependentSQLPlanner])
+@pytest.mark.parametrize('planner',[SQLAgentPlanner,IndependentSQLPlanner])
 def test_explicit_stop_never_retried(planner):
     model=SequenceModel(['{"action":"STOP"}',GOOD])
     assert planner(model)(CTX).action=='STOP'
     assert len(model.calls)==1
 
-@pytest.mark.parametrize('planner',[ContractSQLPlanner,IndependentSQLPlanner])
+@pytest.mark.parametrize('planner',[SQLAgentPlanner,IndependentSQLPlanner])
 def test_persistent_failure_stops_after_three_attempts(planner,monkeypatch):
-    monkeypatch.setattr('contractsql.model_recovery.time.sleep',lambda _:None)
+    monkeypatch.setattr('sql_agent.model_recovery.time.sleep',lambda _:None)
     model=SequenceModel([TimeoutError('down')]*4)
     instance=planner(model)
     with pytest.raises(TimeoutError): instance(CTX)
@@ -41,7 +41,7 @@ def test_persistent_failure_stops_after_three_attempts(planner,monkeypatch):
 @pytest.mark.parametrize('code',[400,401,403,404])
 def test_permanent_http_errors_are_not_retried(code):
     model=SequenceModel([urllib.error.HTTPError('test',code,'error',{},None),GOOD])
-    with pytest.raises(urllib.error.HTTPError): ContractSQLPlanner(model)(CTX)
+    with pytest.raises(urllib.error.HTTPError): SQLAgentPlanner(model)(CTX)
     assert len(model.calls)==1
 
 @pytest.mark.parametrize('header',['60','Wed, 21 Oct 2030 07:28:00 GMT','nan'])
@@ -53,7 +53,7 @@ def test_retry_after_outside_budget_stops(header):
 
 def test_retry_after_honored(monkeypatch):
     delays=[]
-    monkeypatch.setattr('contractsql.model_recovery.time.sleep',delays.append)
+    monkeypatch.setattr('sql_agent.model_recovery.time.sleep',delays.append)
     model=SequenceModel([urllib.error.HTTPError('test',429,'error',{'Retry-After':'1'},None),GOOD])
     assert IndependentSQLPlanner(model)(CTX).action=='REPAIR'
     assert delays==[1.0]
@@ -72,13 +72,13 @@ def test_alias_prompt_distinguishes_source_from_output():
 
 
 def test_pipeline_persists_exhaustion_and_does_not_release(tmp_path,monkeypatch):
-    from contractsql.pipeline import JobPipeline
-    from contractsql.sql_config import SQLTask,SQLTaskRegistry
-    from contractsql.jobs import SqliteJobRepository
-    monkeypatch.setattr('contractsql.model_recovery.time.sleep',lambda _:None)
+    from sql_agent.pipeline import JobPipeline
+    from sql_agent.sql_config import SQLTask,SQLTaskRegistry
+    from sql_agent.jobs import SqliteJobRepository
+    monkeypatch.setattr('sql_agent.model_recovery.time.sleep',lambda _:None)
     primary=SequenceModel(['{"action":"REPAIR","sql":"SELECT name FROM employees ORDER BY id"}']*2)
     checker=SequenceModel([TimeoutError('down')]*6)
-    planner=ContractSQLPlanner(primary)
+    planner=SQLAgentPlanner(primary)
     reviewer=IndependentSQLPlanner(checker)
     pipeline=JobPipeline(SQLTaskRegistry((SQLTask('names','List names ordered by id',DataContract(('name',))),)),planner,reviewer=reviewer)
     repo=SqliteJobRepository(tmp_path/'jobs.sqlite')
