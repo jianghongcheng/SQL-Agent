@@ -1,0 +1,105 @@
+{
+  "0.5b": {
+    "summary": {
+      "baseline": {
+        "n": 100,
+        "correct": 44,
+        "strict_json": 0,
+        "wilson95": [
+          0.34671865400968327,
+          0.537720722887437
+        ]
+      },
+      "adapter": {
+        "n": 100,
+        "correct": 51,
+        "strict_json": 100,
+        "wilson95": [
+          0.4134784047743415,
+          0.6057816990761385
+        ]
+      },
+      "fixed": 15,
+      "regressed": 8
+    },
+    "paired": {
+      "n": 100,
+      "fixed": 15,
+      "regressed": 8,
+      "accuracy_delta": 0.07,
+      "clusters": 20,
+      "cluster_bootstrap95": [
+        -0.011904761904761904,
+        0.15126050420168066
+      ],
+      "bootstrap_seed": 42,
+      "bootstrap_resamples": 10000,
+      "mcnemar_exact_p_iid": 0.21003961563110352,
+      "caution": "Cluster bootstrap resamples whole declared families. Few clusters imply weak precision; IID McNemar is only descriptive when cases are dependent."
+    },
+    "tokens": {
+      "baseline": {
+        "input_tokens": 9197,
+        "output_tokens": 3724,
+        "total_tokens": 12921
+      },
+      "adapter": {
+        "input_tokens": 9197,
+        "output_tokens": 2849,
+        "total_tokens": 12046
+      }
+    },
+    "training": {
+      "samples": 512,
+      "skipped_overlength": 0,
+      "seconds": 121.76923273899592,
+      "training_tokens": 65634,
+      "supervised_tokens": 17824,
+      "trainable_parameters": 2162688,
+      "peak_allocated_bytes": 1358075904
+    },
+    "adapter_sha256": {
+      "adapter_model.safetensors": "e218f28f2b75ffd574b612c38771851546da535b8cef912345eee7f8ae74d5e4"
+    }
+  },
+  "1.5b_historical": {
+    "summary": {
+      "baseline": {
+        "n": 100,
+        "correct": 52,
+        "strict_json": 0,
+        "wilson95": [
+          0.4231640509017654,
+          0.6153561567991945
+        ]
+      },
+      "adapter": {
+        "n": 100,
+        "correct": 59,
+        "strict_json": 100,
+        "wilson95": [
+          0.4920125056109662,
+          0.6813284290433533
+        ]
+      },
+      "fixed": 9,
+      "regressed": 2
+    },
+    "paired": {
+      "n": 100,
+      "fixed": 9,
+      "regressed": 2,
+      "accuracy_delta": 0.07,
+      "clusters": 20,
+      "cluster_bootstrap95": [
+        0.0,
+        0.14473684210526316
+      ],
+      "bootstrap_seed": 42,
+      "bootstrap_resamples": 10000,
+      "mcnemar_exact_p_iid": 0.0654296875,
+      "caution": "Cluster bootstrap resamples whole declared families. Few clusters imply weak precision; IID McNemar is only descriptive when cases are dependent."
+    }
+  },
+  "scope": "Source-labelled synthetic test; one seed; no promotion."
+}

@@ -8,6 +8,26 @@ from sql_agent.planner import OllamaPlannerModel, OpenAICompatiblePlannerModel
 from sql_agent.telemetry import summarize_calls
 
 
+def test_token_cost_includes_retries_and_keeps_unknown_counts_unknown(monkeypatch):
+    monkeypatch.setattr('sql_agent.model_recovery.time.sleep', lambda _: None)
+    class Model:
+        responses = iter(['invalid', '{"sql":"SELECT 1"}'])
+        def complete_with_metadata(self, prompt):
+            return next(self.responses), {'prompt_tokens': 20, 'completion_tokens': 5}
+    events = []
+    complete_json(Model(), 'question', events)
+    usage = summarize_calls({'planner': events}, 1)
+    assert usage['token_cost'] == {'input_tokens': 40, 'output_tokens': 10,
+                                   'total_tokens': 50, 'observed_total_tokens': 50,
+                                   'complete': True, 'unit': 'tokens'}
+    events.append({'event':'failure','attempt':1, 'prompt_tokens':None,'completion_tokens':None})
+    cost = summarize_calls({'planner': events}, 1)['token_cost']
+    assert cost['total_tokens'] is None
+    assert cost['input_tokens'] is None and cost['output_tokens'] is None
+    assert cost['observed_total_tokens'] == 50
+    assert not cost['complete']
+
+
 def test_retries_count_failed_response_tokens_without_leaking_content(monkeypatch):
     monkeypatch.setattr('sql_agent.model_recovery.time.sleep', lambda _: None)
     class Model:

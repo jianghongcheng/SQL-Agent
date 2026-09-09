@@ -1,7 +1,8 @@
 # Contributing
 
-SQL-Agent is a SQL Data Agent prototype. Keep changes focused on registered
-read-only tasks, explicit contracts, evidence, evaluation and reliable execution.
+SQL-Agent is a SQL Data Agent prototype. Keep analysis tasks read-only. Changes
+to business data must use the separate, explicitly enabled CRUD workflow with
+administrator approval, transactions and execution receipts.
 
 - Keep offline evaluation answers out of planner prompts and general-query validation.
   Fixed catalog tasks may use application-owned reference SQL declared in their

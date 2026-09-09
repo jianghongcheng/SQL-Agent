@@ -1,6 +1,5 @@
 import sqlite3
 import pytest
-from dataclasses import asdict
 from sql_agent.data_agent import DataContract, SQLAgentSession
 from sql_agent.bounded_runtime import ActionProposal
 from sql_agent.execution_record import ContractSnapshot
@@ -8,8 +7,11 @@ from sql_agent.execution_record import ContractSnapshot
 
 def test_fixed_contract_hash_remains_compatible():
     contract=DataContract(('total',))
-    old=asdict(contract);old.pop('dynamic_columns',None)
+    # Frozen legacy format, not a reconstruction from today's dataclass fields.
+    old={'columns': ('total',), 'non_null': (), 'min_rows': 0, 'max_rows': 1000,
+         'version': '1', 'verification_sql': '', 'fallback_to_verified_query': False}
     assert contract.snapshot().sha256==ContractSnapshot.capture('sql_query',old).sha256
+    assert contract.snapshot().sha256 == '8cb8fa88e7f1a685d09407e89349b6f94c17cce0ebc1f29018fa185d1c244535'
 
 
 def test_dynamic_contract_supports_scalar_list_and_grouped_outputs():

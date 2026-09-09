@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from .jobs import Job
+from .jobs import Job, clarification_reply, resume_payload, validate_finish
 
 
 class PostgresJobRepository:
@@ -41,6 +41,12 @@ class PostgresJobRepository:
                     lease_expires_at TIMESTAMPTZ
                 );
                 CREATE INDEX IF NOT EXISTS jobs_status_created ON jobs(status, created_at);
+                CREATE TABLE IF NOT EXISTS job_resumes (
+                    job_id UUID NOT NULL REFERENCES jobs(job_id),
+                    idempotency_key TEXT NOT NULL,
+                    reply JSONB NOT NULL,
+                    PRIMARY KEY(job_id, idempotency_key)
+                );
                 CREATE TABLE IF NOT EXISTS job_events (
                     event_id BIGSERIAL PRIMARY KEY,
                     job_id UUID NOT NULL REFERENCES jobs(job_id),
@@ -161,8 +167,7 @@ class PostgresJobRepository:
         from psycopg.types.json import Jsonb
         if claim.job_id != job_id:
             raise ValueError("claim does not belong to job")
-        if status not in {"completed", "needs_review"}:
-            raise ValueError("finish status must be completed or needs_review")
+        validate_finish(status, result)
         with self._connect() as connection, connection.cursor() as cursor:
             cursor.execute("""
                 UPDATE jobs SET status=%s,result=%s,error=NULL,worker_id=NULL,
@@ -172,11 +177,38 @@ class PostgresJobRepository:
             row = cursor.fetchone()
             if row is None:
                 raise RuntimeError("job is not running")
-            self._event(cursor, job_id, status, {})
+            details = {'attempt_telemetry': result['attempt_telemetry']} if 'attempt_telemetry' in result else {}
+            self._event(cursor, job_id, status, details)
+        return self._job(row)
+
+    def resume(self, job_id: str, waiting_id: str, answer: str,
+               actor: str, idempotency_key: str) -> Job:
+        from psycopg.types.json import Jsonb
+        reply = clarification_reply(waiting_id, answer, actor, idempotency_key)
+        with self._connect() as connection, connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM jobs WHERE job_id=%s FOR UPDATE", (job_id,))
+            row = cursor.fetchone()
+            if row is None:
+                raise ValueError('job not found')
+            cursor.execute("SELECT reply FROM job_resumes WHERE job_id=%s AND idempotency_key=%s",
+                           (job_id, idempotency_key))
+            previous = cursor.fetchone()
+            if previous is not None:
+                if previous['reply'] != reply:
+                    raise ValueError('idempotency key already used for a different reply')
+            else:
+                payload = resume_payload(self._job(row), reply)
+                cursor.execute("""UPDATE jobs SET status='queued',payload=%s,result=NULL,error=NULL,
+                    worker_id=NULL,lease_expires_at=NULL,updated_at=%s WHERE job_id=%s RETURNING *""",
+                    (Jsonb(payload), datetime.now(timezone.utc), job_id))
+                row = cursor.fetchone()
+                cursor.execute("INSERT INTO job_resumes(job_id,idempotency_key,reply) VALUES (%s,%s,%s)",
+                               (job_id, idempotency_key, Jsonb(reply)))
+                self._event(cursor, job_id, 'user_resumed', {'clarification_id': waiting_id, 'actor': actor})
         return self._job(row)
 
     def record_failure(self, job_id: str, code: str, message: str,
-                       retryable: bool = True, *, claim: Job) -> Job:
+                       retryable: bool = True, *, claim: Job, evidence: dict | None = None) -> Job:
         if claim.job_id != job_id:
             raise ValueError("claim does not belong to job")
         from psycopg.types.json import Jsonb
@@ -187,6 +219,8 @@ class PostgresJobRepository:
                 raise RuntimeError("job is not running")
             status = "queued" if retryable and current["attempts"] < current["max_attempts"] else "failed"
             error = {"code": code, "message": message, "retryable": retryable}
+            if evidence is not None:
+                error['evidence'] = evidence
             cursor.execute("""
                 UPDATE jobs SET status=%s,error=%s,worker_id=NULL,lease_expires_at=NULL,
                     updated_at=%s WHERE job_id=%s RETURNING *

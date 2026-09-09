@@ -21,12 +21,29 @@ class Worker:
         self.repository, self.pipeline = repository, pipeline
         self.worker_id = worker_id or f"{socket.gethostname()}-{os.getpid()}"
 
-    def _failure(self, job, code, message, retryable):
+    def _failure(self, job, code, message, retryable, evidence=None):
         try:
-            self.repository.record_failure(job.job_id, code, message, retryable=retryable, claim=job)
+            if evidence is not None:
+                evidence = self._account_usage(job, evidence)
+            self.repository.record_failure(job.job_id, code, message, retryable=retryable,
+                                           claim=job, **({'evidence': evidence} if evidence is not None else {}))
         except RuntimeError:
             # A replacement owns the job now; do not overwrite its state.
             logging.getLogger("sql_agent.worker").warning("stale_claim_discarded", extra={"job_id": job.job_id})
+
+    def _account_usage(self, job, result):
+        if 'telemetry' not in result:
+            return result
+        from .telemetry import combine_attempts
+        previous = []
+        for event in self.repository.events(job.job_id):
+            details = event['details']
+            usage = details.get('attempt_telemetry') or details.get('evidence', {}).get('attempt_telemetry')
+            if usage is not None:
+                previous.append(usage)
+        current = result['telemetry']
+        return {**result, 'attempt_telemetry': current,
+                'telemetry': combine_attempts(previous, current, expected_previous=job.attempts-1)}
 
     def run_once(self) -> bool:
         job = self.repository.claim_next(self.worker_id, lease_seconds=self.lease_seconds)
@@ -50,13 +67,13 @@ class Worker:
             outcome = self.pipeline.run(job)
             if lost.is_set():
                 raise RuntimeError('lease renewal failed; result discarded')
-            self.repository.finish(job.job_id, outcome.status, outcome.result, claim=job)
+            self.repository.finish(job.job_id, outcome.status, self._account_usage(job, outcome.result), claim=job)
             logger.info("job_finished", extra={**extra, "event_type": outcome.status})
         except (KeyError, TypeError, ValueError) as exc:
-            self._failure(job, "invalid_job", str(exc), False)
+            self._failure(job, "invalid_job", str(exc), False, getattr(exc, 'pipeline_evidence', None))
             logger.warning("job_invalid", extra={**extra, "event_type": "failed"})
         except Exception as exc:  # operational failures are retried within the job budget
-            self._failure(job, "pipeline_failure", str(exc), True)
+            self._failure(job, "pipeline_failure", str(exc), True, getattr(exc, 'pipeline_evidence', None))
             logger.exception("job_pipeline_failure", extra={**extra, "event_type": "retry_scheduled"})
         finally:
             stopped.set()

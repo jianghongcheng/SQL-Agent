@@ -1,0 +1,19 @@
+{
+  "full_suite": {
+    "passed": 383,
+    "skipped": 19,
+    "failed": 0,
+    "xml_sha256": "8bfcaf28c372d78a426dad8c9fec1c2b1a0877625ab0a25173bd5c5ac0250e9e"
+  },
+  "postgres_followup": {
+    "passed": 19,
+    "deselected": 3,
+    "failed": 0,
+    "disposable_container_removed": true,
+    "xml_sha256": "b1d5c709648afe9170aa02f9e7e4579a4951564a6d178a5622c12c0fda18dcf2"
+  },
+  "unique_collected_tests_covered": 402,
+  "compile_src_and_scripts": true,
+  "harbor_export_unchanged": true,
+  "public_metrics_recomputed": true
+}

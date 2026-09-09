@@ -22,18 +22,80 @@ class PipelineOutcome:
 
 class JobPipeline:
     """SQL collect/act/verify/decide workflow, executed by the durable worker."""
-    def __init__(self, registry=None, planner=None, max_attempts: int = 3, reviewer=None) -> None:
+    def __init__(self, registry=None, planner=None, max_attempts: int = 3, reviewer=None, mutations=None) -> None:
         self.registry = registry if registry is not None else SQLTaskRegistry.from_env()
         self.planner = planner if planner is not None else sql_planner_from_env()
         self.loop = DataAgentLoop(max_attempts)
         self.reviewer = reviewer
+        from .mutations import MutationService
+        self.mutations = mutations if mutations is not None else MutationService.from_env()
+        if self.reviewer is None:
+            from .planner import reviewer_model_from_env
+            review_model = reviewer_model_from_env()
+            if review_model is not None:
+                self.reviewer = IndependentSQLPlanner(review_model)
         if (self.reviewer is None and hasattr(self.planner, 'model')
                 and getattr(self.planner, 'supports_independent_review', True)):
             self.reviewer = IndependentSQLPlanner(self.planner.model)
 
     def run(self, job: Job) -> PipelineOutcome:
+        request_started = time.perf_counter()
+        from .database_workflow import DatabaseWorkflow
+        if job.job_type == 'sql_request' and job.payload.get('database_id'):
+            if self.mutations is None:
+                raise ValueError('database not enabled')
+            policy = self.mutations.policies.get(job.payload['database_id'])
+            if policy is None or policy.fingerprint() != job.payload.get('_database_policy_sha256'):
+                raise ValueError('database policy changed since submission')
+            from .request_planner import RequestPlanner
+            planner = RequestPlanner(self.mutations, getattr(self.planner, 'model', None),
+                                     review_enabled=self.reviewer is not False,
+                                     review_model=getattr(self.reviewer, 'model', None))
+            try:
+                state = self.mutations.workflow.request(job.job_id, job.payload['database_id'],
+                    sql=job.payload.get('sql', ''), question=job.payload.get('question', ''),
+                    submitted_by=job.payload.get('_submitted_by', ''), planner=planner,
+                    answers=job.payload.get('_clarifications', ()))
+            except Exception as exc:
+                state = getattr(exc, 'workflow_state', {})
+                exc.pipeline_evidence = {
+                    'telemetry': summarize_calls({'planner': planner.call_events},
+                        (time.perf_counter()-request_started)*1000),
+                    'retrieval': state.get('retrieval', {}),
+                    'schema_linking': state.get('schema_linking', {}),
+                    'rejected_proposals': state.get('rejected_proposals', []),
+                    'release': {'approved': False, 'reason': 'execution_failed'}}
+                raise
+            telemetry = summarize_calls({'planner': planner.call_events,
+                'checker': planner.checker_events},
+                (time.perf_counter()-request_started)*1000)
+            if state.get('clarification'):
+                return PipelineOutcome('waiting_user', {'clarification': state['clarification'],
+                                       'retrieval': state.get('retrieval', {}), 'telemetry': telemetry})
+            if state.get('proposal'):
+                result = {'operation': 'mutation', 'proposal': state['proposal'], 'sql': state['sql'],
+                          'retrieval': state.get('retrieval', {}), 'telemetry': telemetry}
+                return PipelineOutcome('needs_review', result)
+            return PipelineOutcome('needs_review', {'operation': 'query', 'output': None,
+                'candidate_output': json.loads(json.dumps(state['result'], default=str)),
+                'sql': state['sql'], 'attempts': state.get('attempt', 1),
+                'retrieval': state.get('retrieval', {}),
+                'schema_linking': state.get('schema_linking', {}),
+                'rejected_proposals': state.get('rejected_proposals', []),
+                'telemetry': telemetry,
+                'release': {'approved': False, 'reason': 'semantic_evidence_required'},
+                'semantic_review': state.get('semantic_review', {'status': 'not_run', 'proof': False}),
+                'validation_scope': 'execution_checked_candidate_requires_review'})
+        # The contracted session is one graph node: its connection/snapshot
+        # stays local to that node rather than being serialized in checkpoints.
+        graph_runtime = DatabaseWorkflow(self.mutations)
+        graph = graph_runtime.graph(None, analysis=lambda: self._run_analysis(job))
+        outcome = graph.invoke({'mode': 'analysis'})['result']
+        return PipelineOutcome(outcome['status'], outcome['result'])
+
+    def _run_analysis(self, job: Job) -> PipelineOutcome:
         started = time.perf_counter()
-        if job.job_type != "sql_analysis":
+        if job.job_type not in {"sql_analysis", "sql_request"}:
             raise ValueError("only sql_analysis jobs are supported")
         task = self.registry.get(job.payload["task_id"])
         expected_context = job.payload.get('_business_context_sha256')

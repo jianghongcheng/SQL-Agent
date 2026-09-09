@@ -1,6 +1,6 @@
 # SQL-Agent
 
-**A tool-using SQL agent for business data analysis, with read-only execution, bounded repair, and human review.**
+**A tool-using SQL agent with read-only analysis and separately approved database changes.**
 
 [![CI](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -10,7 +10,38 @@ generate SQL against registered SQLite sources, executes it within explicit
 limits, and returns the result alongside the query and execution history.
 Failed attempts feed a bounded repair loop; general-analysis results go to review.
 
+One **LangGraph workflow** serves the browser and MCP through an asynchronous
+request API. Submit a question or SQL against a configured source: SELECT reads,
+while INSERT, UPDATE, DELETE, CREATE TABLE and DROP TABLE require an impact
+preview and administrator approval. SQLite and PostgreSQL adapters enforce their
+own supported SQL profiles. MCP cannot approve changes.
+See [setup and supported SQL boundaries](docs/USAGE.md#approved-database-changes).
+
 [Quick start](#quick-start) · [Architecture](#architecture) · [Results](#evaluation) · [Usage](docs/USAGE.md)
+
+### Latest measured results — September 9, 2026
+
+**35/48 correct (72.9%) on an inspected SQL development set**, up from 21/48
+(43.8%) after explicit population and aggregation-grain planning. These are six
+known question families with eight data variants each, not blind generalization.
+
+| Metric | Before | After |
+| --- | ---: | ---: |
+| Task accuracy | 21/48 (43.8%) | **35/48 (72.9%)** |
+| Tokens per correct task, including spend on wrong/failed tasks | 6,629 | **4,250** |
+| Client p95 latency | 5.85 s | 5.91 s |
+| Verifier false accept: wrong candidates receiving agreement | 0/27 (0%) | **2/13 (15.4%)** |
+| Human review rate | 100% | 100% |
+
+Planner: **Qwen3 8B**; Verifier: **Qwen2.5-Coder 14B**; BM25 retrieval;
+local RTX 3090; two workers. No general answer was automatically released.
+The improvement fixes 15 cases and regresses one. Top-customer tie queries remain
+**0/8**; verifier agreement does not establish correctness. Token cost per correct
+task falls **35.9%**, while total workload tokens increase from 139,207 to 148,734.
+
+[Full before/after results](docs/SQL_CORRECTNESS_REPAIR.md) ·
+[Public metric evidence](docs/evidence/2026-09-09/README.md) ·
+[Remaining correctness, production and generalization gates](docs/NEXT_QUALITY_GATES.md)
 
 ## Demo
 
@@ -24,8 +55,9 @@ The screenshot shows synthetic commerce data; the walkthrough includes six
 
 ![Agent execution and review workflow](docs/assets/workflow.svg)
 
-The diagram shows the general-analysis path. SQL attempts within one job share
-a read snapshot. Passing runtime checks produces a reviewable candidate, not
+The diagram shows the contracted analysis executor, whose SQL attempts share
+a read snapshot. Direct database requests use separate bounded read connections.
+Passing runtime checks produces a reviewable candidate, not
 an automatically approved business answer.
 Retry is allowed only for repairable errors while the SQL attempt budget remains.
 
@@ -36,25 +68,92 @@ Retry is allowed only for repairable errors while the SQL attempt budget remains
 | Recover background work | Persistent jobs, idempotency keys, renewable leases, retries, and stale-worker write protection |
 | Make results inspectable | SQL, errors, model usage, routing decisions, contract hashes, and review history |
 | Support multiple clients | Browser dashboard, FastAPI, CLI, and MCP |
+| Separate query and mutation authority | LangGraph validation → preview → approval interrupt → transaction; exact proposal hashes and atomic execution receipts |
+
+The detailed diagram above expands the contracted analysis executor. The shared
+graph keeps that snapshot-preserving executor as one node alongside direct
+database planning, reading and approved mutations:
+
+```mermaid
+flowchart LR
+    U[Question or SQL] --> Q[Request API and durable queue]
+    Q --> A[Validate source and request]
+    A -->|Contracted task| X[Analyze: schema, model, bounded repair]
+    A -->|Database source| K[Retrieve source-scoped knowledge]
+    K --> SL[Authorized schema selection and context budget]
+    SL --> P[Planner: SQL or clarification]
+    P --> B{Classify SQL}
+    B -->|SELECT| C[Read-only query]
+    C -->|Eligible error, budget available| L[Rejected SQL ledger]
+    L --> P
+    B -->|Change| D[Preview impact]
+    D --> E[Persist proposal]
+    E --> F[Pause for admin approval]
+    F -->|Approve| G[Executor or optional isolated Gateway]
+    F -->|Reject| H[No database change]
+    G --> I[Commit change and receipt together]
+    X --> R[Result and contract review]
+    C -->|Executed| V[Independent SQL Verifier: advisory]
+    V --> HR[Candidate and evidence: human review]
+```
+
+General database queries never auto-complete based on execution or model
+agreement alone. SQLite natural-language requests receive an independent,
+policy-restricted checker when available; separate snapshots make this advisory,
+not proof. Explicit SQL without a question/model and PostgreSQL candidates also
+require review. Registered business-verified tasks retain automatic completion.
+
+SQL-Agent is a bounded, single-host prototype. PostgreSQL currently admits ordinary
+tables with primitive columns, not arbitrary schemas, triggers or stored logic.
+Historical accuracy results below evaluate SQLite analysis only; they do not
+measure write-task or PostgreSQL accuracy.
+
+### Retrieval-augmented SQL generation
+
+Natural-language database requests can retrieve curated business definitions,
+schema explanations and SQL examples before planning. Configurable hybrid retrieval
+combines BM25 with local sentence embeddings and reciprocal-rank fusion. Both
+branches filter by configured database and allowed tables before indexing, then supply bounded chunks with
+source, version and content hashes. Evidence is checkpointed and returned with
+the request. Explicit SQL skips retrieval; contracted tasks retain registered
+definitions and snapshot-preserving analysis.
+
+Hybrid mode uses token-aware or paragraph-bounded chunks, a model/content-addressed SQLite vector
+cache, and exact cosine search (not a distributed vector database). An optional
+local cross-encoder reranks fused candidates. BM25-only
+mode remains available. Retrieved text cannot authorize SQL or bypass approval.
+Synthetic retrieval smoke results are not SQL-answer accuracy or production evidence.
+See [knowledge configuration](docs/USAGE.md#retrieval-augmented-generation-rag).
 
 [Execution and recovery details](docs/RELIABILITY.md) · [Task registration](docs/USAGE.md#register-additional-tasks)
 
 ## Evaluation
 
-Configuration comparison on **26 development questions × 2 database instances ×
-3 trials**, scored against independently calculated answers:
+Experiments report separate denominators and do not share one accuracy number.
+Cost means input/output **tokens**, including failed calls and retries; missing
+usage is unknown, not zero.
 
-| Configuration | Correct runs | p95 latency |
-| --- | ---: | ---: |
-| Coder 14B, single SQL attempt | 102/156 (65.4%) | 2.12 s |
-| Qwen3 14B, no thinking, repair enabled | 108/156 (69.2%) | 2.23 s |
-| Qwen3 14B, thinking and repair | **142/156 (91.0%)** | 74.83 s |
+| Experiment | Measured result | Scope |
+| --- | --- | --- |
+| SQL planning repair | **21/48 → 35/48**; 15 fixes, 1 regression | Inspected development set; see headline metrics above |
+| Retrieval-only BM25 → hybrid → reranking | Hit@1 **68.75% → 87.50% → 93.75%** | 16 synthetic retrieval queries; not SQL accuracy |
+| Original end-to-end RAG comparison | BM25 **21/48**, hybrid **19/48**, reranked **19/48** | Pre-repair prompt; better retrieval did not improve SQL correctness |
+| New 0.5B QLoRA training | **44/100 → 51/100**; 15 fixes, 8 regressions | Same source-labelled test set; adapter not promoted |
+| Historical 1.5B QLoRA | **52/100 → 59/100**; 9 fixes, 2 regressions | Saved-run replay; not newly trained in this run |
+| Local service load | **100/100** scripted jobs; p95 **0.698 s** | Concurrency 8; excludes LLM inference, not a production SLO |
 
-The selected configuration trades latency for correctness, motivating asynchronous
-delivery. It still produced 13 incorrect candidates and one stop. These are
-repeated development runs, not 156 independent questions; model and execution
-settings differ between rows. See [protocols, failures, external BIRD results,
-and reproduction](docs/EVALUATION.md).
+[Local engineering acceptance](docs/STRONG_SIGNAL_RESULTS.md) ·
+[QLoRA comparison and failure analysis](docs/SMALL_MODEL_COMPARISON.md) ·
+[Protocols and reproduction](docs/EVALUATION.md)
+
+**New holdout status:** runtime frozen; 60 new-domain tasks, 24 tie-ranking
+challenges and 24 shared-error-risk cases are prepared. No completed, verified
+holdout report is included in this release, so no blind accuracy is claimed.
+
+The historical **91.0% (142/156)** result uses a different Qwen3 14B thinking
+configuration and repeated development questions, with p95 **74.83 s**. It is
+not the accuracy or latency of the current 8B/14B pipeline.
+See [the historical protocol](docs/EVALUATION.md#qwen3-14b-configuration-comparison).
 
 Recovery tests exercise worker termination, lease expiry, duplicate submission,
 and stale-result rejection. They test service behavior separately from model accuracy.

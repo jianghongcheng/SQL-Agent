@@ -1,0 +1,5335 @@
+[
+  {
+    "case_id": "commerce_0:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 6.147226192988455,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5750.48,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2703.704,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1477,
+          "completion_tokens_observed": 89,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 190.931,
+          "prompt_eval_ms_observed": 309.435,
+          "generation_ms_observed": 2052.392,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2944.914,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1264,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 172.927,
+          "prompt_eval_ms_observed": 412.284,
+          "generation_ms_observed": 2199.435,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2741,
+      "completion_tokens_observed": 187,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2741,
+        "output_tokens": 187,
+        "total_tokens": 2928,
+        "observed_total_tokens": 2928,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          10750
+        ],
+        [
+          2,
+          10500
+        ],
+        [
+          3,
+          7000
+        ],
+        [
+          4,
+          6000
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) - COALESCE(SUM(refunds.amount_cents), 0) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          9500
+        ],
+        [
+          2,
+          9500
+        ],
+        [
+          3,
+          -500
+        ],
+        [
+          4,
+          3500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "80595c4fb4873a5b0f4ca0a5cabfef52d50dc4a3c484ed5840d204ec67cc1106"
+  },
+  {
+    "case_id": "commerce_0:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.1022648580837995,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4632.155,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1669.784,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1491,
+          "completion_tokens_observed": 37,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 196.31,
+          "prompt_eval_ms_observed": 466.285,
+          "generation_ms_observed": 867.133,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2866.744,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1278,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 214.211,
+          "prompt_eval_ms_observed": 417.575,
+          "generation_ms_observed": 1624.137,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2769,
+      "completion_tokens_observed": 103,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2769,
+        "output_tokens": 103,
+        "total_tokens": 2872,
+        "observed_total_tokens": 2872,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          1,
+          "Customer 1"
+        ],
+        [
+          2,
+          "Customer 2"
+        ],
+        [
+          3,
+          "Customer 3"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "3aa2da815c302f55b21e2c5fc26016005b0100ab0d2dd2f3f752deec6c395fd7"
+  },
+  {
+    "case_id": "commerce_0:monthly_report",
+    "family": "monthly_report",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.291065410943702,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3645.543,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1057.335,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1491,
+          "completion_tokens_observed": 51,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 186.655,
+          "prompt_eval_ms_observed": 224.281,
+          "generation_ms_observed": 459.398,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2497.801,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1278,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 204.801,
+          "prompt_eval_ms_observed": 654.144,
+          "generation_ms_observed": 1492.316,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2769,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2769,
+        "output_tokens": 110,
+        "total_tokens": 2879,
+        "observed_total_tokens": 2879,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          2,
+          3750
+        ],
+        [
+          "2026-02",
+          4,
+          7500
+        ],
+        [
+          "2026-03",
+          3,
+          10000
+        ],
+        [
+          "2026-04",
+          4,
+          14500
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          2,
+          3750
+        ],
+        [
+          "2026-02",
+          4,
+          7500
+        ],
+        [
+          "2026-03",
+          3,
+          10000
+        ],
+        [
+          "2026-04",
+          4,
+          14500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "fa84a9b091ed16741e101ca57f90db3562714e36e566a9bf93d24b822ebea540"
+  },
+  {
+    "case_id": "commerce_0:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.390922258840874,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3691.919,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1134.212,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1453,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 205.796,
+          "prompt_eval_ms_observed": 10.938,
+          "generation_ms_observed": 227.459,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2280.942,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1240,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 228.87,
+          "prompt_eval_ms_observed": 36.744,
+          "generation_ms_observed": 683.615,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2693,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2693,
+        "output_tokens": 68,
+        "total_tokens": 2761,
+        "observed_total_tokens": 2761,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          35750
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          35750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "138ab00749e83dc2fc358db49c4150f4e52e51e6293cc6797409bb66c707f637"
+  },
+  {
+    "case_id": "commerce_0:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 3.372203707927838,
+    "telemetry": {
+      "pipeline_elapsed_ms": 2839.903,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 876.419,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1520,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 199.747,
+          "prompt_eval_ms_observed": 17.814,
+          "generation_ms_observed": 643.784,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1792.0,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1307,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 210.275,
+          "prompt_eval_ms_observed": 38.815,
+          "generation_ms_observed": 1329.571,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2827,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2827,
+        "output_tokens": 153,
+        "total_tokens": 2980,
+        "observed_total_tokens": 2980,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          3,
+          "2026-03-14",
+          5000
+        ],
+        [
+          9,
+          "2026-03-01",
+          3750
+        ],
+        [
+          11,
+          "2026-02-14",
+          2500
+        ],
+        [
+          14,
+          "2026-02-14",
+          5000
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          3,
+          "2026-03-14",
+          5000
+        ],
+        [
+          9,
+          "2026-03-01",
+          3750
+        ],
+        [
+          11,
+          "2026-02-14",
+          2500
+        ],
+        [
+          14,
+          "2026-02-14",
+          5000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "b025988b7e855a3c9c96fa9e0bf07aeddb44febbec2286bf67317ef8afef64ed"
+  },
+  {
+    "case_id": "commerce_0:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 4.928206854965538,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4463.283,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1899.741,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1499,
+          "completion_tokens_observed": 61,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 215.639,
+          "prompt_eval_ms_observed": 356.878,
+          "generation_ms_observed": 1140.291,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2460.681,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1286,
+          "completion_tokens_observed": 76,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 213.141,
+          "prompt_eval_ms_observed": 416.911,
+          "generation_ms_observed": 1659.18,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2785,
+      "completion_tokens_observed": 137,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2785,
+        "output_tokens": 137,
+        "total_tokens": 2922,
+        "observed_total_tokens": 2922,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          11000
+        ],
+        [
+          2,
+          11000
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          11000
+        ],
+        [
+          2,
+          11000
+        ],
+        [
+          3,
+          7500
+        ],
+        [
+          4,
+          6250
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id ORDER BY paid_cents DESC, customer_id ASC",
+    "local_raw_sha256": "0d3a8773ebc5b09335d2a9da0b7def758bf7c82b069086e3d3f567f53afab00c"
+  },
+  {
+    "case_id": "commerce_1:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.618256334215403,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5156.478,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2032.584,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1471,
+          "completion_tokens_observed": 93,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 216.214,
+          "prompt_eval_ms_observed": 360.466,
+          "generation_ms_observed": 1307.579,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3001.356,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1258,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 254.413,
+          "prompt_eval_ms_observed": 627.561,
+          "generation_ms_observed": 1877.41,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2729,
+      "completion_tokens_observed": 191,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2729,
+        "output_tokens": 191,
+        "total_tokens": 2920,
+        "observed_total_tokens": 2920,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          14500
+        ],
+        [
+          2,
+          14750
+        ],
+        [
+          3,
+          2250
+        ],
+        [
+          4,
+          13000
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) - COALESCE(SUM(refunds.amount_cents), 0) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          7000
+        ],
+        [
+          2,
+          7250
+        ],
+        [
+          3,
+          2250
+        ],
+        [
+          4,
+          13000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "21e8cd518ee68eb063a1a1c0545cbcf62308500c017a79d11dadf82ae15ddf81"
+  },
+  {
+    "case_id": "commerce_1:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.837411656975746,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5426.891,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1898.863,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1491,
+          "completion_tokens_observed": 44,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 279.139,
+          "prompt_eval_ms_observed": 344.557,
+          "generation_ms_observed": 1062.669,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3424.704,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1278,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 192.084,
+          "prompt_eval_ms_observed": 391.658,
+          "generation_ms_observed": 1652.437,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2769,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2769,
+        "output_tokens": 110,
+        "total_tokens": 2879,
+        "observed_total_tokens": 2879,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' AND orders.status != 'cancelled' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "2e09890f73e057c38694b7c28d52ea2256e9a0e314bab868e063275988baf1da"
+  },
+  {
+    "case_id": "commerce_1:monthly_report",
+    "family": "monthly_report",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 5.337656185030937,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4707.699,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2031.966,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1486,
+          "completion_tokens_observed": 52,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 220.904,
+          "prompt_eval_ms_observed": 429.946,
+          "generation_ms_observed": 1220.5,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2594.338,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1273,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 224.065,
+          "prompt_eval_ms_observed": 399.733,
+          "generation_ms_observed": 1455.114,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2759,
+      "completion_tokens_observed": 111,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2759,
+        "output_tokens": 111,
+        "total_tokens": 2870,
+        "observed_total_tokens": 2870,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          1,
+          0
+        ],
+        [
+          "2026-02",
+          5,
+          21250
+        ],
+        [
+          "2026-03",
+          2,
+          8500
+        ],
+        [
+          "2026-04",
+          5,
+          16000
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', orders.ordered_at) AS month, COUNT(*) AS order_count, SUM(orders.amount_cents) AS revenue_cents FROM orders WHERE orders.status = 'paid' GROUP BY month ORDER BY month",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          1,
+          0
+        ],
+        [
+          "2026-02",
+          5,
+          21250
+        ],
+        [
+          "2026-03",
+          2,
+          8500
+        ],
+        [
+          "2026-04",
+          5,
+          16000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "aa194bc928be88955f2982f01c015efc03b0aaa1b2f630a8edaedfedde06d398"
+  },
+  {
+    "case_id": "commerce_1:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.3408649689517915,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3608.55,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1319.657,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1450,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 249.863,
+          "prompt_eval_ms_observed": 318.79,
+          "generation_ms_observed": 534.166,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2176.114,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1237,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 201.841,
+          "prompt_eval_ms_observed": 385.764,
+          "generation_ms_observed": 1028.474,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2687,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2687,
+        "output_tokens": 68,
+        "total_tokens": 2755,
+        "observed_total_tokens": 2755,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          45750
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          45750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "3c7cce54ecba30e189b21458ea89dc02ae12213055fba54389999d67c1c83d2d"
+  },
+  {
+    "case_id": "commerce_1:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 4.949699318036437,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4522.801,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1647.077,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1515,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 242.88,
+          "prompt_eval_ms_observed": 356.599,
+          "generation_ms_observed": 855.21,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2784.162,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1302,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 204.178,
+          "prompt_eval_ms_observed": 569.569,
+          "generation_ms_observed": 1799.558,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2817,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2817,
+        "output_tokens": 153,
+        "total_tokens": 2970,
+        "observed_total_tokens": 2970,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          1,
+          "2026-03-28",
+          7250
+        ],
+        [
+          4,
+          "2026-02-01",
+          3750
+        ],
+        [
+          6,
+          "2026-02-01",
+          3750
+        ],
+        [
+          8,
+          "2026-02-28",
+          5000
+        ],
+        [
+          9,
+          "2026-02-28",
+          5000
+        ],
+        [
+          12,
+          "2026-02-28",
+          3750
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          1,
+          "2026-03-28",
+          7250
+        ],
+        [
+          4,
+          "2026-02-01",
+          3750
+        ],
+        [
+          6,
+          "2026-02-01",
+          3750
+        ],
+        [
+          8,
+          "2026-02-28",
+          5000
+        ],
+        [
+          9,
+          "2026-02-28",
+          5000
+        ],
+        [
+          12,
+          "2026-02-28",
+          3750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "597c8681a32d3a80b1dc1a3ae18916ca45a51269f5d4040e42569848d67100d5"
+  },
+  {
+    "case_id": "commerce_1:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 4.83788444288075,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4432.126,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1868.674,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1499,
+          "completion_tokens_observed": 57,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 214.518,
+          "prompt_eval_ms_observed": 332.473,
+          "generation_ms_observed": 1139.002,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2447.069,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1286,
+          "completion_tokens_observed": 76,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 192.196,
+          "prompt_eval_ms_observed": 391.54,
+          "generation_ms_observed": 1650.072,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2785,
+      "completion_tokens_observed": 133,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2785,
+        "output_tokens": 133,
+        "total_tokens": 2918,
+        "observed_total_tokens": 2918,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          14750
+        ],
+        [
+          2,
+          14750
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          14750
+        ],
+        [
+          2,
+          14750
+        ],
+        [
+          3,
+          2500
+        ],
+        [
+          4,
+          13750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id ORDER BY paid_cents DESC, customer_id ASC",
+    "local_raw_sha256": "ce3218513f6552cb24ac75a1e49949666f68137ad422d433c67b60f5daf5878f"
+  },
+  {
+    "case_id": "commerce_2:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.434448769083247,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5042.54,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2087.113,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1483,
+          "completion_tokens_observed": 93,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 183.679,
+          "prompt_eval_ms_observed": 339.347,
+          "generation_ms_observed": 1387.128,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2908.924,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1270,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 219.616,
+          "prompt_eval_ms_observed": 613.096,
+          "generation_ms_observed": 1871.417,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2753,
+      "completion_tokens_observed": 191,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2753,
+        "output_tokens": 191,
+        "total_tokens": 2944,
+        "observed_total_tokens": 2944,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          12750
+        ],
+        [
+          2,
+          13000
+        ],
+        [
+          3,
+          7750
+        ],
+        [
+          4,
+          1250
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) - COALESCE(SUM(refunds.amount_cents), 0) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          12750
+        ],
+        [
+          2,
+          4250
+        ],
+        [
+          3,
+          6500
+        ],
+        [
+          4,
+          1250
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "3b492fbf1f767ff644c48c103057f7b552f035d0146982943cb54976db6e39ec"
+  },
+  {
+    "case_id": "commerce_2:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.834784339880571,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5359.967,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1798.153,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1500,
+          "completion_tokens_observed": 44,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 205.495,
+          "prompt_eval_ms_observed": 315.654,
+          "generation_ms_observed": 1092.101,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3516.051,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1287,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 202.319,
+          "prompt_eval_ms_observed": 417.87,
+          "generation_ms_observed": 1712.357,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2787,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2787,
+        "output_tokens": 110,
+        "total_tokens": 2897,
+        "observed_total_tokens": 2897,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' AND orders.status != 'cancelled' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "f913f91d50d25daa04f7a8e9d793a4443781c27fccb329f7d329ec5bff2f6e0e"
+  },
+  {
+    "case_id": "commerce_2:monthly_report",
+    "family": "monthly_report",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 5.399087463971227,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4952.833,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2057.534,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1498,
+          "completion_tokens_observed": 51,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 231.206,
+          "prompt_eval_ms_observed": 445.233,
+          "generation_ms_observed": 1178.753,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2847.746,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1285,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 176.37,
+          "prompt_eval_ms_observed": 415.936,
+          "generation_ms_observed": 1502.559,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2783,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2783,
+        "output_tokens": 110,
+        "total_tokens": 2893,
+        "observed_total_tokens": 2893,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          6,
+          22000
+        ],
+        [
+          "2026-03",
+          5,
+          16250
+        ],
+        [
+          "2026-04",
+          2,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          6,
+          22000
+        ],
+        [
+          "2026-03",
+          5,
+          16250
+        ],
+        [
+          "2026-04",
+          2,
+          0
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "3819c3267e9653660935bb51b1402f9d4aaa3831bd9a189e45c8faeccadeae76"
+  },
+  {
+    "case_id": "commerce_2:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.245048905024305,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3777.355,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1306.946,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1463,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 206.013,
+          "prompt_eval_ms_observed": 321.998,
+          "generation_ms_observed": 586.011,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2321.28,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1250,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 232.972,
+          "prompt_eval_ms_observed": 389.668,
+          "generation_ms_observed": 1041.421,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2713,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2713,
+        "output_tokens": 68,
+        "total_tokens": 2781,
+        "observed_total_tokens": 2781,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          38250
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          38250
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "f51e2674b4549c4c49c4487ec2cf09963ccfbbe9bbe22dc4794c484eb5788483"
+  },
+  {
+    "case_id": "commerce_2:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.047365801874548,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4547.833,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1632.822,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1527,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 235.786,
+          "prompt_eval_ms_observed": 339.156,
+          "generation_ms_observed": 882.188,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2872.139,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1314,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 235.035,
+          "prompt_eval_ms_observed": 698.941,
+          "generation_ms_observed": 1712.977,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2841,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2841,
+        "output_tokens": 153,
+        "total_tokens": 2994,
+        "observed_total_tokens": 2994,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          3,
+          "2026-03-01",
+          3750
+        ],
+        [
+          9,
+          "2026-03-14",
+          5000
+        ],
+        [
+          13,
+          "2026-03-28",
+          2500
+        ],
+        [
+          14,
+          "2026-03-01",
+          5000
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          3,
+          "2026-03-01",
+          3750
+        ],
+        [
+          9,
+          "2026-03-14",
+          5000
+        ],
+        [
+          13,
+          "2026-03-28",
+          2500
+        ],
+        [
+          14,
+          "2026-03-01",
+          5000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "9f47e6e611147440f02621ea88e2131c1b81cc5483a816e1027d73b634c232f0"
+  },
+  {
+    "case_id": "commerce_2:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.016706150956452,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4496.497,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1983.736,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1508,
+          "completion_tokens_observed": 61,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 197.633,
+          "prompt_eval_ms_observed": 345.508,
+          "generation_ms_observed": 1264.059,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2464.669,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1295,
+          "completion_tokens_observed": 76,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 183.07,
+          "prompt_eval_ms_observed": 420.014,
+          "generation_ms_observed": 1652.958,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2803,
+      "completion_tokens_observed": 137,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2803,
+        "output_tokens": 137,
+        "total_tokens": 2940,
+        "observed_total_tokens": 2940,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ],
+        [
+          3,
+          8750
+        ],
+        [
+          4,
+          2500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id ORDER BY paid_cents DESC, customer_id ASC",
+    "local_raw_sha256": "2c0913010787b214ca39193f3bc17fba153110e568db30ff457fdcf8965f8c9a"
+  },
+  {
+    "case_id": "commerce_3:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.608801963040605,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5204.881,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2273.861,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1476,
+          "completion_tokens_observed": 105,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 180.702,
+          "prompt_eval_ms_observed": 331.746,
+          "generation_ms_observed": 1581.694,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2866.588,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1263,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 186.139,
+          "prompt_eval_ms_observed": 613.589,
+          "generation_ms_observed": 1861.485,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2739,
+      "completion_tokens_observed": 203,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2739,
+        "output_tokens": 203,
+        "total_tokens": 2942,
+        "observed_total_tokens": 2942,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13250
+        ],
+        [
+          3,
+          7500
+        ],
+        [
+          4,
+          12000
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(CASE WHEN orders.status = 'paid' THEN orders.amount_cents ELSE 0 END), 0) - COALESCE(SUM(CASE WHEN refunds.status = 'approved' THEN refunds.amount_cents ELSE 0 END), 0) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          24250
+        ],
+        [
+          3,
+          10000
+        ],
+        [
+          4,
+          14500
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "b29dfe4d264c5c7fb974d366cf09406e7286de7118af0fd51534d3bd6227c0c9"
+  },
+  {
+    "case_id": "commerce_3:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.642226088093594,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5288.896,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1792.943,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1494,
+          "completion_tokens_observed": 44,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 204.87,
+          "prompt_eval_ms_observed": 303.746,
+          "generation_ms_observed": 1097.979,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3453.108,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1281,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 202.183,
+          "prompt_eval_ms_observed": 399.916,
+          "generation_ms_observed": 1665.827,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2775,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2775,
+        "output_tokens": 110,
+        "total_tokens": 2885,
+        "observed_total_tokens": 2885,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' AND orders.status != 'cancelled' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "38bede62d54b96a24413fe89b29c5162c02e7c52584cd59990643d01641d4ba6"
+  },
+  {
+    "case_id": "commerce_3:monthly_report",
+    "family": "monthly_report",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.4129251460544765,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5029.302,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2070.502,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1489,
+          "completion_tokens_observed": 56,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 211.816,
+          "prompt_eval_ms_observed": 249.014,
+          "generation_ms_observed": 1422.42,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2874.704,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1276,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 180.166,
+          "prompt_eval_ms_observed": 390.226,
+          "generation_ms_observed": 1539.215,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2765,
+      "completion_tokens_observed": 115,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2765,
+        "output_tokens": 115,
+        "total_tokens": 2880,
+        "observed_total_tokens": 2880,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          4,
+          5000
+        ],
+        [
+          "2026-02",
+          3,
+          5000
+        ],
+        [
+          "2026-03",
+          3,
+          11250
+        ],
+        [
+          "2026-04",
+          3,
+          25750
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', SUBSTR(ordered_at, 1, 7)) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          null,
+          13,
+          47000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "db9ead76e9a4a5d15792e6011a11194a331da6cef07f8d534142cc6e4706e31d"
+  },
+  {
+    "case_id": "commerce_3:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.0797742530703545,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3697.282,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1242.976,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1457,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 196.94,
+          "prompt_eval_ms_observed": 322.277,
+          "generation_ms_observed": 546.33,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2407.52,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1244,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 201.05,
+          "prompt_eval_ms_observed": 393.836,
+          "generation_ms_observed": 991.182,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2701,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2701,
+        "output_tokens": 68,
+        "total_tokens": 2769,
+        "observed_total_tokens": 2769,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          47000
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          47000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "e60c33f896ee465d78c736985742a2aa4a8a467b13258dbf42e552121936316d"
+  },
+  {
+    "case_id": "commerce_3:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 4.733054704964161,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4243.769,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1543.937,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1518,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 240.636,
+          "prompt_eval_ms_observed": 343.298,
+          "generation_ms_observed": 781.894,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2638.317,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1305,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 187.965,
+          "prompt_eval_ms_observed": 591.858,
+          "generation_ms_observed": 1663.695,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2823,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2823,
+        "output_tokens": 153,
+        "total_tokens": 2976,
+        "observed_total_tokens": 2976,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          3,
+          "2026-03-01",
+          2500
+        ],
+        [
+          4,
+          "2026-03-01",
+          5000
+        ],
+        [
+          12,
+          "2026-03-14",
+          3750
+        ],
+        [
+          16,
+          "2026-02-28",
+          2500
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          3,
+          "2026-03-01",
+          2500
+        ],
+        [
+          4,
+          "2026-03-01",
+          5000
+        ],
+        [
+          12,
+          "2026-03-14",
+          3750
+        ],
+        [
+          16,
+          "2026-02-28",
+          2500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "8ee437c430535dc903845cdaefad1eff2eb8665829f9b66ee410c03ea2ba6729"
+  },
+  {
+    "case_id": "commerce_3:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 4.840762746054679,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4399.017,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1892.322,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1502,
+          "completion_tokens_observed": 57,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 191.506,
+          "prompt_eval_ms_observed": 339.302,
+          "generation_ms_observed": 1186.514,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2464.028,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1289,
+          "completion_tokens_observed": 76,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 180.865,
+          "prompt_eval_ms_observed": 432.533,
+          "generation_ms_observed": 1646.537,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2791,
+      "completion_tokens_observed": 133,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2791,
+        "output_tokens": 133,
+        "total_tokens": 2924,
+        "observed_total_tokens": 2924,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ],
+        [
+          3,
+          7500
+        ],
+        [
+          4,
+          12500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id ORDER BY paid_cents DESC, customer_id ASC",
+    "local_raw_sha256": "ed100bb86f4baf48222cf94a8a9b6be548cfccbab6a7f95db4f7583067c5a9d6"
+  },
+  {
+    "case_id": "commerce_4:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.62467450206168,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5156.444,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2101.172,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1481,
+          "completion_tokens_observed": 89,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 193.935,
+          "prompt_eval_ms_observed": 345.863,
+          "generation_ms_observed": 1387.204,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2959.009,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1268,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 209.767,
+          "prompt_eval_ms_observed": 648.718,
+          "generation_ms_observed": 1891.9,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2749,
+      "completion_tokens_observed": 187,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2749,
+        "output_tokens": 187,
+        "total_tokens": 2936,
+        "observed_total_tokens": 2936,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          15500
+        ],
+        [
+          2,
+          14750
+        ],
+        [
+          3,
+          3750
+        ],
+        [
+          4,
+          14000
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, SUM(COALESCE(orders.amount_cents, 0)) - SUM(COALESCE(refunds.amount_cents, 0)) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          4500
+        ],
+        [
+          2,
+          14750
+        ],
+        [
+          3,
+          1250
+        ],
+        [
+          4,
+          10250
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "897a730c0cae90cbdcf330fde306f217a5301a6707e02da78ca2bb033bd1025d"
+  },
+  {
+    "case_id": "commerce_4:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.858191472943872,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5340.58,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1868.699,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1502,
+          "completion_tokens_observed": 44,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 216.314,
+          "prompt_eval_ms_observed": 372.941,
+          "generation_ms_observed": 1097.195,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3436.374,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1289,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 180.503,
+          "prompt_eval_ms_observed": 426.305,
+          "generation_ms_observed": 1672.87,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2791,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2791,
+        "output_tokens": 110,
+        "total_tokens": 2901,
+        "observed_total_tokens": 2901,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' AND orders.status != 'cancelled' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "99d00690c18032f5bd506ca2f57f1dda7f3d9190cec0bd81a696db7d77a1e419"
+  },
+  {
+    "case_id": "commerce_4:monthly_report",
+    "family": "monthly_report",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 5.395928689045832,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5004.912,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2095.719,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1497,
+          "completion_tokens_observed": 51,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 217.538,
+          "prompt_eval_ms_observed": 412.772,
+          "generation_ms_observed": 1261.115,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2875.267,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1284,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 186.974,
+          "prompt_eval_ms_observed": 418.625,
+          "generation_ms_observed": 1512.22,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2781,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2781,
+        "output_tokens": 110,
+        "total_tokens": 2891,
+        "observed_total_tokens": 2891,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          2,
+          7250
+        ],
+        [
+          "2026-02",
+          3,
+          7500
+        ],
+        [
+          "2026-03",
+          4,
+          16250
+        ],
+        [
+          "2026-04",
+          4,
+          19750
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          2,
+          7250
+        ],
+        [
+          "2026-02",
+          3,
+          7500
+        ],
+        [
+          "2026-03",
+          4,
+          16250
+        ],
+        [
+          "2026-04",
+          4,
+          19750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "7a9236aec08940acb8173d61604d1d2826980cc4bc0b0766f9cf61fd00ff41aa"
+  },
+  {
+    "case_id": "commerce_4:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.349461881909519,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3908.866,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1263.697,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1455,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 224.595,
+          "prompt_eval_ms_observed": 322.758,
+          "generation_ms_observed": 540.391,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2551.168,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1242,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 184.18,
+          "prompt_eval_ms_observed": 391.596,
+          "generation_ms_observed": 1119.577,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2697,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2697,
+        "output_tokens": 68,
+        "total_tokens": 2765,
+        "observed_total_tokens": 2765,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          50750
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          50750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "1865e68ad5da4138d7b4d1d7c5ff7f79d4042d5cbf85eaaf549dfca899022595"
+  },
+  {
+    "case_id": "commerce_4:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.063515170942992,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4585.755,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1702.327,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1526,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 189.619,
+          "prompt_eval_ms_observed": 352.663,
+          "generation_ms_observed": 982.089,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2842.781,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1313,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 224.139,
+          "prompt_eval_ms_observed": 708.758,
+          "generation_ms_observed": 1683.733,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2839,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2839,
+        "output_tokens": 153,
+        "total_tokens": 2992,
+        "observed_total_tokens": 2992,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          4,
+          "2026-03-14",
+          3750
+        ],
+        [
+          6,
+          "2026-03-01",
+          3750
+        ],
+        [
+          8,
+          "2026-03-28",
+          3750
+        ],
+        [
+          9,
+          "2026-02-01",
+          5000
+        ],
+        [
+          11,
+          "2026-02-28",
+          2500
+        ],
+        [
+          14,
+          "2026-03-01",
+          5000
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          4,
+          "2026-03-14",
+          3750
+        ],
+        [
+          6,
+          "2026-03-01",
+          3750
+        ],
+        [
+          8,
+          "2026-03-28",
+          3750
+        ],
+        [
+          9,
+          "2026-02-01",
+          5000
+        ],
+        [
+          11,
+          "2026-02-28",
+          2500
+        ],
+        [
+          14,
+          "2026-03-01",
+          5000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "efef4d21555a1c0b9e91a37ed49d6f8707f55cffbf5340489e61388cb0b1661c"
+  },
+  {
+    "case_id": "commerce_4:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.489901544060558,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5101.251,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1894.553,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1510,
+          "completion_tokens_observed": 61,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 199.67,
+          "prompt_eval_ms_observed": 346.818,
+          "generation_ms_observed": 1174.372,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3169.652,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1297,
+          "completion_tokens_observed": 118,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 180.908,
+          "prompt_eval_ms_observed": 426.263,
+          "generation_ms_observed": 2362.77,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2807,
+      "completion_tokens_observed": 179,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2807,
+        "output_tokens": 179,
+        "total_tokens": 2986,
+        "observed_total_tokens": 2986,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          16000
+        ],
+        [
+          2,
+          16000
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          16000
+        ],
+        [
+          2,
+          16000
+        ],
+        [
+          3,
+          3750
+        ],
+        [
+          4,
+          15000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id HAVING paid_cents = (SELECT MAX(total_paid) FROM (SELECT customer_id, SUM(amount_cents) AS total_paid FROM orders WHERE status = 'paid' GROUP BY customer_id UNION ALL SELECT id, 0 FROM customers)) ORDER BY customer_id;",
+    "local_raw_sha256": "09704f1867e0d85dc4bc65a244701268cc91b78507b5ab15cf5028f1cd7c7303"
+  },
+  {
+    "case_id": "commerce_5:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.4314310571644455,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5003.908,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2070.42,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1485,
+          "completion_tokens_observed": 93,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 207.049,
+          "prompt_eval_ms_observed": 339.588,
+          "generation_ms_observed": 1334.913,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2894.693,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1272,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 190.146,
+          "prompt_eval_ms_observed": 623.318,
+          "generation_ms_observed": 1871.17,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2757,
+      "completion_tokens_observed": 191,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2757,
+        "output_tokens": 191,
+        "total_tokens": 2948,
+        "observed_total_tokens": 2948,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          12750
+        ],
+        [
+          2,
+          13000
+        ],
+        [
+          3,
+          6250
+        ],
+        [
+          4,
+          12500
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, SUM(COALESCE(orders.amount_cents, 0)) - SUM(COALESCE(refunds.amount_cents, 0)) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          12750
+        ],
+        [
+          2,
+          8000
+        ],
+        [
+          3,
+          1250
+        ],
+        [
+          4,
+          8750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "d5a14b70fba97930f674068d0c60915e18944d87d5c490ab92aff605a0eee390"
+  },
+  {
+    "case_id": "commerce_5:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.836912425933406,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5379.698,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1798.259,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1499,
+          "completion_tokens_observed": 44,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 195.142,
+          "prompt_eval_ms_observed": 319.951,
+          "generation_ms_observed": 1099.699,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3544.171,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1286,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 178.838,
+          "prompt_eval_ms_observed": 425.966,
+          "generation_ms_observed": 1725.916,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2785,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2785,
+        "output_tokens": 110,
+        "total_tokens": 2895,
+        "observed_total_tokens": 2895,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' AND orders.status != 'cancelled' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "16f4ceb7ccfe880dc3b067a6af0674032badb7aadffa9e89a5272ae074e21099"
+  },
+  {
+    "case_id": "commerce_5:monthly_report",
+    "family": "monthly_report",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.4007254431489855,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4946.916,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2166.805,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1493,
+          "completion_tokens_observed": 56,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 234.999,
+          "prompt_eval_ms_observed": 389.988,
+          "generation_ms_observed": 1340.574,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2746.429,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1280,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 185.727,
+          "prompt_eval_ms_observed": 400.718,
+          "generation_ms_observed": 1446.417,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2773,
+      "completion_tokens_observed": 115,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2773,
+        "output_tokens": 115,
+        "total_tokens": 2888,
+        "observed_total_tokens": 2888,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          1,
+          0
+        ],
+        [
+          "2026-02",
+          6,
+          35750
+        ],
+        [
+          "2026-03",
+          3,
+          8750
+        ],
+        [
+          "2026-04",
+          3,
+          1250
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', SUBSTR(ordered_at, 1, 7)) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          null,
+          13,
+          45750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "711bee239b78dde18419fc8a7ddd9d4e0701fb516c0fefc3a30c7ec86d7c0869"
+  },
+  {
+    "case_id": "commerce_5:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 4.919093047035858,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4535.344,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1256.298,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1456,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 194.933,
+          "prompt_eval_ms_observed": 312.842,
+          "generation_ms_observed": 578.901,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3213.503,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1243,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 195.577,
+          "prompt_eval_ms_observed": 391.7,
+          "generation_ms_observed": 1137.529,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2699,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2699,
+        "output_tokens": 68,
+        "total_tokens": 2767,
+        "observed_total_tokens": 2767,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          45750
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          45750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "2af914dcd18bc2cfe3646c5b8fd2c91dc016aa8019e5c6f99b3f21e45852023b"
+  },
+  {
+    "case_id": "commerce_5:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.061746571911499,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4579.889,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1722.489,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1522,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 192.181,
+          "prompt_eval_ms_observed": 340.558,
+          "generation_ms_observed": 996.829,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2826.039,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1309,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 227.708,
+          "prompt_eval_ms_observed": 663.227,
+          "generation_ms_observed": 1722.035,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2831,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2831,
+        "output_tokens": 153,
+        "total_tokens": 2984,
+        "observed_total_tokens": 2984,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          1,
+          "2026-02-01",
+          13500
+        ],
+        [
+          2,
+          "2026-02-28",
+          3500
+        ],
+        [
+          4,
+          "2026-03-28",
+          5000
+        ],
+        [
+          6,
+          "2026-02-28",
+          5000
+        ],
+        [
+          8,
+          "2026-02-28",
+          3750
+        ],
+        [
+          11,
+          "2026-02-14",
+          5000
+        ],
+        [
+          14,
+          "2026-02-14",
+          5000
+        ],
+        [
+          16,
+          "2026-03-28",
+          3750
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          1,
+          "2026-02-01",
+          13500
+        ],
+        [
+          2,
+          "2026-02-28",
+          3500
+        ],
+        [
+          4,
+          "2026-03-28",
+          5000
+        ],
+        [
+          6,
+          "2026-02-28",
+          5000
+        ],
+        [
+          8,
+          "2026-02-28",
+          3750
+        ],
+        [
+          11,
+          "2026-02-14",
+          5000
+        ],
+        [
+          14,
+          "2026-02-14",
+          5000
+        ],
+        [
+          16,
+          "2026-03-28",
+          3750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "c08510ee09f260a6bda83fb25b84d240531fcdacf9240d1466d8ad31dc441de1"
+  },
+  {
+    "case_id": "commerce_5:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.7054205851163715,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5290.477,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2013.831,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1507,
+          "completion_tokens_observed": 61,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 182.608,
+          "prompt_eval_ms_observed": 341.204,
+          "generation_ms_observed": 1304.847,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3179.831,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1294,
+          "completion_tokens_observed": 118,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 184.294,
+          "prompt_eval_ms_observed": 485.99,
+          "generation_ms_observed": 2306.61,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2801,
+      "completion_tokens_observed": 179,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2801,
+        "output_tokens": 179,
+        "total_tokens": 2980,
+        "observed_total_tokens": 2980,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ],
+        [
+          3,
+          6250
+        ],
+        [
+          4,
+          12500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id HAVING paid_cents = (SELECT MAX(total_paid) FROM (SELECT customer_id, SUM(amount_cents) AS total_paid FROM orders WHERE status = 'paid' GROUP BY customer_id UNION ALL SELECT id, 0 FROM customers)) ORDER BY customer_id;",
+    "local_raw_sha256": "e805661cd7f5f97574915b9743327b185ea643ef96a6f3ac626555cc43d02caa"
+  },
+  {
+    "case_id": "commerce_6:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.4779478560667485,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5038.513,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2094.307,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1484,
+          "completion_tokens_observed": 89,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 199.717,
+          "prompt_eval_ms_observed": 338.725,
+          "generation_ms_observed": 1343.29,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2881.23,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1271,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 208.459,
+          "prompt_eval_ms_observed": 609.782,
+          "generation_ms_observed": 1840.297,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2755,
+      "completion_tokens_observed": 187,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2755,
+        "output_tokens": 187,
+        "total_tokens": 2942,
+        "observed_total_tokens": 2942,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          12500
+        ],
+        [
+          2,
+          13500
+        ],
+        [
+          3,
+          9500
+        ],
+        [
+          4,
+          12000
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) - COALESCE(SUM(refunds.amount_cents), 0) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          10000
+        ],
+        [
+          2,
+          3750
+        ],
+        [
+          3,
+          9500
+        ],
+        [
+          4,
+          8250
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "b895212e4b9204236ded9617324e509047c0ab5abb8e2b0eef1ba3cf320f7c65"
+  },
+  {
+    "case_id": "commerce_6:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.8466727221384645,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5347.588,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1761.301,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1493,
+          "completion_tokens_observed": 44,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 208.448,
+          "prompt_eval_ms_observed": 294.419,
+          "generation_ms_observed": 1061.086,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3482.041,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1280,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 236.112,
+          "prompt_eval_ms_observed": 391.963,
+          "generation_ms_observed": 1682.029,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2773,
+      "completion_tokens_observed": 110,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2773,
+        "output_tokens": 110,
+        "total_tokens": 2883,
+        "observed_total_tokens": 2883,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' AND orders.status != 'cancelled' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "10d0989726aff33ce07664eb18eb62d4082ad3c53c8cf114168bb068fda3190e"
+  },
+  {
+    "case_id": "commerce_6:monthly_report",
+    "family": "monthly_report",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 5.263032171875238,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4806.515,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2173.484,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1488,
+          "completion_tokens_observed": 52,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 298.721,
+          "prompt_eval_ms_observed": 419.36,
+          "generation_ms_observed": 1250.323,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2586.718,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1275,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 192.234,
+          "prompt_eval_ms_observed": 403.393,
+          "generation_ms_observed": 1461.764,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2763,
+      "completion_tokens_observed": 111,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2763,
+        "output_tokens": 111,
+        "total_tokens": 2874,
+        "observed_total_tokens": 2874,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          4,
+          22250
+        ],
+        [
+          "2026-02",
+          2,
+          7500
+        ],
+        [
+          "2026-03",
+          5,
+          17250
+        ],
+        [
+          "2026-04",
+          2,
+          2500
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', orders.ordered_at) AS month, COUNT(*) AS order_count, SUM(orders.amount_cents) AS revenue_cents FROM orders WHERE orders.status = 'paid' GROUP BY month ORDER BY month",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          4,
+          22250
+        ],
+        [
+          "2026-02",
+          2,
+          7500
+        ],
+        [
+          "2026-03",
+          5,
+          17250
+        ],
+        [
+          "2026-04",
+          2,
+          2500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "fe85334ea57441c7111931afa193cbcee2974730fa8ce690f77d2b879d4cffbf"
+  },
+  {
+    "case_id": "commerce_6:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 5.044438514858484,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4599.271,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1284.987,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1459,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 179.804,
+          "prompt_eval_ms_observed": 347.49,
+          "generation_ms_observed": 580.861,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3250.239,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1246,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 275.27,
+          "prompt_eval_ms_observed": 403.168,
+          "generation_ms_observed": 1123.992,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2705,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2705,
+        "output_tokens": 68,
+        "total_tokens": 2773,
+        "observed_total_tokens": 2773,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          49500
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          49500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "b488e2a7c31150a0ddf5e79fdbd7229150a0c66fc91101da292965b6b24676ae"
+  },
+  {
+    "case_id": "commerce_6:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.014702741988003,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4585.796,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1725.288,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1517,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 228.761,
+          "prompt_eval_ms_observed": 338.814,
+          "generation_ms_observed": 970.376,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2826.879,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1304,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 209.114,
+          "prompt_eval_ms_observed": 591.013,
+          "generation_ms_observed": 1776.674,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2821,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2821,
+        "output_tokens": 153,
+        "total_tokens": 2974,
+        "observed_total_tokens": 2974,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          1,
+          "2026-03-14",
+          7250
+        ],
+        [
+          4,
+          "2026-02-28",
+          3750
+        ],
+        [
+          7,
+          "2026-02-14",
+          3750
+        ],
+        [
+          8,
+          "2026-03-01",
+          2500
+        ],
+        [
+          16,
+          "2026-03-28",
+          5000
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          1,
+          "2026-03-14",
+          7250
+        ],
+        [
+          4,
+          "2026-02-28",
+          3750
+        ],
+        [
+          7,
+          "2026-02-14",
+          3750
+        ],
+        [
+          8,
+          "2026-03-01",
+          2500
+        ],
+        [
+          16,
+          "2026-03-28",
+          5000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "e542e29ffeb5f8c6486bdc7460fff0ee90efbed7cdf3192bb1f4f5df65325d8f"
+  },
+  {
+    "case_id": "commerce_6:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 4.808747362811118,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4366.694,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1853.589,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1501,
+          "completion_tokens_observed": 57,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 178.614,
+          "prompt_eval_ms_observed": 340.012,
+          "generation_ms_observed": 1162.003,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2423.096,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1288,
+          "completion_tokens_observed": 76,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 174.199,
+          "prompt_eval_ms_observed": 395.662,
+          "generation_ms_observed": 1655.776,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2789,
+      "completion_tokens_observed": 133,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2789,
+        "output_tokens": 133,
+        "total_tokens": 2922,
+        "observed_total_tokens": 2922,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          13500
+        ],
+        [
+          2,
+          13500
+        ],
+        [
+          3,
+          10000
+        ],
+        [
+          4,
+          12500
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id ORDER BY paid_cents DESC, customer_id ASC",
+    "local_raw_sha256": "a33b271de5bded6e8de0e513396713599267703c284737a3641846e464ae7827"
+  },
+  {
+    "case_id": "commerce_7:customer_net",
+    "family": "customer_net",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 5.854504919843748,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5356.495,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2163.435,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1484,
+          "completion_tokens_observed": 89,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 207.202,
+          "prompt_eval_ms_observed": 332.556,
+          "generation_ms_observed": 1444.087,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3152.276,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1271,
+          "completion_tokens_observed": 98,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 298.617,
+          "prompt_eval_ms_observed": 678.454,
+          "generation_ms_observed": 1851.105,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2755,
+      "completion_tokens_observed": 187,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2755,
+        "output_tokens": 187,
+        "total_tokens": 2942,
+        "observed_total_tokens": 2942,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For every customer, report customer_id and net_cents using the customer net revenue definition. Sort by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          11000
+        ],
+        [
+          2,
+          10500
+        ],
+        [
+          3,
+          6000
+        ],
+        [
+          4,
+          8500
+        ],
+        [
+          5,
+          0
+        ],
+        [
+          6,
+          0
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) - COALESCE(SUM(refunds.amount_cents), 0) AS net_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id LEFT JOIN refunds ON refunds.order_id = orders.id WHERE orders.status = 'paid' AND refunds.status = 'approved' GROUP BY customers.id ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "net_cents"
+      ],
+      "rows": [
+        [
+          1,
+          9750
+        ],
+        [
+          2,
+          4250
+        ],
+        [
+          3,
+          3500
+        ],
+        [
+          4,
+          7250
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "0e8bb78b54d44f297ffdb4fee24b2c555b0e9c7494b8a1f85c47d07f06e1abc0"
+  },
+  {
+    "case_id": "commerce_7:inactive_customers",
+    "family": "inactive_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.839866471011192,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5454.07,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1873.327,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1498,
+          "completion_tokens_observed": 37,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 298.989,
+          "prompt_eval_ms_observed": 442.808,
+          "generation_ms_observed": 830.027,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 3525.458,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1285,
+          "completion_tokens_observed": 66,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 236.175,
+          "prompt_eval_ms_observed": 435.24,
+          "generation_ms_observed": 1627.28,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2783,
+      "completion_tokens_observed": 103,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2783,
+        "output_tokens": 103,
+        "total_tokens": 2886,
+        "observed_total_tokens": 2886,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          5,
+          "Customer 5"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, customers.name FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status != 'paid' ORDER BY customers.id",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "name"
+      ],
+      "rows": [
+        [
+          1,
+          "Customer 1"
+        ],
+        [
+          2,
+          "Customer 2"
+        ],
+        [
+          3,
+          "Customer 3"
+        ],
+        [
+          6,
+          "Customer 6"
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, c.name FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id AND o.status != 'cancelled' AND o.amount_cents > 0) ORDER BY c.id",
+    "local_raw_sha256": "c95d6b4f827537ee96a8fd7ece649b1298b5c2bd144a8ef58c30861d6dc38f3b"
+  },
+  {
+    "case_id": "commerce_7:monthly_report",
+    "family": "monthly_report",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 5.468415670096874,
+    "telemetry": {
+      "pipeline_elapsed_ms": 5045.5,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2244.866,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1496,
+          "completion_tokens_observed": 60,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 184.008,
+          "prompt_eval_ms_observed": 364.314,
+          "generation_ms_observed": 1508.373,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2715.043,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1283,
+          "completion_tokens_observed": 59,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 175.321,
+          "prompt_eval_ms_observed": 417.009,
+          "generation_ms_observed": 1512.586,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2779,
+      "completion_tokens_observed": 119,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2779,
+        "output_tokens": 119,
+        "total_tokens": 2898,
+        "observed_total_tokens": 2898,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+    "expected": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          "2026-01",
+          2,
+          6000
+        ],
+        [
+          "2026-02",
+          5,
+          15000
+        ],
+        [
+          "2026-03",
+          3,
+          5000
+        ],
+        [
+          "2026-04",
+          3,
+          11000
+        ]
+      ]
+    },
+    "sql": "SELECT strftime('%Y-%m', SUBSTR(ordered_at, 1, 7)) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "candidate": {
+      "columns": [
+        "month",
+        "order_count",
+        "revenue_cents"
+      ],
+      "rows": [
+        [
+          null,
+          13,
+          37000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT strftime('%Y-%m', ordered_at) AS month, COUNT(*) AS order_count, SUM(amount_cents) AS revenue_cents FROM orders WHERE status = 'paid' GROUP BY month ORDER BY month;",
+    "local_raw_sha256": "0ca42d354161ac6a3f868958a75b3cf03283849aa9257272ea49600396f2c5a9"
+  },
+  {
+    "case_id": "commerce_7:paid_revenue",
+    "family": "paid_revenue",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "agreement",
+    "has_candidate": true,
+    "seconds": 3.9896234599873424,
+    "telemetry": {
+      "pipeline_elapsed_ms": 3617.718,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1291.044,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1460,
+          "completion_tokens_observed": 25,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 207.206,
+          "prompt_eval_ms_observed": 318.926,
+          "generation_ms_observed": 591.822,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2269.028,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1247,
+          "completion_tokens_observed": 43,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 197.273,
+          "prompt_eval_ms_observed": 403.271,
+          "generation_ms_observed": 1062.562,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2707,
+      "completion_tokens_observed": 68,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2707,
+        "output_tokens": 68,
+        "total_tokens": 2775,
+        "observed_total_tokens": 2775,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+    "expected": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          37000
+        ]
+      ]
+    },
+    "sql": "SELECT SUM(amount_cents) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "candidate": {
+      "columns": [
+        "paid_revenue_cents"
+      ],
+      "rows": [
+        [
+          37000
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT COALESCE(SUM(amount_cents), 0) AS paid_revenue_cents FROM orders WHERE status = 'paid'",
+    "local_raw_sha256": "03a8089c49f724a999f71a62a37226ee6a7b214dae41752da26535b4550cf708"
+  },
+  {
+    "case_id": "commerce_7:qualifying_orders",
+    "family": "qualifying_orders",
+    "correct": true,
+    "status": "needs_review",
+    "verifier_status": "unavailable",
+    "has_candidate": true,
+    "seconds": 4.8573426329530776,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4436.471,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1608.738,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1525,
+          "completion_tokens_observed": 72,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 196.486,
+          "prompt_eval_ms_observed": 342.753,
+          "generation_ms_observed": 901.144,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2789.898,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1312,
+          "completion_tokens_observed": 81,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 191.415,
+          "prompt_eval_ms_observed": 682.743,
+          "generation_ms_observed": 1713.082,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2837,
+      "completion_tokens_observed": 153,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2837,
+        "output_tokens": 153,
+        "total_tokens": 2990,
+        "observed_total_tokens": 2990,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+    "expected": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          6,
+          "2026-02-01",
+          5000
+        ],
+        [
+          7,
+          "2026-03-28",
+          2500
+        ],
+        [
+          9,
+          "2026-02-14",
+          5000
+        ],
+        [
+          16,
+          "2026-02-01",
+          3750
+        ]
+      ]
+    },
+    "sql": "SELECT orders.id AS order_id, ordered_at, amount_cents FROM orders WHERE status = 'paid' AND amount_cents >= 2500 AND ordered_at >= '2026-02-01' AND ordered_at < '2026-04-01' ORDER BY orders.id",
+    "candidate": {
+      "columns": [
+        "order_id",
+        "ordered_at",
+        "amount_cents"
+      ],
+      "rows": [
+        [
+          6,
+          "2026-02-01",
+          5000
+        ],
+        [
+          7,
+          "2026-03-28",
+          2500
+        ],
+        [
+          9,
+          "2026-02-14",
+          5000
+        ],
+        [
+          16,
+          "2026-02-01",
+          3750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": null,
+    "local_raw_sha256": "303764faebeca9fccca46ce3133cd0b3ea161df10b8ef25d92330d5c25e4a9b2"
+  },
+  {
+    "case_id": "commerce_7:top_customers",
+    "family": "top_customers",
+    "correct": false,
+    "status": "needs_review",
+    "verifier_status": "disagreement",
+    "has_candidate": true,
+    "seconds": 4.6181235949043185,
+    "telemetry": {
+      "pipeline_elapsed_ms": 4166.383,
+      "latency_scope": "worker_pipeline_excluding_queue_wait_and_http",
+      "stages": {
+        "planner": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 1928.553,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1506,
+          "completion_tokens_observed": 61,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 242.294,
+          "prompt_eval_ms_observed": 330.763,
+          "generation_ms_observed": 1152.383,
+          "calls_without_provider_timing": 0
+        },
+        "checker": {
+          "calls": 1,
+          "failed_calls": 0,
+          "retries": 0,
+          "call_elapsed_ms": 2097.979,
+          "retry_wait_ms": 0,
+          "prompt_tokens_observed": 1293,
+          "completion_tokens_observed": 76,
+          "calls_without_complete_usage": 0,
+          "model_load_ms_observed": 224.956,
+          "prompt_eval_ms_observed": 418.855,
+          "generation_ms_observed": 1241.563,
+          "calls_without_provider_timing": 0
+        }
+      },
+      "calls": 2,
+      "failed_calls": 0,
+      "retries": 0,
+      "prompt_tokens_observed": 2799,
+      "completion_tokens_observed": 137,
+      "calls_without_complete_usage": 0,
+      "usage_complete": true,
+      "monetary_cost": null,
+      "cost_reason": "Cost is measured in input and output tokens; no model unit prices supplied for monetary conversion.",
+      "token_cost": {
+        "input_tokens": 2799,
+        "output_tokens": 137,
+        "total_tokens": 2936,
+        "observed_total_tokens": 2936,
+        "complete": true,
+        "unit": "tokens"
+      },
+      "accounting_scope": "observed_job_attempts",
+      "unobserved_job_attempts": 0
+    },
+    "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+    "expected": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          11000
+        ],
+        [
+          2,
+          11000
+        ]
+      ]
+    },
+    "sql": "SELECT customers.id AS customer_id, COALESCE(SUM(orders.amount_cents), 0) AS paid_cents FROM customers LEFT JOIN orders ON customers.id = orders.customer_id WHERE orders.status = 'paid' GROUP BY customers.id ORDER BY customers.id;",
+    "candidate": {
+      "columns": [
+        "customer_id",
+        "paid_cents"
+      ],
+      "rows": [
+        [
+          1,
+          11000
+        ],
+        [
+          2,
+          11000
+        ],
+        [
+          3,
+          6250
+        ],
+        [
+          4,
+          8750
+        ]
+      ],
+      "truncated": false
+    },
+    "verifier_sql": "SELECT c.id AS customer_id, COALESCE(SUM(o.amount_cents), 0) AS paid_cents FROM customers c LEFT JOIN orders o ON c.id = o.customer_id AND o.status = 'paid' GROUP BY c.id ORDER BY paid_cents DESC, customer_id ASC",
+    "local_raw_sha256": "f7e4b7f852e1cf4b7f91760168c0787a4abc805f381ec703275ff75baaaec6a2"
+  }
+]

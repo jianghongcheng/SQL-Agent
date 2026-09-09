@@ -133,7 +133,9 @@ def test_mcp_sql_tools_forward_to_authenticated_api(service, monkeypatch):
         return response.json()
     monkeypatch.setattr(mcp_server, "api_call", call)
     schemas = mcp_server.dispatch({"id": 1, "method": "tools/list"})["result"]["tools"]
-    assert {s["name"] for s in schemas} == {"list_sql_tasks", "submit_sql_task", "get_sql_job"}
+    assert {s["name"] for s in schemas} == {"list_sql_tasks", "submit_sql_task", "get_sql_job",
+        "list_databases", "query_database", "propose_database_change", "get_database_change",
+        "list_sql_sources", "submit_sql_request", "get_sql_request"}
     submitted = mcp_server.dispatch({"id": 2, "method": "tools/call", "params": {
         "name": "submit_sql_task", "arguments": {"task_id": "employee_names", "idempotency_key": "mcp"}}})
     job_id = submitted["result"]["structuredContent"]["job"]["job_id"]

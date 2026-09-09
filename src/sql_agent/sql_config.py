@@ -128,7 +128,9 @@ def sql_planner_from_env():
     if provider == "ollama":
         adapter = OllamaPlannerModel(base, model, timeout=timeout,
             max_tokens=int(os.environ.get('SQL_AGENT_PLANNER_MAX_TOKENS', '8192' if thinking else ('2048' if generation_format == 'sql' else '256'))),
-            json_mode=generation_format == 'json', thinking=thinking)
+            json_mode=generation_format == 'json', thinking=thinking,
+            keep_alive_seconds=(int(os.environ['SQL_AGENT_PLANNER_KEEP_ALIVE_SECONDS'])
+                if 'SQL_AGENT_PLANNER_KEEP_ALIVE_SECONDS' in os.environ else None))
     elif provider == "openai_compatible":
         if generation_format != 'json' or thinking:
             raise ValueError('SQL text profile currently requires Ollama')

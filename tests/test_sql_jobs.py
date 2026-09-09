@@ -115,6 +115,8 @@ def test_killed_worker_is_recovered_after_real_lease_expiration(tmp_path):
         recovered=repo.get(job.job_id)
         assert recovered.status=='completed' and recovered.attempts==2
         assert recovered.result['output']['rows']==[['Ada'],['Grace'],['Linus']]
+        assert recovered.result['telemetry']['unobserved_job_attempts'] == 1
+        assert recovered.result['telemetry']['token_cost']['total_tokens'] is None
     finally:
         if process.is_alive():
             process.kill(); process.join()

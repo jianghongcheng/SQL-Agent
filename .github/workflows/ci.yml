@@ -11,7 +11,9 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e '.[dev]'
-      - run: pytest -q
+      # Includes deterministic evaluation/gate regressions, not live LLM quality.
+      - run: python -m pytest -q --junitxml=outputs/validation/ci-regression.xml
       - run: python -m compileall -q src
+      - run: PYTHONPATH=src:. python scripts/verify_public_metrics.py
       - run: python scripts/export_harbor_sql_suite.py
       - run: git diff --exit-code -- harbor/tasks/sql_agent_repair_v1

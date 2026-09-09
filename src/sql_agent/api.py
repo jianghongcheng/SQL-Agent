@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 
 from .backends import job_repository_from_env
-from .dashboard import render_dashboard
 from .metrics import HttpMetrics
 from .replay import build_replay_payload, replay_guarantee
 from .security import ApiKeyAuthorizer, BrowserSessions
@@ -14,7 +13,7 @@ from .sql_config import SQLTaskRegistry
 LOCAL_BENCHMARK_REPORT = Path(__file__).resolve().parents[2] / 'runtime/local-demo/benchmark.html'
 
 
-def create_app(jobs=None, registry=None, authorizer=None):
+def create_app(jobs=None, registry=None, authorizer=None, mutations=None):
     from fastapi import FastAPI, Header, HTTPException, Request, Response, Cookie
     from fastapi.responses import HTMLResponse, PlainTextResponse, JSONResponse, RedirectResponse
     from pydantic import BaseModel, Field, ConfigDict
@@ -24,6 +23,13 @@ def create_app(jobs=None, registry=None, authorizer=None):
     authorizer = authorizer if authorizer is not None else ApiKeyAuthorizer.from_env()
     sessions = BrowserSessions()
     metrics = HttpMetrics()
+    from .mutations import MutationService
+    mutations = mutations if mutations is not None else MutationService.from_env()
+    if mutations is not None and getattr(jobs, 'path', None):
+        job_path = Path(jobs.path).resolve()
+        if job_path in {mutations.store, mutations.workflow.path} or any(
+                getattr(p, 'database', None) == job_path for p in mutations.policies.values()):
+            raise ValueError('job, mutation control, graph and business databases must be separate')
     app = FastAPI(title="SQL-Agent", version="0.7.0")
 
     class JobPayload(BaseModel):
@@ -36,10 +42,91 @@ def create_app(jobs=None, registry=None, authorizer=None):
         model_config = ConfigDict(extra="forbid")
         decision: str = Field(pattern="^(approve|reject)$")
         notes: str = Field(default="", max_length=2000)
+        proposal_sha256: str | None = Field(default=None, pattern='^[a-f0-9]{64}$')
+
+    class RequestPayload(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+        task_id: str | None = Field(default=None, min_length=1, max_length=128)
+        database_id: str | None = Field(default=None, min_length=1, max_length=128)
+        question: str | None = Field(default=None, min_length=1, max_length=4000)
+        sql: str = Field(default='', max_length=20000)
 
     class LoginPayload(BaseModel):
         model_config = ConfigDict(extra="forbid")
         api_key: str = Field(min_length=1, max_length=4096)
+
+    class ResumePayload(BaseModel):
+        model_config = ConfigDict(extra='forbid')
+        clarification_id: str = Field(min_length=1, max_length=128)
+        answer: str = Field(min_length=1, max_length=4000)
+
+    class MutationPayload(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        database_id: str = Field(min_length=1, max_length=128)
+        sql: str = Field(min_length=1, max_length=20000)
+
+    class MutationReviewPayload(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+        proposal_sha256: str = Field(pattern="^[a-f0-9]{64}$")
+        decision: str = Field(pattern="^(approve|reject)$")
+
+    def mutation_service():
+        if mutations is None:
+            raise HTTPException(403, "database changes are disabled; configure an explicit allowlist")
+        return mutations
+
+    def mutation_call(fn, *args):
+        import sqlite3
+        from sqlglot.errors import SqlglotError
+        try:
+            return fn(*args)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        except SqlglotError as exc:
+            raise HTTPException(422, 'Invalid or unsupported SQL syntax') from exc
+        except sqlite3.Error as exc:
+            raise HTTPException(422, "Database/workflow error; inspect proposal status before retrying") from exc
+        except Exception as exc:
+            # Optional PostgreSQL dependency; do not expose DSNs or raw server errors.
+            try:
+                import psycopg
+            except ImportError:
+                raise exc
+            if isinstance(exc, psycopg.Error):
+                raise HTTPException(422, "PostgreSQL could not complete the request; inspect proposal status before retrying") from exc
+            raise
+
+    @app.get('/v1/databases')
+    def databases(x_api_key: str | None = Header(default=None),
+                  sql_agent_session: str | None = Cookie(default=None)):
+        authorize(x_api_key, 'viewer', sql_agent_session)
+        return {"databases": [] if mutations is None else mutations.describe()}
+
+    @app.post('/v1/database-query')
+    def database_query(payload: MutationPayload, x_api_key: str | None = Header(default=None),
+                       sql_agent_session: str | None = Cookie(default=None)):
+        authorize(x_api_key, 'viewer', sql_agent_session)
+        return mutation_call(mutation_service().query, payload.database_id, payload.sql)
+
+    @app.post('/v1/mutations', status_code=201)
+    def propose_mutation(payload: MutationPayload, x_api_key: str | None = Header(default=None),
+                         sql_agent_session: str | None = Cookie(default=None)):
+        principal = authorize(x_api_key, 'operator', sql_agent_session)
+        return mutation_call(mutation_service().propose, payload.database_id, payload.sql, principal.name)
+
+    @app.get('/v1/mutations/{ident}')
+    def get_mutation(ident: str, x_api_key: str | None = Header(default=None),
+                     sql_agent_session: str | None = Cookie(default=None)):
+        authorize(x_api_key, 'viewer', sql_agent_session)
+        return mutation_call(mutation_service().inspect, ident)
+
+    @app.post('/v1/mutations/{ident}/review')
+    def review_mutation(ident: str, payload: MutationReviewPayload,
+                        x_api_key: str | None = Header(default=None),
+                        sql_agent_session: str | None = Cookie(default=None)):
+        principal = authorize(x_api_key, 'admin', sql_agent_session)
+        return mutation_call(mutation_service().review, ident, payload.proposal_sha256,
+                             principal.name, payload.decision)
 
     def authorize(key, role, session=None):
         try:
@@ -69,7 +156,12 @@ def create_app(jobs=None, registry=None, authorizer=None):
 
     @app.get("/", response_class=HTMLResponse)
     def dashboard():
-        return HTMLResponse(render_dashboard(), headers={"Cache-Control": "no-store"})
+        from .unified_dashboard import render_unified_dashboard
+        return HTMLResponse(render_unified_dashboard(), headers={"Cache-Control": "no-store"})
+
+    @app.get('/database', response_class=HTMLResponse)
+    def database_console():
+        return RedirectResponse('/', status_code=307)
 
     @app.get('/benchmark', response_class=HTMLResponse, include_in_schema=False)
     def benchmark_report():
@@ -119,12 +211,76 @@ def create_app(jobs=None, registry=None, authorizer=None):
         authorize(x_api_key, "viewer", sql_agent_session)
         return {"tasks": registry.describe()}
 
+    @app.get('/v1/sources')
+    def sources(x_api_key: str | None = Header(default=None), sql_agent_session: str | None = Cookie(default=None)):
+        authorize(x_api_key, 'viewer', sql_agent_session)
+        return {'tasks': registry.describe(), 'databases': [] if mutations is None else mutations.describe()}
+
+    @app.post('/v1/requests', status_code=202)
+    def submit_request(payload: RequestPayload, request: Request,
+                       idempotency_key: str = Header(min_length=1, max_length=256),
+                       x_api_key: str | None = Header(default=None),
+                       sql_agent_session: str | None = Cookie(default=None)):
+        principal = authorize(x_api_key, 'operator', sql_agent_session)
+        if bool(payload.task_id) == bool(payload.database_id):
+            raise HTTPException(422, 'select exactly one configured task or database')
+        content = payload.model_dump()
+        if payload.task_id:
+            try:
+                task = registry.get(payload.task_id)
+                task.validate_question(payload.question)
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            content.update(question=payload.question or task.question, initial_sql=payload.sql,
+                           _execution_contract_sha256=task.contract.snapshot().sha256,
+                           _business_context_sha256=task.context_sha256)
+        else:
+            service = mutation_service()
+            policy = service.policies.get(payload.database_id)
+            if policy is None or not (payload.question or payload.sql.strip()):
+                raise HTTPException(422, 'configured database and question or SQL required')
+            content['_database_policy_sha256'] = policy.fingerprint()
+        content.update(_trace_id=request.state.trace_id, _submitted_by=principal.name)
+        job, created = jobs.submit('sql_request', content, idempotency_key)
+        if job.job_type != 'sql_request' or any(job.payload.get(k) != v for k, v in content.items() if k != '_trace_id'):
+            raise HTTPException(409, 'idempotency key already used for different inputs')
+        return {'job': job.to_dict(), 'created': created}
+
+    @app.get('/v1/requests/{job_id}')
+    def inspect_request(job_id: str, x_api_key: str | None = Header(default=None),
+                        sql_agent_session: str | None = Cookie(default=None)):
+        authorize(x_api_key, 'viewer', sql_agent_session)
+        job = get(job_id)
+        result = job.to_dict()
+        if job.result and job.result.get('operation') == 'mutation':
+            result['result'] = {**job.result, 'proposal': mutation_call(mutation_service().inspect, job_id)}
+        return result
+
+    @app.post('/v1/requests/{job_id}/resume', status_code=202)
+    def resume_request(job_id: str, payload: ResumePayload,
+                       idempotency_key: str = Header(min_length=1, max_length=256),
+                       x_api_key: str | None = Header(default=None),
+                       sql_agent_session: str | None = Cookie(default=None)):
+        principal = authorize(x_api_key, 'operator', sql_agent_session)
+        original = get(job_id)
+        if principal.role != 'admin' and original.payload.get('_submitted_by') != principal.name:
+            raise HTTPException(403, 'only the request owner or an admin can answer')
+        try:
+            resumed = jobs.resume(job_id, payload.clarification_id, payload.answer,
+                                  principal.name, idempotency_key)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from exc
+        return {'job': resumed.to_dict()}
+
     @app.get("/v1/capabilities")
     def capabilities(x_api_key: str | None = Header(default=None),
                sql_agent_session: str | None = Cookie(default=None)):
         authorize(x_api_key, "viewer", sql_agent_session)
         return {"domain": "sql", "operations": ["read_only_query", "query_repair", "contract_validation"],
-                "validation_scope": "structural_contract_not_semantic_proof", "tasks": registry.describe()}
+                "validation_scope": "structural_contract_not_semantic_proof", "tasks": registry.describe(),
+                "database_changes": {"enabled": mutations is not None,
+                    "operations": [] if mutations is None else ["select", "insert", "update", "delete", "create_table", "drop_table"],
+                    "approval": "admin_required", "databases": [] if mutations is None else mutations.describe()}}
 
     @app.post("/v1/jobs", status_code=202)
     def submit(payload: JobPayload, request: Request,
@@ -186,11 +342,24 @@ def create_app(jobs=None, registry=None, authorizer=None):
             raise HTTPException(409, "idempotency key already used for another request")
         return {"job": job.to_dict(), "created": created, "guarantee": replay_guarantee(original)}
 
+    @app.post('/v1/requests/{job_id}/review')
     @app.post("/v1/jobs/{job_id}/review")
     def review(job_id: str, payload: ReviewPayload, x_api_key: str | None = Header(default=None),
                sql_agent_session: str | None = Cookie(default=None)):
         principal = authorize(x_api_key, "admin", sql_agent_session)
-        get(job_id)
+        original = get(job_id)
+        if original.result and original.result.get('operation') == 'mutation':
+            if not payload.proposal_sha256:
+                raise HTTPException(422, 'exact proposal hash required for a database change')
+            mutation_result = mutation_call(mutation_service().review, job_id,
+                                            payload.proposal_sha256, principal.name, payload.decision)
+            current = get(job_id)
+            if current.status == 'needs_review':
+                try:
+                    current = jobs.review(job_id, principal.name, payload.decision, notes=payload.notes)
+                except RuntimeError as exc:
+                    raise HTTPException(409, 'review publication changed; inspect request status') from exc
+            return {**current.to_dict(), 'mutation_result': mutation_result}
         try:
             return jobs.review(job_id, principal.name, payload.decision, notes=payload.notes).to_dict()
         except RuntimeError as exc:

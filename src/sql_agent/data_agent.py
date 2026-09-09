@@ -26,14 +26,29 @@ class DataContract:
     verification_sql: str = ""
     fallback_to_verified_query: bool = False
     dynamic_columns: bool = False
+    ordered: bool = True
+    grain_measures: tuple[tuple[str, str, str], ...] = ()
 
     def snapshot(self) -> ContractSnapshot:
         specification = asdict(self)
+        if not self.grain_measures:
+            specification.pop('grain_measures')
+        if self.ordered:
+            specification.pop('ordered')  # Preserve existing ordered contract hashes.
         if not self.dynamic_columns:
             specification.pop('dynamic_columns')  # Preserve existing registered contract hashes.
         return ContractSnapshot.capture("sql_query", specification)
 
     def __post_init__(self) -> None:
+        import re
+        measures = tuple(tuple(m) for m in self.grain_measures)
+        if any(len(m) != 3 or any(not isinstance(v, str) or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', v) for v in m) for m in measures):
+            raise ValueError('grain measures require table, measure column, and row key')
+        if len({m[:2] for m in measures}) != len(measures):
+            raise ValueError('duplicate grain measure')
+        object.__setattr__(self, 'grain_measures', measures)
+        if type(self.ordered) is not bool:
+            raise ValueError('ordered must be boolean')
         if not isinstance(self.verification_sql, str) or len(self.verification_sql) > 20000:
             raise ValueError("invalid verification SQL")
         if type(self.fallback_to_verified_query) is not bool or (self.fallback_to_verified_query and not self.verification_sql):

@@ -4,7 +4,90 @@ This document separates model configuration comparisons, product acceptance,
 external-dataset evaluation, and software verification. Each result retains its
 own dataset, denominator, and execution conditions.
 
-## Software verification
+## Latest verified results — 2026-09-09
+
+- [SQL correctness repair](SQL_CORRECTNESS_REPAIR.md): **21/48 → 35/48** on the
+  inspected six-family development set; **6,629 → 4,250 tokens per correct task**;
+  p95 **5.85 → 5.91 s**. After repair, **2/13 wrong candidates** receive verifier
+  agreement. All general answers require human review; this is not blind accuracy.
+- [Small-model QLoRA](SMALL_MODEL_COMPARISON.md): newly trained 0.5B **44/100 →
+  51/100**, compared with historical 1.5B **52/100 → 59/100**. Both conditions use
+  identical JSON-fence normalization. The adapters are not promoted.
+- [Public evidence](evidence/2026-09-09/README.md) contains synthetic development
+  records, expected results, model identities, metric denominators and hashes.
+- A frozen 108-case holdout/challenge protocol is prepared, but no completed,
+  verified result is included in this release. It is not counted as a passed gate.
+
+The 91.0% historical thinking-model experiment below uses different models,
+settings and repeated questions. Do not substitute it for the current pipeline.
+
+## Current local acceptance protocols
+
+The local implementation extends the historical results below with three separate
+protocols. A completed run demonstrates its stated scope, not production readiness.
+
+- `prepare_agent_acceptance.py` freezes six existing developer-authored commerce
+  families across fresh data seeds. The default has 48 instances, not 48 independent
+  task families. Python arithmetic computes the expected results; evaluation files
+  are never mounted into the Agent containers.
+- `validate_live_rag_deployment.py` runs BM25, hybrid and hybrid-plus-cross-encoder
+  against the same cases and Planner/Verifier settings. It records every failure,
+  candidate, review decision, observed token usage, submit-to-result timing, read-only
+  database hashes and restart evidence. Two warm-up jobs per condition are retained
+  separately. CPU retrieval runs inside isolated containers; generation uses the
+  configured local Ollama service on the shared host. All general results still
+  require review. Agreement rates are not automatic-release rates.
+- `analyze_sql_lora.py` verifies saved generation/dataset hashes, computes paired
+  fixes and regressions, and resamples entire source domains for uncertainty.
+  The 100-case pilot is 52 correct before and 59 after adaptation, with nine fixes
+  and two regressions. The reproducible domain-cluster interval includes zero;
+  the candidate is not promoted. Data labels are source-provided, not manually
+  verified clinical or commercial outcomes.
+
+Cost is measured in **input and output tokens**. Report Planner and Verifier
+usage, failed calls, retries, and total observed consumption per submitted job
+and per correct result. The latter includes spend on all incorrect/failed jobs,
+not just tokens from successful jobs. Incomplete provider usage or an unobserved
+crashed attempt makes the total unknown; observed counts remain a lower bound.
+Monetary conversion requires explicit input/output model prices and is not used
+for this acceptance. GPU board samples are optional resource observations only.
+
+The [Strong Signal acceptance record](STRONG_SIGNAL_ACCEPTANCE.md) separates
+local engineering acceptance from semantic accuracy and model promotion.
+
+Reproduction uses fresh output directories and locally available models:
+
+```bash
+PYTHONPATH=src:. python scripts/prepare_agent_acceptance.py --output /tmp/agent-cases --instances 8
+docker build -f Dockerfile.rag -t sql-agent-rag:local .
+PYTHONPATH=src:. python scripts/validate_live_rag_deployment.py \
+  --dataset /tmp/agent-cases --output /tmp/agent-evaluation \
+  --image sql-agent-rag:local --embedding /path/to/local/minilm \
+  --reranker /path/to/local/cross-encoder
+```
+
+The runner removes only its generated containers and retains fixture/control files,
+private Compose configuration and raw evidence locally. Host networking is used
+to reach loopback Ollama; this is a single-workspace acceptance deployment, not a
+network-isolated multi-tenant installation. Do not publish the private Compose file.
+
+If Docker lacks a GPU runtime, `run_isolated_inference_trial.py` owns a separate
+native Ollama process and points the Docker API/Workers at its ephemeral loopback
+port. It does not change the installed service. Existing model files must be
+non-writable; cloud access and startup pruning are disabled. The trial sets a
+4096-token context, two resident models, one parallel request per model and flash
+attention. Wait for sufficient free VRAM rather than stopping other workloads.
+This is a serving-profile comparison, not a single-factor keep-alive ablation.
+
+```bash
+PYTHONPATH=src:. python scripts/run_isolated_inference_trial.py \
+  --output /tmp/isolated-agent-evaluation \
+  --models /usr/share/ollama/.ollama/models -- \
+  --dataset /tmp/agent-cases --image sql-agent-rag:local \
+  --embedding /path/to/local/minilm --reranker /path/to/local/cross-encoder
+```
+
+## Historical software verification
 
 The clean public checkout passed 237 tests locally on 2026-09-08, with one
 dependency deprecation warning. GitHub CI checks tests, source compilation and

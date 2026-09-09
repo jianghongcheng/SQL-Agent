@@ -22,6 +22,30 @@ TOOL_SCHEMAS = [
                      "required": ["job_id"], "additionalProperties": False}},
 ]
 
+# Deliberately no approval tool: model clients can inspect/propose, never approve.
+TOOL_SCHEMAS += [
+    {"name": "list_sql_sources", "description": "List all SQL-Agent sources and task contracts for the unified request workflow.",
+     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "submit_sql_request", "description": "Submit a question or SQL through the unified asynchronous SQL-Agent workflow. Choose task_id OR database_id. Changes pause for human approval.",
+     "inputSchema": {"type": "object", "properties": {"task_id": {"type": "string"},
+         "database_id": {"type": "string"}, "question": {"type": "string"}, "sql": {"type": "string"},
+         "idempotency_key": {"type": "string"}}, "required": ["idempotency_key"], "additionalProperties": False}},
+    {"name": "get_sql_request", "description": "Read unified request state, SQL, output or approval proposal.",
+     "inputSchema": {"type": "object", "properties": {"request_id": {"type": "string"}},
+                     "required": ["request_id"], "additionalProperties": False}},
+    {"name": "list_databases", "description": "List explicitly configured CRUD databases and table/DDL policies.",
+     "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False}},
+    {"name": "query_database", "description": "Execute one read-only SELECT against a configured database.",
+     "inputSchema": {"type": "object", "properties": {"database_id": {"type": "string"}, "sql": {"type": "string"}},
+                     "required": ["database_id", "sql"], "additionalProperties": False}},
+    {"name": "propose_database_change", "description": "Preview INSERT/UPDATE/DELETE/CREATE TABLE/DROP TABLE. Does NOT commit changes. A human administrator must approve through the browser/API.",
+     "inputSchema": {"type": "object", "properties": {"database_id": {"type": "string"}, "sql": {"type": "string"}},
+                     "required": ["database_id", "sql"], "additionalProperties": False}},
+    {"name": "get_database_change", "description": "Inspect a stored change proposal and execution status.",
+     "inputSchema": {"type": "object", "properties": {"proposal_id": {"type": "string"}},
+                     "required": ["proposal_id"], "additionalProperties": False}},
+]
+
 
 def api_call(path: str, payload: dict | None = None, idempotency_key: str | None = None):
     key = os.environ.get("SQL_AGENT_MCP_API_KEY")
@@ -66,6 +90,22 @@ def dispatch(message: dict) -> dict | None:
             return error(-32602, "Invalid arguments")
         if name == "list_sql_tasks" and not args:
             output = api_call("/v1/tasks")
+        elif name == 'list_sql_sources' and not args:
+            output = api_call('/v1/sources')
+        elif name == 'submit_sql_request' and 'idempotency_key' in args and not set(args) - {'task_id', 'database_id', 'question', 'sql', 'idempotency_key'}:
+            if not all(isinstance(v, str) and v for v in args.values()):
+                return error(-32602, 'Arguments must be nonempty strings')
+            output = api_call('/v1/requests', {k: v for k, v in args.items() if k != 'idempotency_key'}, args['idempotency_key'])
+        elif name == 'get_sql_request' and set(args) == {'request_id'} and isinstance(args['request_id'], str):
+            output = api_call('/v1/requests/' + quote(args['request_id'], safe=''))
+        elif name == 'list_databases' and not args:
+            output = api_call('/v1/databases')
+        elif name in {'query_database', 'propose_database_change'} and set(args) == {'database_id', 'sql'}:
+            if not all(isinstance(v, str) and v for v in args.values()):
+                return error(-32602, 'Arguments must be nonempty strings')
+            output = api_call('/v1/database-query' if name == 'query_database' else '/v1/mutations', args)
+        elif name == 'get_database_change' and set(args) == {'proposal_id'} and isinstance(args['proposal_id'], str):
+            output = api_call('/v1/mutations/' + quote(args['proposal_id'], safe=''))
         elif name == "get_sql_job" and set(args) == {"job_id"} and isinstance(args["job_id"], str):
             output = api_call("/v1/jobs/" + quote(args["job_id"], safe=""))
         elif name == "submit_sql_task" and {"task_id", "idempotency_key"} <= set(args) and not set(args) - {"task_id", "idempotency_key", "question", "initial_sql"}:

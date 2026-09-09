@@ -14,6 +14,35 @@ from typing import Any, Iterator
 TERMINAL_STATUSES = {"completed", "needs_review", "review_approved", "review_rejected", "failed"}
 
 
+def validate_finish(status, result):
+    if status not in {'completed', 'needs_review', 'waiting_user'}:
+        raise ValueError('unsupported finish status')
+    if status == 'waiting_user':
+        question = result.get('clarification', {})
+        if not isinstance(question, dict) or any(
+                not isinstance(question.get(k), str) or not question[k].strip() or len(question[k]) > limit
+                for k, limit in [('id', 128), ('question', 2000)]):
+            raise ValueError('waiting_user requires an identified clarification question')
+
+
+def clarification_reply(waiting_id, answer, actor, key):
+    for value, maximum in [(waiting_id,128), (answer,4000), (actor,256), (key,256)]:
+        if not isinstance(value, str) or not value.strip() or len(value) > maximum:
+            raise ValueError('invalid clarification reply')
+    return {'id': waiting_id, 'answer': answer, 'actor': actor}
+
+
+def resume_payload(job, reply):
+    if job.status != 'waiting_user' or (job.result or {}).get('clarification', {}).get('id') != reply['id']:
+        raise ValueError('job is not awaiting this clarification')
+    if job.attempts >= job.max_attempts:
+        raise ValueError('job attempt budget exhausted; cannot resume')
+    history = job.payload.get('_clarifications', [])
+    if len(history) >= 2:
+        raise ValueError('clarification budget exhausted')
+    return {**job.payload, '_clarifications': [*history, reply]}
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -99,6 +128,9 @@ class SqliteJobRepository:
                     created_at TEXT NOT NULL
                 )
             """)
+            connection.execute('''CREATE TABLE IF NOT EXISTS job_resumes (
+                job_id TEXT NOT NULL, idempotency_key TEXT NOT NULL, reply TEXT NOT NULL,
+                PRIMARY KEY(job_id, idempotency_key))''')
 
     @staticmethod
     def _event(connection: sqlite3.Connection, job_id: str,
@@ -226,21 +258,44 @@ class SqliteJobRepository:
     def finish(self, job_id: str, status: str, result: dict[str, Any], *, claim: Job) -> Job:
         if claim.job_id != job_id:
             raise ValueError("claim does not belong to job")
-        if status not in {"completed", "needs_review"}:
-            raise ValueError("finish status must be completed or needs_review")
+        validate_finish(status, result)
         with self._connect() as connection:
+            connection.execute('BEGIN IMMEDIATE')
             cursor = connection.execute(
                 "UPDATE jobs SET status=?, result=?, error=NULL, worker_id=NULL, lease_expires_at=NULL, updated_at=? WHERE job_id=? AND status='running' AND worker_id=? AND attempts=? AND lease_expires_at>?",
                 (status, json.dumps(result), _now(), job_id, claim.worker_id, claim.attempts, _now()),
             )
             if cursor.rowcount == 1:
-                self._event(connection, job_id, status, {})
+                details = {'attempt_telemetry': result['attempt_telemetry']} if 'attempt_telemetry' in result else {}
+                self._event(connection, job_id, status, details)
+            connection.execute('COMMIT')
         if cursor.rowcount != 1:
             raise RuntimeError("job is not running or claim is stale")
         return self.get(job_id)
 
+    def resume(self, job_id, waiting_id, answer, actor, idempotency_key):
+        reply = clarification_reply(waiting_id, answer, actor, idempotency_key)
+        with self._connect() as connection:
+            connection.execute('BEGIN IMMEDIATE')
+            row = connection.execute('SELECT * FROM jobs WHERE job_id=?', (job_id,)).fetchone()
+            if row is None:
+                raise ValueError('unknown job')
+            previous = connection.execute('SELECT reply FROM job_resumes WHERE job_id=? AND idempotency_key=?',
+                                          (job_id, idempotency_key)).fetchone()
+            if previous:
+                if json.loads(previous['reply']) != reply:
+                    raise ValueError('resume idempotency key already used for another reply')
+            else:
+                payload = resume_payload(self._job(row), reply)
+                connection.execute('UPDATE jobs SET status=\'queued\',payload=?,result=NULL,error=NULL,worker_id=NULL,lease_expires_at=NULL,updated_at=? WHERE job_id=?',
+                                   (json.dumps(payload), _now(), job_id))
+                connection.execute('INSERT INTO job_resumes VALUES (?,?,?)', (job_id, idempotency_key, json.dumps(reply)))
+                self._event(connection, job_id, 'user_resumed', {'clarification_id': waiting_id, 'actor': actor})
+            connection.execute('COMMIT')
+        return self.get(job_id)
+
     def record_failure(self, job_id: str, code: str, message: str,
-                       retryable: bool = True, *, claim: Job) -> Job:
+                       retryable: bool = True, *, claim: Job, evidence: dict | None = None) -> Job:
         if claim.job_id != job_id:
             raise ValueError("claim does not belong to job")
         with self._connect() as connection:
@@ -254,6 +309,8 @@ class SqliteJobRepository:
                 raise RuntimeError("job is not running or claim is stale")
             status = "queued" if retryable and row["attempts"] < row["max_attempts"] else "failed"
             error = {"code": code, "message": message, "retryable": retryable}
+            if evidence is not None:
+                error['evidence'] = evidence
             connection.execute(
                 "UPDATE jobs SET status=?,error=?,worker_id=NULL,lease_expires_at=NULL,updated_at=? WHERE job_id=?",
                 (status, json.dumps(error), _now(), job_id),

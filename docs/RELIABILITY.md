@@ -1,5 +1,11 @@
 # Execution control and operational recovery
 
+This document expands SQL-Agent's **contracted analysis executor**, which runs
+as a node in the shared LangGraph workflow. Database mutations use persistent
+approval checkpoints and atomic receipts within that workflow; see
+[approved database changes](USAGE.md#approved-database-changes). Live PostgreSQL
+business-data tests do not validate the PostgreSQL job-store renewal adapter.
+
 ## Fixed-task verification
 
 Structural SQL validation checks executable form, not business semantics. Fixed
@@ -108,11 +114,24 @@ production capacity and deployment isolation require separate validation.
 
 ## General SQL release boundary
 
-General SQL remains review-required without registered business verification.
-An independent model checker is available as an optional strategy; it is not
-enabled in the documented SQL-text demo profile. Its agreement does not prove
-correctness. See [the evaluation summary](EVALUATION.md) for the separate
-checker experiments and their abstention tradeoffs.
+General HTTP requests now end in `needs_review`, with `output: null` and a
+separate `candidate_output`, unless using the existing registered-task business
+verification path. Executing SQL successfully is not automatic publication.
+The LangGraph `verify_result` node runs an independent checker for SQLite
+natural-language requests when a model is available. Agreement, disagreement,
+checker failure and truncated results all remain review-required. The checker
+does not see the primary SQL or result and executes under the same database
+allowlist and budgets, but uses a **separate read snapshot**. Evidence explicitly
+labels this limitation and always sets `proof: false`. No semantic repair loop
+or automatic publication is enabled by checker agreement.
+
+Explicit SQL without a question/model, disabled review, and PostgreSQL queries
+retain candidates for review with a `not_run` reason; the SQLite checker is not
+misrepresented as PostgreSQL semantic verification. Existing historical jobs
+are not rewritten. Human review uses the existing administrator endpoint and
+records `review_approved` / `review_rejected`, not a machine correctness proof.
+See [the evaluation summary](EVALUATION.md) for historical experiments, which
+predate this HTTP release-boundary change.
 
 ## Read snapshots and MCP input validation
 

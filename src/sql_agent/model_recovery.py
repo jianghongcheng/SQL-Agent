@@ -73,4 +73,7 @@ def call_observation(model, started, metadata):
             'adapter': type(model).__name__,
             'model': str(getattr(model, 'model', 'unspecified'))[:128],
             'prompt_tokens': count('prompt_tokens'),
-            'completion_tokens': count('completion_tokens')}
+            'completion_tokens': count('completion_tokens'),
+            **{target: (count(source)/1_000_000 if count(source) is not None else None)
+               for source, target in [('load_duration_ns','model_load_ms'),
+                   ('prompt_eval_duration_ns','prompt_eval_ms'), ('eval_duration_ns','generation_ms')]}}

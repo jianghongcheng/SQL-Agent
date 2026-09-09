@@ -1,0 +1,403 @@
+{
+  "scope": "Inspected synthetic development set; six question families, eight data variants each. Not blind or production accuracy.",
+  "summaries": {
+    "before": {
+      "n": 48,
+      "correct": 21,
+      "token_cost": {
+        "unit": "tokens",
+        "complete": true,
+        "input_tokens": 132980,
+        "output_tokens": 6227,
+        "total_tokens": 139207,
+        "observed_total_tokens": 139207,
+        "tokens_per_submitted_job": 2900.1458333333335,
+        "tokens_per_correct_result": 6628.9047619047615,
+        "scope": "All submitted jobs, including incorrect answers, failures and recorded retries. Missing usage is unknown, not zero."
+      },
+      "candidate_accuracy": 0.4375,
+      "accuracy_wilson95_descriptive_iid": [
+        0.3070105464041092,
+        0.5772522849899835
+      ],
+      "unavailable": 0,
+      "human_review_rate": 1.0,
+      "automatic_release_rate": 0.0,
+      "false_discovery_among_releases": null,
+      "incorrect_answer_detection_recall": 0.7037037037037037,
+      "incorrect_agreement_rate": 0.0,
+      "correct_answer_agreement_rate": 0.6190476190476191,
+      "p50_seconds": 5.1022648580837995,
+      "p95_seconds": 5.854504919843748,
+      "prompt_tokens_observed": 132980,
+      "completion_tokens_observed": 6227,
+      "model_calls_observed": 96,
+      "jobs_without_complete_telemetry": 0,
+      "caution": "Agreement is advisory, not publication or proof. Repeated template instances are clustered, not independent questions.",
+      "task_accuracy": {
+        "numerator": 21,
+        "denominator": 48,
+        "rate": 0.4375
+      },
+      "verifier_false_accept_rate": {
+        "numerator": 0,
+        "denominator": 27,
+        "rate": 0.0
+      },
+      "verifier_false_discovery_rate": {
+        "numerator": 0,
+        "denominator": 13,
+        "rate": 0.0
+      },
+      "observed_joint_wrong_agreement_rate": {
+        "numerator": 0,
+        "denominator": 48,
+        "rate": 0.0
+      },
+      "system_false_accept_rate": {
+        "numerator": 0,
+        "denominator": 27,
+        "rate": 0.0
+      },
+      "system_false_discovery_rate": {
+        "numerator": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "no_candidate": {
+        "numerator": 0,
+        "denominator": 48,
+        "rate": 0.0
+      },
+      "review": {
+        "numerator": 48,
+        "denominator": 48,
+        "rate": 1.0
+      },
+      "accuracy_cluster95": [
+        0.10416666666666667,
+        0.7708333333333334
+      ],
+      "question_template_clusters": 6,
+      "latency_scope": "Client submission to terminal observation, including cold start, polling and failures; timeout records are censored.",
+      "timed_out_records": 0,
+      "p99_seconds": 6.147226192988455
+    },
+    "after": {
+      "n": 48,
+      "correct": 35,
+      "token_cost": {
+        "unit": "tokens",
+        "complete": true,
+        "input_tokens": 142484,
+        "output_tokens": 6250,
+        "total_tokens": 148734,
+        "observed_total_tokens": 148734,
+        "tokens_per_submitted_job": 3098.625,
+        "tokens_per_correct_result": 4249.542857142857,
+        "scope": "All submitted jobs, including incorrect answers, failures and recorded retries. Missing usage is unknown, not zero."
+      },
+      "candidate_accuracy": 0.7291666666666666,
+      "accuracy_wilson95_descriptive_iid": [
+        0.5900276538379887,
+        0.8343419643836709
+      ],
+      "unavailable": 0,
+      "human_review_rate": 1.0,
+      "automatic_release_rate": 0.0,
+      "false_discovery_among_releases": null,
+      "incorrect_answer_detection_recall": 0.6923076923076923,
+      "incorrect_agreement_rate": 0.15384615384615385,
+      "correct_answer_agreement_rate": 0.6,
+      "p50_seconds": 5.224331327015534,
+      "p95_seconds": 5.909396583912894,
+      "prompt_tokens_observed": 142484,
+      "completion_tokens_observed": 6250,
+      "model_calls_observed": 96,
+      "jobs_without_complete_telemetry": 0,
+      "caution": "Agreement is advisory, not publication or proof. Repeated template instances are clustered, not independent questions.",
+      "task_accuracy": {
+        "numerator": 35,
+        "denominator": 48,
+        "rate": 0.7291666666666666
+      },
+      "verifier_false_accept_rate": {
+        "numerator": 2,
+        "denominator": 13,
+        "rate": 0.15384615384615385
+      },
+      "verifier_false_discovery_rate": {
+        "numerator": 2,
+        "denominator": 23,
+        "rate": 0.08695652173913043
+      },
+      "observed_joint_wrong_agreement_rate": {
+        "numerator": 2,
+        "denominator": 48,
+        "rate": 0.041666666666666664
+      },
+      "system_false_accept_rate": {
+        "numerator": 0,
+        "denominator": 13,
+        "rate": 0.0
+      },
+      "system_false_discovery_rate": {
+        "numerator": 0,
+        "denominator": 0,
+        "rate": null
+      },
+      "no_candidate": {
+        "numerator": 0,
+        "denominator": 48,
+        "rate": 0.0
+      },
+      "review": {
+        "numerator": 48,
+        "denominator": 48,
+        "rate": 1.0
+      },
+      "accuracy_cluster95": [
+        0.4166666666666667,
+        0.9583333333333334
+      ],
+      "question_template_clusters": 6,
+      "latency_scope": "Client submission to terminal observation, including cold start, polling and failures; timeout records are censored.",
+      "timed_out_records": 0,
+      "p99_seconds": 6.574626357993111
+    }
+  },
+  "identities": {
+    "before": {
+      "image_id": "sha256:a2e58f395b74f83a0e39d51464a2b0026017cae8ab60ba7c6fddfb382a62b17c",
+      "planner": "qwen3:8b",
+      "reviewer": "qwen2.5-coder:14b",
+      "model_metadata": [
+        {
+          "name": "qwen3:8b",
+          "model": "qwen3:8b",
+          "modified_at": "2026-08-25T16:58:15.401600829-05:00",
+          "size": 5225388164,
+          "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "qwen2.5-coder:14b",
+          "model": "qwen2.5-coder:14b",
+          "modified_at": "2026-06-26T13:59:08.02160783-05:00",
+          "size": 8988124298,
+          "digest": "9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "14.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 5120
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "insert"
+          ]
+        }
+      ],
+      "dataset_sha256": "c953aad9fdf41bba3a8642c223bdc16308df9629f97e3da83bd9919789d7e5a1",
+      "knowledge_sha256": "2b0dcfd06fb4c8af5f72a02c93c43c210012e510e595f301e1c79afab78c8e95",
+      "concurrency": 2,
+      "workers": 2,
+      "source_sha256": {
+        "src/sql_agent/execution_record.py": "bb7ec4e1583e20269ee23a0681363a6a9f4ecd75bae07d5fd2a9f83ca5d8dd8d",
+        "src/sql_agent/replay.py": "fadbc047377e6dc2286d5fcbf5921954a3fe9cebd520298d54285886fe57db89",
+        "src/sql_agent/model_recovery.py": "e57f4fe3b3a39a8e1b6475030a7a787ad52da2690c9d589b85f7728f285f33ea",
+        "src/sql_agent/data_agent.py": "ee718e75db03926b3b5733d232e511147be6a36ec93dfb942899ea93a029c644",
+        "src/sql_agent/metrics.py": "9317de8487268d722eb8f8b712cd25aa54bb7fa44ad7626fea1c7270061a3945",
+        "src/sql_agent/unified_dashboard.py": "7fd672e943960a555a153b60981b867d9fe0e52ab65ef001d774fc147a6a091c",
+        "src/sql_agent/training_dataset.py": "3876127af715875642ee113e36c65847cc5af47f87706cdd38fa0c289d6a26c8",
+        "src/sql_agent/sql_environment.py": "25a5cc533afaa54c23d2297cd67c798c5a96cc387569f501bb71b2f5a93e689a",
+        "src/sql_agent/cli.py": "5d1c6b3b36948fc1f815fd580ca8f0138c6591539d207a272b266b1f3c4dc261",
+        "src/sql_agent/security.py": "88f781f13718a9be2fb468d8fc717c076d7c9015b55d65238eb33c8ea4a9852f",
+        "src/sql_agent/pipeline.py": "07e8db0b2bd80e11a3a351793198c1b9f8224b10dba9be56d2e04e7cfb949dc4",
+        "src/sql_agent/backends.py": "dbb453cfc200c1cc98360edc1f1b6ac09339092657977f38aab20ba0bf82303c",
+        "src/sql_agent/database_workflow.py": "97a61feebbe8e2fd68f475edb1c2f779ded40c13a74789b93be81d2d48fa7bd7",
+        "src/sql_agent/data_probe.py": "abce4435ac243b631df57c1cd464ede7ab6fe30a3b513de5c517fc4cf4fc5b20",
+        "src/sql_agent/reranking.py": "e8c2bdeece2a4385a5a1cb44e6bd59e3fdbff5cce65f2cd110f421031dbc8b96",
+        "src/sql_agent/mutations.py": "466e94ca1ef57b4b5c7368ae2c11552fe64e63a40d74c7a5e643d8820d894abf",
+        "src/sql_agent/harbor_agent.py": "973066fa9c288e9320005d11f354d40b1d4d3af4cfc8d3f7ed414f7a41bbaddc",
+        "src/sql_agent/bounded_runtime.py": "5f5fd16744a73f10880503486025a8b4aa9705a598c45a48022c35707493cdc4",
+        "src/sql_agent/logging_config.py": "7fa1b6208e0790734d991e04832303464c03c1b102e46445e0e193d07d6d7f5e",
+        "src/sql_agent/native_sql.py": "2cf59ea63335478ceb61e097bb011888cc49c69eeaa4bc7749455121be4d5f12",
+        "src/sql_agent/commerce_catalog.py": "e43ef7a3d9a6ff5706ff204847360277a342533a22424885d105b39dddef5a6b",
+        "src/sql_agent/api.py": "f53d9169b684cdf86fc76d62d881d0d36888bc921de5d23ce381fa601aa2ba84",
+        "src/sql_agent/planner.py": "a00ffb955b41f4de896e3805988f74eb0de31a447328ee75d3d59419f093fff7",
+        "src/sql_agent/relational_plan.py": "69ae518fd491ac6072e6dcb74cede7169979c9f798ca94a5ee56948090d781d6",
+        "src/sql_agent/embeddings.py": "b32c00f2e11ec10b12870577bb1828e695c30cd6975e6fa8499297980fb0ddbf",
+        "src/sql_agent/semantic_review.py": "ff380d332dc77143d2769d617975a8835177348f39f92f99943aac91d5f611f8",
+        "src/sql_agent/postgres_mutations.py": "d6a5ef15859c43596c38232092d7568aaa0abd02223078799563bf7434adadaf",
+        "src/sql_agent/request_planner.py": "edfebe04a282060bee6c24d18c7707a25fb01454a42d0856ac52b125850eb735",
+        "src/sql_agent/dashboard.py": "927e0b7fedc9f23e50a7f540895a53493e6c48a7e68d7592620910baa4c0929f",
+        "src/sql_agent/schema_linking.py": "fb6b53d0d713ba1b14be01d75a1443ed6c61d880598a8c947e996ca9b9f5796e",
+        "src/sql_agent/evaluation_gate.py": "9e1a46afcc1b86e12950c5601f46004cbd92d435a8260d344619424206387257",
+        "src/sql_agent/gateway.py": "33b6b5104b7cb2bc79e5edf851453e6b8c21b86e82e0bce8ad5093d38f067e29",
+        "src/sql_agent/evaluation_dataset.py": "bc241329e1c5fb3af94500fe818f2fa694d9810edfdae257ea8f0d4658c358d9",
+        "src/sql_agent/worker.py": "2ab956450872de52f773334323032b6a22ec8c3bcb2426136cefc0d69d001233",
+        "src/sql_agent/telemetry.py": "00f05dfde31338c59324a3ebbf40c84057325ccffa73576e0a39f36795a39a80",
+        "src/sql_agent/sql_config.py": "12b0585d74925b08919dcecb46f1483fcdf1bc50396c6e713a364f4167a76dcb",
+        "src/sql_agent/agent_evaluation.py": "d8b90731138ba3d74a37b426629155b6f80ae767ce1633d33ac9b1e97d855f2f",
+        "src/sql_agent/harbor_export.py": "ff99500db941df722cf5e2fad49f86e95f4542dcdcbf64be9d5e380fe88eaad9",
+        "src/sql_agent/jobs.py": "9c1bad84e3406dda22bfa513c32405e093fcbb53da07892398fa0b305c84647c",
+        "src/sql_agent/acceptance_report.py": "e5e1b4d32a3b3376f66cc1fe8bfe97ab75db110157ba3a809edb3df32e50c19c",
+        "src/sql_agent/postgres_jobs.py": "0497db0c90f468479d476380c6be8cdf3e616586b9581a310334103caf550464",
+        "src/sql_agent/mcp_server.py": "b113a755ce6060f9eed2f82ab7d189ba1fcfe69b82635e7b5a07f6b6b754d7a6",
+        "src/sql_agent/__init__.py": "557e516901d9f1c38d458fcb36ffe1436798dcd73da0bbeb3d9ce771a43ef30b",
+        "src/sql_agent/paired_benchmark.py": "81565c0408482807872e29d9865e42ae592bb1de23423179439d0186d1be60e2",
+        "src/sql_agent/business_context.py": "f5ded98b45ef44939b9197c218d96bc2645f6c2c850fb949b664b80d7291c95a",
+        "src/sql_agent/retrieval.py": "b1ef08452cd0d3b0b4bb7fa3655d075e8c795eaab9b751a1dd2494be15f333d6",
+        "src/sql_agent/grain_verification.py": "899cc93174dc957c381bc82c8ef9793ec837f647794432c372bc1d1047b011b7"
+      }
+    },
+    "after": {
+      "image_id": "sha256:24da5788143a08a44a83ad28c028eff93bd2541507b5ffc9465b0e9bb279ac9c",
+      "planner": "qwen3:8b",
+      "reviewer": "qwen2.5-coder:14b",
+      "model_metadata": [
+        {
+          "name": "qwen3:8b",
+          "model": "qwen3:8b",
+          "modified_at": "2026-08-25T16:58:15.401600829-05:00",
+          "size": 5225388164,
+          "digest": "500a1f067a9f782620b40bee6f7b0c89e17ae61f686b92c24933e4ca4b2b8b41",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "qwen2.5-coder:14b",
+          "model": "qwen2.5-coder:14b",
+          "modified_at": "2026-06-26T13:59:08.02160783-05:00",
+          "size": 8988124298,
+          "digest": "9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "14.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 5120
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "insert"
+          ]
+        }
+      ],
+      "dataset_sha256": "c953aad9fdf41bba3a8642c223bdc16308df9629f97e3da83bd9919789d7e5a1",
+      "knowledge_sha256": "2b0dcfd06fb4c8af5f72a02c93c43c210012e510e595f301e1c79afab78c8e95",
+      "concurrency": 2,
+      "workers": 2,
+      "source_sha256": {
+        "src/sql_agent/execution_record.py": "bb7ec4e1583e20269ee23a0681363a6a9f4ecd75bae07d5fd2a9f83ca5d8dd8d",
+        "src/sql_agent/replay.py": "fadbc047377e6dc2286d5fcbf5921954a3fe9cebd520298d54285886fe57db89",
+        "src/sql_agent/model_recovery.py": "e57f4fe3b3a39a8e1b6475030a7a787ad52da2690c9d589b85f7728f285f33ea",
+        "src/sql_agent/data_agent.py": "ee718e75db03926b3b5733d232e511147be6a36ec93dfb942899ea93a029c644",
+        "src/sql_agent/metrics.py": "9317de8487268d722eb8f8b712cd25aa54bb7fa44ad7626fea1c7270061a3945",
+        "src/sql_agent/unified_dashboard.py": "7fd672e943960a555a153b60981b867d9fe0e52ab65ef001d774fc147a6a091c",
+        "src/sql_agent/training_dataset.py": "3876127af715875642ee113e36c65847cc5af47f87706cdd38fa0c289d6a26c8",
+        "src/sql_agent/sql_environment.py": "25a5cc533afaa54c23d2297cd67c798c5a96cc387569f501bb71b2f5a93e689a",
+        "src/sql_agent/cli.py": "5d1c6b3b36948fc1f815fd580ca8f0138c6591539d207a272b266b1f3c4dc261",
+        "src/sql_agent/security.py": "88f781f13718a9be2fb468d8fc717c076d7c9015b55d65238eb33c8ea4a9852f",
+        "src/sql_agent/pipeline.py": "07e8db0b2bd80e11a3a351793198c1b9f8224b10dba9be56d2e04e7cfb949dc4",
+        "src/sql_agent/backends.py": "dbb453cfc200c1cc98360edc1f1b6ac09339092657977f38aab20ba0bf82303c",
+        "src/sql_agent/database_workflow.py": "97a61feebbe8e2fd68f475edb1c2f779ded40c13a74789b93be81d2d48fa7bd7",
+        "src/sql_agent/data_probe.py": "abce4435ac243b631df57c1cd464ede7ab6fe30a3b513de5c517fc4cf4fc5b20",
+        "src/sql_agent/reranking.py": "e8c2bdeece2a4385a5a1cb44e6bd59e3fdbff5cce65f2cd110f421031dbc8b96",
+        "src/sql_agent/mutations.py": "466e94ca1ef57b4b5c7368ae2c11552fe64e63a40d74c7a5e643d8820d894abf",
+        "src/sql_agent/harbor_agent.py": "973066fa9c288e9320005d11f354d40b1d4d3af4cfc8d3f7ed414f7a41bbaddc",
+        "src/sql_agent/bounded_runtime.py": "5f5fd16744a73f10880503486025a8b4aa9705a598c45a48022c35707493cdc4",
+        "src/sql_agent/logging_config.py": "7fa1b6208e0790734d991e04832303464c03c1b102e46445e0e193d07d6d7f5e",
+        "src/sql_agent/native_sql.py": "2cf59ea63335478ceb61e097bb011888cc49c69eeaa4bc7749455121be4d5f12",
+        "src/sql_agent/commerce_catalog.py": "e43ef7a3d9a6ff5706ff204847360277a342533a22424885d105b39dddef5a6b",
+        "src/sql_agent/api.py": "f53d9169b684cdf86fc76d62d881d0d36888bc921de5d23ce381fa601aa2ba84",
+        "src/sql_agent/planner.py": "a00ffb955b41f4de896e3805988f74eb0de31a447328ee75d3d59419f093fff7",
+        "src/sql_agent/relational_plan.py": "69ae518fd491ac6072e6dcb74cede7169979c9f798ca94a5ee56948090d781d6",
+        "src/sql_agent/embeddings.py": "b32c00f2e11ec10b12870577bb1828e695c30cd6975e6fa8499297980fb0ddbf",
+        "src/sql_agent/semantic_review.py": "ff380d332dc77143d2769d617975a8835177348f39f92f99943aac91d5f611f8",
+        "src/sql_agent/postgres_mutations.py": "d6a5ef15859c43596c38232092d7568aaa0abd02223078799563bf7434adadaf",
+        "src/sql_agent/request_planner.py": "126ffc2a8ca86d70a4d37cec68253160a3bf44890b990d8f45dafd69d2550807",
+        "src/sql_agent/dashboard.py": "927e0b7fedc9f23e50a7f540895a53493e6c48a7e68d7592620910baa4c0929f",
+        "src/sql_agent/schema_linking.py": "fb6b53d0d713ba1b14be01d75a1443ed6c61d880598a8c947e996ca9b9f5796e",
+        "src/sql_agent/evaluation_gate.py": "9e1a46afcc1b86e12950c5601f46004cbd92d435a8260d344619424206387257",
+        "src/sql_agent/gateway.py": "33b6b5104b7cb2bc79e5edf851453e6b8c21b86e82e0bce8ad5093d38f067e29",
+        "src/sql_agent/evaluation_dataset.py": "bc241329e1c5fb3af94500fe818f2fa694d9810edfdae257ea8f0d4658c358d9",
+        "src/sql_agent/worker.py": "2ab956450872de52f773334323032b6a22ec8c3bcb2426136cefc0d69d001233",
+        "src/sql_agent/telemetry.py": "00f05dfde31338c59324a3ebbf40c84057325ccffa73576e0a39f36795a39a80",
+        "src/sql_agent/sql_config.py": "12b0585d74925b08919dcecb46f1483fcdf1bc50396c6e713a364f4167a76dcb",
+        "src/sql_agent/agent_evaluation.py": "d8b90731138ba3d74a37b426629155b6f80ae767ce1633d33ac9b1e97d855f2f",
+        "src/sql_agent/harbor_export.py": "ff99500db941df722cf5e2fad49f86e95f4542dcdcbf64be9d5e380fe88eaad9",
+        "src/sql_agent/jobs.py": "9c1bad84e3406dda22bfa513c32405e093fcbb53da07892398fa0b305c84647c",
+        "src/sql_agent/acceptance_report.py": "e5e1b4d32a3b3376f66cc1fe8bfe97ab75db110157ba3a809edb3df32e50c19c",
+        "src/sql_agent/postgres_jobs.py": "0497db0c90f468479d476380c6be8cdf3e616586b9581a310334103caf550464",
+        "src/sql_agent/mcp_server.py": "b113a755ce6060f9eed2f82ab7d189ba1fcfe69b82635e7b5a07f6b6b754d7a6",
+        "src/sql_agent/__init__.py": "557e516901d9f1c38d458fcb36ffe1436798dcd73da0bbeb3d9ce771a43ef30b",
+        "src/sql_agent/paired_benchmark.py": "81565c0408482807872e29d9865e42ae592bb1de23423179439d0186d1be60e2",
+        "src/sql_agent/business_context.py": "f5ded98b45ef44939b9197c218d96bc2645f6c2c850fb949b664b80d7291c95a",
+        "src/sql_agent/retrieval.py": "b1ef08452cd0d3b0b4bb7fa3655d075e8c795eaab9b751a1dd2494be15f333d6",
+        "src/sql_agent/grain_verification.py": "899cc93174dc957c381bc82c8ef9793ec837f647794432c372bc1d1047b011b7"
+      }
+    }
+  },
+  "paired": {
+    "n": 48,
+    "fixed": 15,
+    "regressed": 1,
+    "accuracy_delta": 0.2916666666666667,
+    "clusters": 6,
+    "cluster_bootstrap95": [
+      0.0,
+      0.625
+    ],
+    "bootstrap_seed": 42,
+    "bootstrap_resamples": 10000,
+    "mcnemar_exact_p_iid": 0.000518798828125,
+    "caution": "Cluster bootstrap resamples whole declared families. Few clusters imply weak precision; IID McNemar is only descriptive when cases are dependent."
+  },
+  "holdout_status": "No completed verified report published in this release."
+}
