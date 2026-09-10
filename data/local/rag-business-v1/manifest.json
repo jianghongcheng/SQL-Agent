@@ -1,0 +1,69 @@
+{
+  "version": "rag-business-v1",
+  "synthetic": true,
+  "purpose": "New local supporting data for eight knowledge topics; no experiments run.",
+  "construction": "Explicit deterministic rows in schema_and_data.sql; no model generation.",
+  "tables": {
+    "customers": 4,
+    "orders": 8,
+    "refunds": 3,
+    "products": 4,
+    "stock_movements": 6,
+    "reservations": 5,
+    "shipments": 4,
+    "tickets": 3,
+    "ticket_messages": 7,
+    "ticket_events": 8,
+    "invoices": 4,
+    "payments": 5
+  },
+  "knowledge_scope": {
+    "net_sales": [
+      "orders",
+      "refunds"
+    ],
+    "available_stock": [
+      "products",
+      "stock_movements",
+      "reservations"
+    ],
+    "customer_count": [
+      "orders"
+    ],
+    "monthly_window": [
+      "orders"
+    ],
+    "shipping_delay": [
+      "shipments"
+    ],
+    "response_time": [
+      "tickets",
+      "ticket_messages"
+    ],
+    "unpaid_balance": [
+      "invoices",
+      "payments"
+    ],
+    "repeat_open": [
+      "tickets",
+      "ticket_events"
+    ]
+  },
+  "conventions": {
+    "timestamps": "UTC ISO-8601 Z",
+    "money": "integer cents",
+    "refunds": "Recorded refund amounts; no pending refund applications in this new table.",
+    "stock": "Signed movements, positive receipt and negative issue; only active reservations subtract availability."
+  },
+  "checks": [
+    "SQLite integrity_check",
+    "foreign_key_check",
+    "knowledge table references exist"
+  ],
+  "evaluation_results": null,
+  "files_sha256": {
+    "knowledge.json": "5198e88f277d40439a89ca7301a427d35c0c91406c18b1846274c2f67867db13",
+    "schema_and_data.sql": "a3d4a03ac05a205c1743388d9a26c1bc8ad687207b02f3a3de48730d2a0eaf1b",
+    "business.db": "b26bf3c03ec8e894fdaece4bab1a2e4075dae8f05811a64e7a4b25c0fd8f27e8"
+  }
+}
