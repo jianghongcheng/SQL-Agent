@@ -104,7 +104,7 @@ usage is unknown, not zero.
 | Experiment | Measured result | Scope |
 | --- | --- | --- |
 | SQL planning repair | **21/48 → 35/48**; 15 fixes, 1 regression | Inspected development set; see headline metrics above |
-| Retrieval-only BM25 → hybrid → reranking | Hit@1 **68.75% → 87.50% → 93.75%** | 16 synthetic retrieval queries; not SQL accuracy |
+| Retrieval-only BM25 → hybrid → reranking | Hit@1 **68.75% → 87.50% → 93.75%** | Historical 16-query terminology fixture; not the current database-backed example or SQL accuracy |
 | Original end-to-end RAG comparison | BM25 **21/48**, hybrid **19/48**, reranked **19/48** | Pre-repair prompt; better retrieval did not improve SQL correctness |
 | New 0.5B QLoRA training | **44/100 → 51/100**; 15 fixes, 8 regressions | Same source-labelled test set; adapter not promoted |
 | Historical 1.5B QLoRA | **52/100 → 59/100**; 9 fixes, 2 regressions | Saved-run replay; not newly trained in this run |

@@ -1,22 +1,30 @@
 {
-  "version":"synthetic-retrieval-v1",
-  "scope":"Developer-authored retrieval smoke; not SQL execution or independent held-out evaluation. Documents illustrate business terminology, not executable schemas.",
-  "queries":[
-    {"question":"net sales refunded amounts","relevant_id":"net_sales"},
-    {"question":"available inventory active reservations","relevant_id":"available_stock"},
-    {"question":"unique purchasers customer identifiers","relevant_id":"customer_count"},
-    {"question":"monthly reporting UTC interval","relevant_id":"monthly_window"},
-    {"question":"late delivery promised timestamp","relevant_id":"shipping_delay"},
-    {"question":"first human response staff reply","relevant_id":"response_time"},
-    {"question":"unpaid invoice balance settled payments","relevant_id":"unpaid_balance"},
-    {"question":"reopened tickets closed event","relevant_id":"repeat_open"},
-    {"question":"How much money did we really earn after reimbursements?","relevant_id":"net_sales"},
-    {"question":"How many units can we still sell after setting goods aside?","relevant_id":"available_stock"},
-    {"question":"Should a shopper making several purchases be counted repeatedly?","relevant_id":"customer_count"},
-    {"question":"Which timezone and end boundary apply to a calendar report?","relevant_id":"monthly_window"},
-    {"question":"Does an undelivered parcel qualify as a tardy completed shipment?","relevant_id":"shipping_delay"},
-    {"question":"Do chatbot acknowledgements stop the support waiting clock?","relevant_id":"response_time"},
-    {"question":"Can an overpaid bill offset the money owed on a different bill?","relevant_id":"unpaid_balance"},
-    {"question":"Does the initial opening count as a case being opened again?","relevant_id":"repeat_open"}
+  "version": "commerce-retrieval-v2",
+  "scope": "Six developer-authored commerce questions, backed by hybrid_commerce.sql. Not a holdout. Historical 16-query scores do not apply.",
+  "queries": [
+    {
+      "question": "What is the total amount in cents of paid orders? Return one column named paid_revenue_cents; use zero if none exist.",
+      "relevant_id": "paid_revenue"
+    },
+    {
+      "question": "List paid orders of at least 2500 cents placed on or after 2026-02-01 and before 2026-04-01. Return order_id, ordered_at, amount_cents, sorted by order_id.",
+      "relevant_id": "qualifying_orders"
+    },
+    {
+      "question": "For each month containing paid orders, return month (YYYY-MM), order_count and revenue_cents for paid orders only, sorted by month.",
+      "relevant_id": "monthly_report"
+    },
+    {
+      "question": "For every customer, return customer_id and net_cents: paid order amounts minus approved refund amounts on those paid orders. Count each order and refund once, ignore pending refunds, and use zero for absent or NULL amounts. Include customers without paid orders and sort by customer_id.",
+      "relevant_id": "customer_net"
+    },
+    {
+      "question": "List customers who have no paid order. Return customer_id and name, sorted by customer_id. A cancelled order is not a paid order.",
+      "relevant_id": "inactive_customers"
+    },
+    {
+      "question": "Return all customers tied for the highest total paid order amount. Include customers with no paid orders as zero. Return customer_id and paid_cents, sorted by customer_id.",
+      "relevant_id": "top_customers"
+    }
   ]
 }
