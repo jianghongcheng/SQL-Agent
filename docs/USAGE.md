@@ -189,7 +189,7 @@ Optional, independently switchable extensions (defaults preserve the baseline):
   establish a chunking improvement. Variant first passes share process caches
   and must not be described as independent cold-start measurements.
 
-Run the database-backed commerce retrieval example (6 labelled queries, version `commerce-retrieval-v2`):
+Reproduce the small synthetic retrieval comparison (16 labelled queries):
 
 ```bash
 python scripts/evaluate_hybrid_retrieval.py \
@@ -199,14 +199,8 @@ python scripts/evaluate_hybrid_retrieval.py \
   --output /tmp/new-hybrid-evaluation
 ```
 
-Output must be new. `examples/hybrid_commerce.sql` supplies the matching synthetic
-`customers`, `orders`, and `refunds` tables. Import it into a disposable SQLite
-database and register those tables if testing SQL generation. This is not an
-independently curated holdout. Inventory, shipping, support, and invoice rules
-were removed because this fixture has no corresponding tables. The historical
-16-query scores used the older terminology-only corpus at Git commit `f14be4b`;
-they do not describe this revised example and are not reproduced by this command.
-The runner
+Output must be new. The examples are synthetic terminology fixtures, not an
+executable multi-domain schema or an independently curated holdout. The runner
 reports Hit@1, Recall@4, MRR@4 and first/warm-pass latency separately for BM25 and
 hybrid. Do not turn this retrieval result into a SQL correctness claim.
 
