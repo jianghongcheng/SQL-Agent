@@ -1,6 +1,6 @@
 import json
 import pytest
-from scripts.render_paired_sql_report import load_complete
+from scripts.evaluation.render_paired_sql_report import load_complete
 
 
 def artifact(tmp_path):

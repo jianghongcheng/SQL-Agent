@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-from scripts.evaluate_bird_single_pass import execute, extract, save_json, validate_resume
+from scripts.evaluation.evaluate_bird_single_pass import execute, extract, save_json, validate_resume
 
 
 def test_readonly_executor(tmp_path):

@@ -14,8 +14,8 @@ import sqlite3
 from sql_agent.agent_evaluation import compare_output
 from sql_agent.bounded_runtime import ActionProposal
 from sql_agent.data_agent import SQLAgentSession
-from scripts import transfer_sql_cases as billing
-from scripts.render_model_comparison import ROOT, load_run
+from scripts.evaluation import transfer_sql_cases as billing
+from scripts.evaluation.render_model_comparison import ROOT, load_run
 
 
 def digest(path):

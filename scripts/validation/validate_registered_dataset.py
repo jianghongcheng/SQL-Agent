@@ -19,7 +19,7 @@ from sql_agent.pipeline import JobPipeline
 from sql_agent.planner import OllamaPlannerModel
 from sql_agent.sql_config import SQLTask, SQLTaskRegistry
 from sql_agent.worker import Worker
-from validate_live_sql_agent import RecordingModel
+from scripts.evaluation.validate_live_sql_agent import RecordingModel
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
     with urllib.request.urlopen('http://127.0.0.1:11434/api/tags', timeout=10) as response:
         model_info = [m for m in json.load(response)['models'] if m['name'] == 'qwen3:8b']
     manifest = {'source': source_manifest, 'database_hashes': database_hashes,
-        'agent_source_sha256': hashlib.sha256((Path(__file__).resolve().parents[1] / 'src/sql_agent/data_agent.py').read_bytes()).hexdigest(),
+        'agent_source_sha256': hashlib.sha256((Path(__file__).resolve().parents[2] / 'src/sql_agent/data_agent.py').read_bytes()).hexdigest(),
         'model': model_info, 'prompt_version': SQLAgentPlanner.PROMPT_VERSION,
         'tasks_sha256': hashlib.sha256((args.data / 'tasks.json').read_bytes()).hexdigest(),
         'repeats': args.repeats, 'unique_tasks': len(tasks),

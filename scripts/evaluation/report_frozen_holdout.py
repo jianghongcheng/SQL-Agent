@@ -4,7 +4,7 @@ from collections import Counter
 import hashlib
 import json
 from pathlib import Path
-from holdout_metrics import metrics
+from scripts.evaluation.holdout_metrics import metrics
 
 
 def read(path):return json.loads(path.read_text())

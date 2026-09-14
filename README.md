@@ -11,7 +11,7 @@ Planner–Verifier orchestration, bounded repair, human review, and durable
 background execution. Browser, FastAPI, and MCP clients use the same
 checkpointed workflow.
 
-[Quick start](#quick-start) · [Architecture](#architecture) · [Evaluation](#evaluation) · [Usage](docs/USAGE.md)
+[Quick start](#quick-start) · [Architecture](#architecture) · [Evaluation](#evaluation) · [Usage](docs/USAGE.md) · [Repository commands](scripts/README.md)
 
 ## System capabilities
 
@@ -113,7 +113,7 @@ setup.
 [Configuration, artifacts, and paired results](docs/evidence/2026-09-13/README.md) ·
 [Evaluation protocols](docs/EVALUATION.md)
 
-The reusable evaluator is `scripts/evaluate_bird_agent.py`; model-specific shell
+The reusable evaluator is `scripts/evaluation/evaluate_bird_agent.py`; model-specific shell
 wrappers only select the Planner profile and local model. Runtime outputs and BIRD
 database files remain local and are excluded from Git.
 
@@ -148,15 +148,15 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
 ollama pull qwen3:8b
-python scripts/local_demo.py start --model qwen3:8b
+python -m scripts.demo.local_demo start --model qwen3:8b
 ```
 
 Open **http://127.0.0.1:8765**, select **Enter local demo**, and choose
 `commerce_analysis`. The local demo key is `123`.
 
 ```bash
-python scripts/local_demo.py status
-python scripts/local_demo.py stop
+python -m scripts.demo.local_demo status
+python -m scripts.demo.local_demo stop
 python -m pytest -q
 ```
 

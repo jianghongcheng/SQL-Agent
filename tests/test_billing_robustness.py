@@ -1,6 +1,6 @@
 import sqlite3
-from scripts.check_billing_query_robustness import fixture, score
-from scripts.transfer_sql_cases import CASES, SCHEMA, expected, fixture as original_fixture
+from scripts.evaluation.check_billing_query_robustness import fixture, score
+from scripts.evaluation.transfer_sql_cases import CASES, SCHEMA, expected, fixture as original_fixture
 
 
 def make(path,data):

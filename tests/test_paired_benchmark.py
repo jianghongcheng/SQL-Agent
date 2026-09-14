@@ -3,7 +3,7 @@ import json
 import pytest
 
 from sql_agent.paired_benchmark import CASES, create_database, expected, fixture
-from scripts.run_paired_sql_benchmark import (CALL_LIMIT, CallBudgetExceeded, ObservedModel,
+from scripts.evaluation.run_paired_sql_benchmark import (CALL_LIMIT, CallBudgetExceeded, ObservedModel,
                                             paired_difference, run_episode, score_sql, summarize)
 
 

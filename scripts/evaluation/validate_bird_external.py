@@ -18,7 +18,7 @@ from sql_agent.data_agent import SQLAgentSession, DataAgentLoop, DataContract
 from sql_agent.planner import OllamaPlannerModel
 from sql_agent.model_recovery import complete_json
 try:
-    from scripts.validate_live_sql_agent import RecordingModel
+    from scripts.evaluation.validate_live_sql_agent import RecordingModel
 except ModuleNotFoundError:
     from validate_live_sql_agent import RecordingModel
 
@@ -116,7 +116,7 @@ def main():
     suite = select_cases(rows, all_cases=args.all_domains, full=args.full)
     previous_110_ids = {r['question_id'] for r in select_cases(rows, all_cases=True)}
     prior_ids = {r['question_id'] for r in select_cases(rows)}
-    source_dir = Path(__file__).resolve().parents[1] / 'src/sql_agent'
+    source_dir = Path(__file__).resolve().parents[2] / 'src/sql_agent'
     production_hashes = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(source_dir.glob('*.py'))}
     args.output.mkdir(parents=True, exist_ok=False)
     source = json.loads((databases / 'manifest.json').read_text())

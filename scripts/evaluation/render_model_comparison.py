@@ -7,7 +7,7 @@ import json
 import math
 from pathlib import Path
 
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(__file__).resolve().parents[2]
 RUNS=('native_qwen8_v1','native_omnisql_v1','native_coder14_v1','billing_transfer_v1','guided_coder14_dev_v2','guided_coder14_billing_v2','manufacturing_transfer_v2','quality_regression_v1','fast_sql_regression_v1')
 
 

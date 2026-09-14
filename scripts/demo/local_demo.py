@@ -18,7 +18,7 @@ from sql_agent.business_context import MetricDefinition
 from sql_agent.data_agent import DataContract
 from sql_agent.sql_config import SQLTask
 
-ROOT=Path(__file__).resolve().parents[1]
+ROOT=Path(__file__).resolve().parents[2]
 RUNTIME=ROOT/'runtime/local-demo'
 PORT=8765
 
@@ -47,7 +47,7 @@ def prepare():
         else:tasks.append(make_task('net_revenue',path,task_id='blocked_'+variant))
     # One general-query demonstration, separate from the verified metric catalog.
     # Reuses the documented synthetic billing fixture, never its offline oracle.
-    from scripts.transfer_sql_cases import CASES, fixture, create_database
+    from scripts.evaluation.transfer_sql_cases import CASES, fixture, create_database
     billing_path=RUNTIME/'billing.sqlite'
     if billing_path.exists():billing_path.unlink()
     create_database(billing_path,fixture(0))
@@ -58,7 +58,7 @@ def prepare():
         "Settlement is determined by state, including rows whose amount is NULL. "
         "Receipts link to invoices through receipts.invoice_id = invoices.id.",
         'synthetic billing dictionary','1'),)))
-    from scripts.commerce_acceptance_cases import fixture as analysis_fixture, create_database as analysis_database, DEMO_QUESTIONS
+    from scripts.evaluation.commerce_acceptance_cases import fixture as analysis_fixture, create_database as analysis_database, DEMO_QUESTIONS
     analysis_path=RUNTIME/'analytics.sqlite'
     if analysis_path.exists():analysis_path.unlink()
     analysis_database(analysis_path,analysis_fixture(17))

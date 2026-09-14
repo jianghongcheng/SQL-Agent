@@ -18,7 +18,7 @@ def main():
     if not 0 <= args.load_jobs <= 1000:
         raise ValueError('load jobs must be between 0 and 1000')
     args.output.chmod(0o700)
-    root=Path(__file__).resolve().parents[1]
+    root=Path(__file__).resolve().parents[2]
     project='sql-agent-trial-'+uuid.uuid4().hex[:10]
     password=secrets.token_hex(24); keys={role:secrets.token_hex(24) for role in ('viewer','operator','admin')}
     env=os.environ.copy()

@@ -13,7 +13,7 @@ import urllib.request
 
 from sql_agent.paired_benchmark import Case
 from sql_agent.planner import OllamaPlannerModel
-from scripts import run_paired_sql_benchmark as runner
+from scripts.evaluation import run_paired_sql_benchmark as runner
 
 SCHEMA='''CREATE TABLE lots(id INTEGER PRIMARY KEY, plant TEXT, planned_units INTEGER);
 CREATE TABLE runs(lot_id INTEGER, units INTEGER, result TEXT);

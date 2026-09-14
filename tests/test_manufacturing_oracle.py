@@ -1,4 +1,4 @@
-from scripts.run_manufacturing_transfer import CASES, expected, fixture
+from scripts.evaluation.run_manufacturing_transfer import CASES, expected, fixture
 
 
 def test_equal_amounts_count_twice_and_null_pass_is_still_a_pass():

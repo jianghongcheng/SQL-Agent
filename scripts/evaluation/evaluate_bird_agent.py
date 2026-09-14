@@ -19,8 +19,8 @@ from sql_agent.database_workflow import DatabaseWorkflow
 from sql_agent.mutations import MutationPolicy, MutationService
 from sql_agent.request_planner import RequestPlanner
 from sql_agent.retrieval import KnowledgeRetriever
-from scripts.evaluate_bird_single_pass import execute, extract, save_json
-from scripts.sql_model_profiles import MODELS, prompt_for, final_sql
+from scripts.evaluation.evaluate_bird_single_pass import execute, extract, save_json
+from scripts.evaluation.sql_model_profiles import MODELS, prompt_for, final_sql
 
 
 class LoggedModel:
@@ -259,7 +259,7 @@ def main():
     if args.variant.startswith('field_'):
         from sql_agent.grounded_retrieval import field_documents
         docs, field_metadata = field_documents(root, policies)
-    source=Path(__file__).resolve().parents[1]/'src/sql_agent'
+    source=Path(__file__).resolve().parents[2]/'src/sql_agent'
     manifest=dict(semantic_repair=args.semantic_repair,execution_max_rows=100000,execution_timeout_seconds=30,variant=args.variant,model=args.model,reviewer=args.reviewer,model_digests={n:installed[n] for n in (args.model,args.reviewer)},
         database_hashes=hashes,data_sha256=base_manifest['data_sha256'],retrieval=args.retrieval,
         embedding_path=str(args.embedding_model),reranker_path=str(args.reranker_model),

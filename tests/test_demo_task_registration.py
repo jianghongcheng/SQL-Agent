@@ -1,5 +1,5 @@
 import json
-from scripts import local_demo
+from scripts.demo import local_demo
 from sql_agent.sql_config import SQLTaskRegistry
 from sql_agent.business_context import retrieve_definitions
 

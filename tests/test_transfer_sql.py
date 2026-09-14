@@ -1,4 +1,4 @@
-from scripts.transfer_sql_cases import CASES, expected, fixture
+from scripts.evaluation.transfer_sql_cases import CASES, expected, fixture
 
 
 def test_billing_oracle_handles_duplicate_receipts_credits_and_null_amounts():

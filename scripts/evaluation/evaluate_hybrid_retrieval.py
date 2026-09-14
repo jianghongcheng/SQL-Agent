@@ -24,7 +24,7 @@ def main():
     docs = json.loads(args.knowledge.read_text())['documents']
     dataset = json.loads(args.queries.read_text())
     tables = sorted({t for d in docs if d['database_id']==args.database for t in d['tables']})
-    repo = Path(__file__).resolve().parents[1]
+    repo = Path(__file__).resolve().parents[2]
     sources = {str(f.relative_to(repo)):hashlib.sha256(f.read_bytes()).hexdigest() for f in (repo/'src').rglob('*.py')}
     summaries = {}
     variants = ['bm25', 'hybrid'] + (['hybrid_reranked'] if args.reranker else [])

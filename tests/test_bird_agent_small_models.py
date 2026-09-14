@@ -1,7 +1,7 @@
 import io
 import json
 import pytest
-from scripts.evaluate_bird_agent import LoggedModel
+from scripts.evaluation.evaluate_bird_agent import LoggedModel
 
 
 @pytest.mark.parametrize('disable', [True, False])
@@ -37,7 +37,7 @@ def test_qwen_non_thinking_bypasses_forced_think_template(monkeypatch):
 
 def test_generic_planner_decodes_structured_sql(tmp_path):
     import sqlite3
-    from scripts.evaluate_bird_agent import BirdPlanner
+    from scripts.evaluation.evaluate_bird_agent import BirdPlanner
     from sql_agent.mutations import MutationPolicy, MutationService
     from sql_agent.retrieval import KnowledgeRetriever
     path=tmp_path/'data.sqlite'

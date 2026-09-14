@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from sql_agent.training_dataset import score_response
-from train_sql_lora import wilson
+from scripts.training.train_sql_lora import wilson
 
 
 def main():

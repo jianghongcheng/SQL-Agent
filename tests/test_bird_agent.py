@@ -3,7 +3,7 @@ import sqlite3
 
 import pytest
 from langgraph.checkpoint.memory import MemorySaver
-from scripts.evaluate_bird_agent import BirdPlanner, summarize, configuration_matches
+from scripts.evaluation.evaluate_bird_agent import BirdPlanner, summarize, configuration_matches
 from sql_agent.database_workflow import DatabaseWorkflow
 from sql_agent.mutations import MutationPolicy, MutationService
 from sql_agent.retrieval import KnowledgeRetriever
@@ -65,8 +65,8 @@ def test_read_functions_allowed_without_allowing_writes_or_unlisted_tables(tmp_p
 
 
 def test_full_schema_no_rag_matches_baseline_prompt(tmp_path):
-    from scripts.sql_model_profiles import prompt_for
-    from scripts.evaluate_bird_single_pass import execute
+    from scripts.evaluation.sql_model_profiles import prompt_for
+    from scripts.evaluation.evaluate_bird_single_pass import execute
     path=tmp_path/'data.sqlite'
     with sqlite3.connect(path) as db:
         db.execute('CREATE TABLE things(value INTEGER)')

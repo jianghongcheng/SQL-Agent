@@ -3,7 +3,7 @@ from pathlib import Path
 
 from sql_agent.bounded_runtime import ActionProposal, BoundedAgentRuntime, RuntimeOutcome
 from sql_agent.data_agent import SQLAgentSession, DataContract
-from scripts.validate_live_sql_agent import database, grade
+from scripts.evaluation.validate_live_sql_agent import database, grade
 
 
 def test_generation_failure_is_not_counted_as_successful_refusal():

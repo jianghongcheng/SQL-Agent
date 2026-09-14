@@ -1,4 +1,4 @@
-from scripts.holdout_metrics import metrics
+from scripts.evaluation.holdout_metrics import metrics
 
 
 def row(i, *, correct=False, candidate=True, verifier='disagreement', status='needs_review', usage=True):

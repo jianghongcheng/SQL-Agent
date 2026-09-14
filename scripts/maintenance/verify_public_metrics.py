@@ -20,7 +20,7 @@ EXPECTED = {
 
 def main() -> None:
     evidence = (
-        Path(__file__).resolve().parents[1]
+        Path(__file__).resolve().parents[2]
         / "docs/evidence/2026-09-13/model_agent_comparison.json"
     )
     report = json.loads(evidence.read_text())

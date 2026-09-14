@@ -1,6 +1,6 @@
 """Check that counterexamples distinguish the intended wrong SQL mechanisms."""
 import sqlite3
-from scripts.prepare_frozen_holdout import Suite, ranking, correlated
+from scripts.evaluation.prepare_frozen_holdout import Suite, ranking, correlated
 
 
 def test_dense_and_competition_rank_have_different_correct_populations(tmp_path):

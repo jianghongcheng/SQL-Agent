@@ -1,9 +1,9 @@
 import json
 import pytest
-from scripts.run_paired_sql_benchmark import run_episode
-from scripts.transfer_sql_cases import CASES, fixture, create_database
-from scripts import run_paired_sql_benchmark as runner
-from scripts.transfer_sql_cases import expected
+from scripts.evaluation.run_paired_sql_benchmark import run_episode
+from scripts.evaluation.transfer_sql_cases import CASES, fixture, create_database
+from scripts.evaluation import run_paired_sql_benchmark as runner
+from scripts.evaluation.transfer_sql_cases import expected
 
 
 @pytest.mark.parametrize('response,accepted', [

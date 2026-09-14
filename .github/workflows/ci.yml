@@ -14,4 +14,4 @@ jobs:
       # Includes deterministic evaluation/gate regressions, not live LLM quality.
       - run: python -m pytest -q --junitxml=outputs/validation/ci-regression.xml
       - run: python -m compileall -q src
-      - run: PYTHONPATH=src:. python scripts/verify_public_metrics.py
+      - run: PYTHONPATH=src:. python -m scripts.maintenance.verify_public_metrics

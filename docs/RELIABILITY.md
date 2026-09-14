@@ -47,9 +47,9 @@ and repair, while this optional mode provides a deterministic operational path.
 With dependencies installed and local Ollama `qwen3:8b` available:
 
 ```bash
-python scripts/demo_commerce.py --verified --catalog-fallback --all \
+python -m scripts.demo.demo_commerce --verified --catalog-fallback --all \
   --output runtime/commerce-verified
-python scripts/smoke_commerce_service.py \
+python -m scripts.demo.smoke_commerce_service \
   --tasks runtime/commerce-verified/tasks.json \
   --output runtime/commerce-http
 python -m pytest -q

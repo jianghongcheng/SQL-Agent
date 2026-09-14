@@ -10,7 +10,7 @@ def main():
     parser.add_argument('--output',type=Path)
     parser.add_argument('--model-profile',type=Path,required=True,help='Canonical JSON with model digest and inference options')
     args=parser.parse_args()
-    root=Path(__file__).resolve().parents[1]
+    root=Path(__file__).resolve().parents[2]
     sources={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest()
              for p in sorted((root/'src').rglob('*.py'))}
     fingerprint=hashlib.sha256(json.dumps(sources,sort_keys=True).encode()).hexdigest()

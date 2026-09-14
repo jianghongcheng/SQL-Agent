@@ -1,4 +1,4 @@
-from scripts.analyze_sql_fixture_stress import stress_case
+from scripts.evaluation.analyze_sql_fixture_stress import stress_case
 
 
 def test_fixture_stress_exposes_sum_avg_accidental_agreement():

@@ -25,7 +25,7 @@ from sql_agent.native_sql import NativeSQLPlanner
 from sql_agent.semantic_review import IndependentSQLPlanner
 from sql_agent.sql_config import SQLTaskRegistry
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 METHODS = ('one_shot', 'execution_retry', 'checked_agent')
 CALL_LIMIT = 9
 
@@ -234,7 +234,7 @@ def main():
     extra_sources = []
     if args.suite == 'billing':
         global CASES, SCHEMAS, fixture, create_database, expected
-        from scripts import transfer_sql_cases as billing
+        from scripts.evaluation import transfer_sql_cases as billing
         CASES, SCHEMAS, expected = billing.CASES, {'billing': billing.SCHEMA}, billing.expected
         fixture = lambda domain, variant: billing.fixture(variant)
         create_database = lambda path, domain, data: billing.create_database(path, data)

@@ -6,7 +6,7 @@ from pathlib import Path
 import sqlite3
 from sql_agent.bounded_runtime import ActionProposal,BoundedAgentRuntime
 from sql_agent.data_agent import DataContract,SQLAgentSession
-from scripts.validate_bird_external import BenchmarkSession,file_hash,reference_rows,score
+from scripts.evaluation.validate_bird_external import BenchmarkSession,file_hash,reference_rows,score
 
 
 def main():

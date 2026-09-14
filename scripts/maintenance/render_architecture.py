@@ -3,7 +3,7 @@
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-OUTPUT = Path(__file__).resolve().parents[1] / "docs/assets/workflow.svg"
+OUTPUT = Path(__file__).resolve().parents[2] / "docs/assets/workflow.svg"
 
 
 def node(x, y, n, title, lines, tone="blue", w=190, h=106):

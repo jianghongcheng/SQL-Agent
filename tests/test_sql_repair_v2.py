@@ -3,7 +3,7 @@ from pathlib import Path
 
 from sql_agent.bounded_runtime import ActionProposal, BoundedAgentRuntime
 from sql_agent.sql_environment import SQLiteRepairEnvironment, case_database, expected_output
-from scripts.evaluate_sql_harness_ablation import evaluate_layer
+from scripts.evaluation.evaluate_sql_harness_ablation import evaluate_layer
 
 
 ROOT = Path(__file__).resolve().parents[1]

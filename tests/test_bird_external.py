@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from scripts.validate_bird_external import score, select_cases, DOMAINS
+from scripts.evaluation.validate_bird_external import score, select_cases, DOMAINS
 
 
 def test_external_grading_reports_duplicate_difference():

@@ -11,7 +11,7 @@ from sql_agent.pipeline import JobPipeline
 from sql_agent.planner import OllamaPlannerModel
 from sql_agent.sql_config import SQLTask, SQLTaskRegistry
 from sql_agent.worker import Worker
-from validate_live_sql_agent import RecordingModel
+from scripts.evaluation.validate_live_sql_agent import RecordingModel
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     args = parser.parse_args()
     if args.catalog_fallback and not args.verified:
         parser.error('--catalog-fallback requires --verified')
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     suite = json.loads((root / 'data/benchmarks/commerce_v1.json').read_text())
     # Refuse to overwrite previous evidence or database state.
     args.output.mkdir(parents=True, exist_ok=False)

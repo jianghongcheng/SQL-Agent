@@ -147,27 +147,28 @@ fail; it does not authorize another mutation. There is no automatic unknown-case
 reset or operator override. The Job's review decision and mutation execution status
 remain separate; inspect the mutation status rather than treating approval as commit.
 
-`scripts/validate_gateway_trial.py --image IMAGE --output NEW_DIRECTORY` verifies
+`python -m scripts.validation.validate_gateway_trial --image IMAGE --output NEW_DIRECTORY` verifies
 three local containers: Worker/API business mounts read-only, Gateway read-write,
 Worker lacking gateway/admin tokens, and approved duplicate-safe mutation. It uses
-explicit SQLite SQL, not live model generation. `scripts/validate_compose_trial.py
---image IMAGE --output NEW_DIRECTORY --load-jobs 100` measures the scripted control
+explicit SQLite SQL, not live model generation.
+`python -m scripts.validation.validate_compose_trial --image IMAGE --output NEW_DIRECTORY --load-jobs 100`
+measures the scripted control
 path at eight clients. Neither is a production LLM throughput claim.
 
 ### Offline QLoRA experiment
 
-`scripts/prepare_sql_training.py` freezes a domain-disjoint source-labelled dataset
+`scripts/training/prepare_sql_training.py` freezes a domain-disjoint source-labelled dataset
 with executable SQLite fixtures, exact normalized schema/question deduplication,
 and source hashes. Labels originate from the external corpus, not human business
 validation; execution alone does not establish that the source SQL answers the question.
-`scripts/train_sql_lora.py` runs local 4-bit NF4 SFT/LoRA and paired base/adapter
+`scripts/training/train_sql_lora.py` runs local 4-bit NF4 SFT/LoRA and paired base/adapter
 evaluation with RAG identically disabled. It does not automatically deploy an adapter.
 The first pilot used Qwen2.5-Coder-1.5B-Instruct, 512 training examples, rank 16,
 one epoch and 100 domain-isolated test examples. It is not a comparison with the
 existing Qwen3-14B Agent or an end-to-end Agent benchmark.
 
 The first pilot's strict JSON scorer rejected fenced baseline responses. Preserve
-those raw outputs and use `scripts/score_sql_lora.py` for explicitly labelled
+those raw outputs and use `scripts/training/score_sql_lora.py` for explicitly labelled
 post-hoc alignment to runtime fence handling, applied equally to both conditions.
 Report format compliance separately from execution equivalence. The descriptive
 52/100 versus 59/100 result includes nine fixes and two regressions; it does not
@@ -185,8 +186,8 @@ Optional, independently switchable extensions (defaults preserve the baseline):
   non-finite scores, and does not silently fall back on failure. Evidence records
   the model hash, candidate count, elapsed seconds and per-hit reranker score;
   `score` remains the RRF score, not the reranker score or a confidence value.
-- Compare with `scripts/evaluate_hybrid_retrieval.py --chunking structure
-  --reranker /absolute/local/model` plus the required arguments below. Compare
+- Compare with `python -m scripts.evaluation.evaluate_hybrid_retrieval --chunking structure --reranker /absolute/local/model`
+  plus the required arguments below. Compare
   chunking separately on long documents; short single-paragraph examples do not
   establish a chunking improvement. Variant first passes share process caches
   and must not be described as independent cold-start measurements.
@@ -194,7 +195,7 @@ Optional, independently switchable extensions (defaults preserve the baseline):
 Reproduce the small synthetic retrieval comparison (16 labelled queries):
 
 ```bash
-python scripts/evaluate_hybrid_retrieval.py \
+python -m scripts.evaluation.evaluate_hybrid_retrieval \
   --knowledge examples/hybrid_knowledge.json --queries examples/hybrid_retrieval_eval.json \
   --model /absolute/path/to/local-embedding-model \
   --cache /absolute/path/to/private-runtime/eval-vectors.sqlite \
@@ -210,7 +211,7 @@ Live-model smoke check using only disposable synthetic data:
 
 ```bash
 SQL_AGENT_KNOWLEDGE_CONFIG="$PWD/examples/knowledge.json" \
-  python scripts/validate_unified_requests.py --expect-rag
+  python -m scripts.validation.validate_unified_requests --expect-rag
 ```
 
 This checks retrieval, generation, execution and approval together for two cases;
@@ -225,7 +226,7 @@ With Python 3.10+, Ollama running locally, and `qwen3:14b` installed:
 git clone https://github.com/jianghongcheng/SQL-Agent.git
 cd SQL-Agent
 pip install -e '.[dev]'
-PYTHONPATH=src:. python scripts/local_demo.py start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
+PYTHONPATH=src:. python -m scripts.demo.local_demo start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
 ```
 
 Open **http://127.0.0.1:8765**, then click **Enter local demo**.
@@ -244,7 +245,7 @@ correct answer; it is not an accuracy verdict.
 
 These answers were independently calculated from the current local
 `analytics.sqlite` and checked against the deterministic
-[commerce fixture](../scripts/commerce_acceptance_cases.py), seed **17**: 6 customers,
+[commerce fixture](../scripts/evaluation/commerce_acceptance_cases.py), seed **17**: 6 customers,
 17 orders and 15 refunds. All amounts are **integer cents**. Rebuilding the demo
 with the documented launcher recreates this fixture; answers must be recalculated
 if you change the data. These are known manual regression questions, not a new
@@ -485,7 +486,7 @@ Build an isolated image and exercise the existing Compose stack:
 
 ```bash
 docker build -t sql-agent-trial:local .
-python scripts/validate_compose_trial.py --image sql-agent-trial:local --output /tmp/sql-agent-trial-run-001
+python -m scripts.validation.validate_compose_trial --image sql-agent-trial:local --output /tmp/sql-agent-trial-run-001
 ```
 
 The output directory must not exist. Requires Docker Compose 2.24.4 or newer.
@@ -505,7 +506,7 @@ CI runs deterministic evaluation and gate tests as part of pytest and writes
 query answers are ready for automatic release. Separately run:
 
 ```bash
-python scripts/check_eval_gate.py audited-counts.json --model-profile model-profile.json --output gate-result.json
+python -m scripts.validation.check_eval_gate audited-counts.json --model-profile model-profile.json --output gate-result.json
 ```
 
 The output must be new. The counts report has `schema_version: 1`, SHA-256
@@ -745,7 +746,7 @@ Browser interaction tests additionally need Playwright and Chrome.
 Tests using optional dependencies may be skipped when they are unavailable.
 
 For a two-case real-model smoke check using disposable SQLite data:
-`python scripts/validate_unified_requests.py --model qwen3:14b`.
+`python -m scripts.validation.validate_unified_requests --model qwen3:14b`.
 It queries one synthetic order, generates an update, verifies no pre-approval
 change, and approves only that disposable test operation. It is not a benchmark.
 

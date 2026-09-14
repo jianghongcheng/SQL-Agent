@@ -1,4 +1,4 @@
-from scripts.commerce_acceptance_cases import oracle
+from scripts.evaluation.commerce_acceptance_cases import oracle
 
 
 def test_hand_calculated_totals_refunds_absent_customers_and_ties():
