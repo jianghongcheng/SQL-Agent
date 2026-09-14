@@ -3,7 +3,7 @@
   "dataset": "official BIRD Mini-Dev",
   "tasks": 500,
   "grading": "execution-result set equality; errors count against all 500",
-  "v4": {
+  "sql_agent": {
     "workflow": "full schema, no RAG, bounded execution-error repair, advisory Qwen2.5-Coder-7B verifier",
     "results": {
       "qwen3:4b": {"correct": 196, "accuracy": 0.392, "tokens_per_correct": 6762.816326530612, "p95_seconds": 3.657954497030005},

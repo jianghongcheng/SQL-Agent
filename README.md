@@ -111,8 +111,8 @@ setup.
   concurrency 8** with **0.698 s p95** latency. The run excluded LLM inference and
   is an engineering check, not a production SLO.
 
-Detailed development experiments, fine-tuning comparisons, and failure analyses
-remain available in [the evaluation documentation](docs/EVALUATION.md).
+The [evaluation documentation](docs/EVALUATION.md) records the scoring rules,
+configuration boundaries, and reproduction limits.
 
 ## Demo
 

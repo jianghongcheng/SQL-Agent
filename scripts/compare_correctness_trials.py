@@ -81,7 +81,7 @@ def main():
         'Regressed cases: '+', '.join(c['case_id'] for c in changes if c['change']=='regressed')+'. Family totals can hide offsetting fixes and regressions.',
         'These inspected cases are development evidence. No further prompt selection was performed during this comparison.', '',
         'All changed SQLs and raw record hashes are retained in `outputs/validation/correctness-v1/comparison.json`.',
-        'This experiment does not pass the production or generalization gates. See [remaining gates](NEXT_QUALITY_GATES.md).', '']
+        'This inspected development experiment is not evidence of production performance or blind generalization.', '']
     args.markdown.write_text('\n'.join(lines))
     print(json.dumps({'summaries':summaries,'paired':paired,'retain_development_change':keep},indent=2))
 

@@ -202,7 +202,7 @@ def main():
     parser.add_argument("--cases", type=Path, default=Path("data/benchmarks/sql_repair_v1.json"))
     parser.add_argument("--model", default="qwen3:8b")
     parser.add_argument("--base-url", default="http://127.0.0.1:11434")
-    parser.add_argument("--output", type=Path, default=Path("outputs/portfolio/sql_harness_ablation_qwen3_8b.json"))
+    parser.add_argument("--output", type=Path, default=Path("outputs/validation/sql_harness_ablation_qwen3_8b.json"))
     parser.add_argument("--generations-from", type=Path,
                         help="Replay generations from a previous result instead of calling the model")
     args = parser.parse_args()
