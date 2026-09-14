@@ -19,7 +19,35 @@ verifier false accepts, latency, and tokens per correct task with public evidenc
 
 [Quick start](#quick-start) · [Architecture](#architecture) · [Results](#evaluation) · [Usage](docs/USAGE.md)
 
-### Latest measured results — September 9, 2026
+### Latest measured results — September 13, 2026
+
+The latest comparison uses the same **official BIRD Mini-Dev 500 questions**, SQLite
+databases and local model weights for both workflows. The v4 workflow uses full
+schema context, bounded execution-error repair and a fixed Qwen2.5-Coder-7B
+advisory Verifier. PV-SQL uses its published Probe–Generate–Verify/Repair workflow,
+with the tested base model performing all three stages.
+
+| Model | v4 | PV-SQL | PV-SQL change |
+| --- | ---: | ---: | ---: |
+| **Qwen3-4B** | **196/500 (39.2%)** | 180/500 (36.0%) | **−16 tasks** |
+| **Gemma3-4B** | 108/500 (21.6%) | **110/500 (22.0%)** | **+2 tasks** |
+| **Qwen3-0.6B** | **37/500 (7.4%)** | 34/500 (6.8%) | **−3 tasks** |
+
+PV-SQL also used more tokens per correct task and had higher p95 latency:
+
+| Model | Tokens / correct task, v4 → PV-SQL | p95 latency, v4 → PV-SQL |
+| --- | ---: | ---: |
+| Qwen3-4B | 6,763 → **19,025** | 3.66 s → **8.67 s** |
+| Gemma3-4B | 13,253 → **32,022** | 4.11 s → **12.80 s** |
+| Qwen3-0.6B | 33,898 → **44,625** | 5.20 s → **5.45 s** |
+
+These are local paired configuration results, not an official BIRD leaderboard
+submission or a reproduction of the paper's full BIRD results. The v4 Verifier is
+advisory and does not select or rewrite successful SQL. On this configuration,
+PV-SQL recovered and lost respectively 53/69, 47/45 and 17/20 tasks across the
+three models. [Configuration and evidence](docs/evidence/2026-09-13/README.md)
+
+### Inspected development-set repair — September 9, 2026
 
 **35/48 correct (72.9%) on an inspected SQL development set**, up from 21/48
 (43.8%) after explicit population and aggregation-grain planning. These are six

@@ -165,6 +165,24 @@ results inform changes, that data is development data, not a fresh holdout.
 
 ## Historical external BIRD Mini-Dev check
 
+### September 13, 2026 paired Agent comparison
+
+Three local model weights were evaluated on the same official BIRD Mini-Dev 500
+questions and SQLite databases. The v4 configuration used the production
+`DatabaseWorkflow`, full schema context, no RAG, bounded execution-error repair,
+and a fixed Qwen2.5-Coder-7B advisory Verifier. The comparison configuration used
+the upstream PV-SQL Probe–Generate–Verify/Repair pipeline pinned at commit
+`9f2bcd9a16ec1029649222851bd9e08a2af3e2c6`. Qwen3 thinking was disabled and
+temperature was zero. Gold SQL was used only after inference for execution-result
+scoring.
+
+Execution accuracy was 39.2% versus 36.0% for Qwen3-4B, 21.6% versus 22.0% for
+Gemma3-4B, and 7.4% versus 6.8% for Qwen3-0.6B, where each pair is v4 versus
+PV-SQL. See the [public summary](evidence/2026-09-13/README.md) for cost, latency,
+and paired gain/loss counts. Raw per-task prompts, model responses, databases and
+generated runtime state remain local under `outputs/validation/` and are excluded
+from Git.
+
 Qwen3-8B v2 covered 500 questions across 11 canonical databases with BIRD input
 adaptation. First-candidate set-of-rows matches: 135/500; bounded repair:
 140/500; multiset matches: 128/500. Five reference queries could not be scored
