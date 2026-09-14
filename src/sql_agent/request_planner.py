@@ -68,7 +68,9 @@ class RequestPlanner:
             with closing(_connect(policy, readonly=True)) as conn:
                 schema = tuple((name, row[0]) for name in policy.tables
                                if (row := conn.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=?", (name,)).fetchone()))
-            contract = DataContract((), dynamic_columns=True, max_rows=policy.max_rows)
+            # This contract supplies planner context only. Actual result limits are
+            # enforced by service._query using policy.max_rows for both queries.
+            contract = DataContract((), dynamic_columns=True, max_rows=min(policy.max_rows, 10000))
             context = PlanningContext(question, contract, SQLPlanningEvidence(schema, ''), 1, 0)
             proposal = reviewer(context)
             if not isinstance(proposal, ActionProposal) or proposal.action != 'REPAIR':
@@ -85,7 +87,10 @@ class RequestPlanner:
                     'comparison': 'ordered_rows_and_column_count',
                     'model_recovery': reviewer.recovery_events}
         except Exception as exc:
+            # Evidence is returned through the API. Raw adapter/database messages
+            # can contain paths, URLs, SQL, or response bodies and stay server-side.
             return {**evidence, 'status': 'unavailable', 'error_type': type(exc).__name__,
+                    'reason': 'checker_execution_failed',
                     'model_recovery': reviewer.recovery_events}
         finally:
             self.checker_events.extend(reviewer.recovery_events)

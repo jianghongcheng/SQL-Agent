@@ -117,8 +117,8 @@ def create_app(jobs=None, registry=None, authorizer=None, mutations=None):
     @app.get('/v1/mutations/{ident}')
     def get_mutation(ident: str, x_api_key: str | None = Header(default=None),
                      sql_agent_session: str | None = Cookie(default=None)):
-        authorize(x_api_key, 'viewer', sql_agent_session)
-        return mutation_call(mutation_service().inspect, ident)
+        principal = authorize(x_api_key, 'viewer', sql_agent_session)
+        return owned_mutation(ident, principal)
 
     @app.post('/v1/mutations/{ident}/review')
     def review_mutation(ident: str, payload: MutationReviewPayload,
@@ -139,6 +139,20 @@ def create_app(jobs=None, registry=None, authorizer=None, mutations=None):
         if job is None:
             raise HTTPException(404, "job not found")
         return job
+
+    def owned_job(job_id, principal):
+        job = get(job_id)
+        if (principal.role != 'admin'
+                and job.payload.get('_submitted_by') != principal.name):
+            raise HTTPException(404, "job not found")
+        return job
+
+    def owned_mutation(ident, principal):
+        body = mutation_call(mutation_service().inspect, ident)
+        if (principal.role != 'admin'
+                and body.get('submitted_by') != principal.name):
+            raise HTTPException(404, "mutation proposal not found")
+        return body
 
     @app.middleware("http")
     async def observe(request: Request, call_next):
@@ -249,8 +263,8 @@ def create_app(jobs=None, registry=None, authorizer=None, mutations=None):
     @app.get('/v1/requests/{job_id}')
     def inspect_request(job_id: str, x_api_key: str | None = Header(default=None),
                         sql_agent_session: str | None = Cookie(default=None)):
-        authorize(x_api_key, 'viewer', sql_agent_session)
-        job = get(job_id)
+        principal = authorize(x_api_key, 'viewer', sql_agent_session)
+        job = owned_job(job_id, principal)
         result = job.to_dict()
         if job.result and job.result.get('operation') == 'mutation':
             result['result'] = {**job.result, 'proposal': mutation_call(mutation_service().inspect, job_id)}
@@ -307,21 +321,23 @@ def create_app(jobs=None, registry=None, authorizer=None, mutations=None):
     @app.get("/v1/jobs/{job_id}")
     def job(job_id: str, x_api_key: str | None = Header(default=None),
                sql_agent_session: str | None = Cookie(default=None)):
-        authorize(x_api_key, "viewer", sql_agent_session)
-        return get(job_id).to_dict()
+        principal = authorize(x_api_key, "viewer", sql_agent_session)
+        return owned_job(job_id, principal).to_dict()
 
     @app.get("/v1/jobs/{job_id}/events")
     def events(job_id: str, x_api_key: str | None = Header(default=None),
                sql_agent_session: str | None = Cookie(default=None)):
-        authorize(x_api_key, "viewer", sql_agent_session)
-        get(job_id)
+        principal = authorize(x_api_key, "viewer", sql_agent_session)
+        owned_job(job_id, principal)
         return {"events": jobs.events(job_id)}
 
     @app.get("/v1/traces/{trace_id}")
     def trace(trace_id: str, x_api_key: str | None = Header(default=None),
                sql_agent_session: str | None = Cookie(default=None)):
-        authorize(x_api_key, "viewer", sql_agent_session)
+        principal = authorize(x_api_key, "viewer", sql_agent_session)
         runs = jobs.find_by_trace_id(trace_id)
+        if principal.role != 'admin':
+            runs = [job for job in runs if job.payload.get('_submitted_by') == principal.name]
         if not runs:
             raise HTTPException(404, "trace not found")
         return {"trace_id": trace_id, "runs": [{"job": j.to_dict(), "events": jobs.events(j.job_id)} for j in runs]}
@@ -332,7 +348,7 @@ def create_app(jobs=None, registry=None, authorizer=None, mutations=None):
                x_api_key: str | None = Header(default=None),
                sql_agent_session: str | None = Cookie(default=None)):
         principal = authorize(x_api_key, "operator", sql_agent_session)
-        original = get(job_id)
+        original = owned_job(job_id, principal)
         try:
             content = build_replay_payload(original, request.state.trace_id, principal.name)
         except RuntimeError as exc:

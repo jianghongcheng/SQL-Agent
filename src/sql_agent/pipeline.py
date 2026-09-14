@@ -85,6 +85,7 @@ class JobPipeline:
                 'telemetry': telemetry,
                 'release': {'approved': False, 'reason': 'semantic_evidence_required'},
                 'semantic_review': state.get('semantic_review', {'status': 'not_run', 'proof': False}),
+                'semantic_repair': state.get('semantic_repair', {'status': 'not_run', 'proof': False}),
                 'validation_scope': 'execution_checked_candidate_requires_review'})
         # The contracted session is one graph node: its connection/snapshot
         # stays local to that node rather than being serialized in checkpoints.

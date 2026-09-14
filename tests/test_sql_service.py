@@ -17,8 +17,8 @@ from sql_agent import mcp_server
 def service(tmp_path):
     repository = SqliteJobRepository(tmp_path / "jobs.db")
     registry = SQLTaskRegistry()
-    authorizer = ApiKeyAuthorizer({"read": Principal("reader", "viewer"),
-                                  "write": Principal("writer", "operator"),
+    authorizer = ApiKeyAuthorizer({"read": Principal("analyst", "viewer"),
+                                  "write": Principal("analyst", "operator"),
                                   "admin": Principal("admin", "admin")})
     client = TestClient(create_app(repository, registry, authorizer))
     worker = Worker(repository, JobPipeline(registry, DemoSQLPlanner()))

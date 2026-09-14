@@ -23,7 +23,12 @@ def unified(tmp_path):
     changes = MutationService(tmp_path / 'changes.db', {'business': MutationPolicy(db, ('orders','notes'), allow_ddl=True)})
     jobs = SqliteJobRepository(tmp_path / 'jobs.db')
     registry = SQLTaskRegistry()
-    keys = ApiKeyAuthorizer({r: Principal(r,r) for r in ['viewer','operator','admin']})
+    keys = ApiKeyAuthorizer({
+        'viewer': Principal('analyst', 'viewer'),
+        'operator': Principal('analyst', 'operator'),
+        'admin': Principal('administrator', 'admin'),
+        'other': Principal('other-user', 'operator'),
+    })
     client = TestClient(create_app(jobs, registry, keys, changes))
     pipeline = JobPipeline(registry, DemoSQLPlanner(), mutations=changes)
     return client, Worker(jobs,pipeline), changes, pipeline
@@ -50,6 +55,23 @@ def test_one_endpoint_and_worker_for_queries(unified, payload):
     result = client.get('/v1/requests/'+ident, headers=headers('viewer')).json()
     assert result['status'] == ('completed' if 'task_id' in payload else 'needs_review'), result
     assert (result['result']['output'] or result['result']['candidate_output'])['rows']
+
+
+def test_job_evidence_is_visible_only_to_owner_or_admin(unified):
+    client, worker, _, _ = unified
+    ident = submit(client, {'database_id': 'business', 'sql': 'SELECT amount FROM orders'})
+    assert worker.run_once()
+    assert client.get('/v1/requests/' + ident, headers=headers('other')).status_code == 404
+    assert client.get('/v1/requests/' + ident, headers=headers('admin')).status_code == 200
+    assert client.get('/v1/jobs/' + ident + '/events', headers=headers('other')).status_code == 404
+
+
+def test_replay_rejects_a_different_operator(unified):
+    client, worker, _, _ = unified
+    ident = submit(client, {'task_id': 'employee_names', 'question': 'List employee names'})
+    assert worker.run_once()
+    response = client.post('/v1/jobs/' + ident + '/replay', headers=headers('other', 'other-replay'))
+    assert response.status_code == 404
 
 
 @pytest.mark.parametrize('statement', [

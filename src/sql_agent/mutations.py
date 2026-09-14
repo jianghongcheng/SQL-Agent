@@ -19,7 +19,8 @@ import uuid
 
 RECEIPTS = "_sql_agent_mutation_receipts"
 SQLITE_READ_FUNCTIONS = frozenset({'count','sum','avg','min','max','coalesce',
-    'lower','upper','length','substr','substring','strftime'})
+    'lower','upper','length','substr','substring','strftime',
+    'like','nullif','abs','group_concat','date','current_timestamp','iif','instr'})
 
 
 def digest(value):
@@ -272,16 +273,14 @@ class MutationService:
         return {**body, "reviewer": reviewer, "status": status}
 
     def _query(self, database_id, sql):
-        from sqlglot import exp, parse
+        from .sql_validation import parse_read_query
         policy = self.policies.get(database_id)
         if policy is None:
             raise ValueError("unknown database")
         if policy.engine == 'postgresql':
             from .postgres_mutations import query
             return query(policy, sql)
-        nodes = parse(sql, read="sqlite")
-        if len(nodes) != 1 or not isinstance(nodes[0], exp.Select):
-            raise ValueError("one SELECT statement required")
+        parse_read_query(sql, "sqlite")
         with closing(_connect(policy, readonly=True)) as conn:
             conn.execute("PRAGMA query_only=ON")
             _deadline(conn, policy)

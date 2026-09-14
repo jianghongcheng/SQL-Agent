@@ -15,6 +15,7 @@ from sqlglot import exp, parse
 from sqlglot.errors import SqlglotError
 
 from .mutations import RECEIPTS, digest
+from .sql_validation import READ_QUERY_TYPES
 
 
 @dataclass(frozen=True)
@@ -51,7 +52,7 @@ ALLOWED_NODES = {
     "And", "Or", "Not", "Paren", "In", "Between", "Is", "Neg", "Add", "Sub", "Mul",
     "Div", "Mod", "Tuple", "Values", "Where", "Star", "Select", "From", "Order", "Ordered",
     "Limit", "Offset", "Count", "Sum", "Avg", "Min", "Max", "Coalesce", "Lower", "Upper",
-    "Length", "Distinct", "Alias", "ColumnDef", "DataType", "DataTypeParam",
+    "Length", "Distinct", "Alias", "Union", "Intersect", "Except", "ColumnDef", "DataType", "DataTypeParam",
     "ColumnConstraint", "PrimaryKeyColumnConstraint", "NotNullColumnConstraint", "PrimaryKey",
 }
 TYPES = {"INT", "BIGINT", "SMALLINT", "TEXT", "VARCHAR", "CHAR", "BOOLEAN", "DECIMAL", "FLOAT", "DOUBLE", "DATE", "TIMESTAMP"}
@@ -62,7 +63,7 @@ def statement(sql, policy, read=False):
         nodes = parse(sql, read="postgres")
     except SqlglotError as exc:
         raise ValueError("invalid PostgreSQL SQL") from exc
-    roots = (exp.Select,) if read else (exp.Insert, exp.Update, exp.Delete, exp.Create, exp.Drop)
+    roots = READ_QUERY_TYPES if read else (exp.Insert, exp.Update, exp.Delete, exp.Create, exp.Drop)
     if len(nodes) != 1 or not isinstance(nodes[0], roots):
         raise ValueError("one supported SQL statement required")
     node = nodes[0]

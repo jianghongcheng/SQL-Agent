@@ -29,6 +29,7 @@ class DatabaseState(TypedDict, total=False):
     clarification: dict | None
     clarification_rounds: int
     semantic_review: dict
+    semantic_repair: dict
     schema_linking: dict
     rejected_proposals: list[dict]
     planner_calls: list[dict]
@@ -137,12 +138,12 @@ class DatabaseWorkflow:
                     'clarification': None, 'sql': ''}
 
         def classify(state):
-            from sqlglot import exp, parse
+            from .sql_validation import is_read_query, parse_statement
             policy = self.service.policies[state['database_id']]
-            nodes = parse(state['sql'], read='postgres' if policy.engine == 'postgresql' else 'sqlite')
-            if len(nodes) != 1:
-                raise ValueError('exactly one SQL statement required')
-            mode = 'query' if isinstance(nodes[0], exp.Select) else 'mutation'
+            node = parse_statement(
+                state['sql'], 'postgres' if policy.engine == 'postgresql' else 'sqlite'
+            )
+            mode = 'query' if is_read_query(node) else 'mutation'
             if mode == 'mutation' and not state.get('allow_writes', True):
                 raise ValueError('this request is read-only')
             if mode == 'mutation':
@@ -171,10 +172,12 @@ class DatabaseWorkflow:
                     raise
                 from sqlglot import parse_one
                 dialect = 'postgres' if self.service.policies[state['database_id']].engine == 'postgresql' else 'sqlite'
+                from .repair_feedback import repair_feedback
+                feedback = repair_feedback(self.service.policies[state['database_id']], state['sql'], exc)
                 rejected = {'normalized_sql':parse_one(state['sql'], read=dialect).sql(
                     dialect=dialect, normalize=True, comments=False), 'reason':str(exc)[:1000],
-                    'attempt':state.get('attempt', 1)}
-                return {'error': str(exc)[:1000], 'allow_writes': False,
+                    'repair_feedback': feedback, 'attempt':state.get('attempt', 1)}
+                return {'error': feedback, 'allow_writes': False,
                         'rejected_proposals': [*state.get('rejected_proposals', []), rejected]}
 
         def analyze(state):
@@ -191,6 +194,15 @@ class DatabaseWorkflow:
         def preview(state):
             proposal = self.service._propose(state['database_id'], state['sql'], state['submitted_by'], ident=state['id'])
             return {'proposal': proposal}
+
+        def semantic_repair(state):
+            if getattr(planner, 'pv_verification_enabled', False):
+                from .pv_verification import verify_and_repair
+                return verify_and_repair(self.service, state)
+            if not getattr(planner, 'semantic_repair_enabled', False):
+                return {}
+            from .semantic_repair import repair_once
+            return repair_once(self.service, planner, state)
 
         def approval(state):
             value = interrupt({'type': 'mutation_approval', 'proposal': state['proposal']})
@@ -211,6 +223,7 @@ class DatabaseWorkflow:
         graph.add_node('analyze', analyze)
         graph.add_node('read_query', read_query)
         graph.add_node('verify_result', verify_result)
+        graph.add_node('semantic_repair', semantic_repair)
         graph.add_node('preview', preview)
         graph.add_node('await_approval', approval)
         graph.add_node('execute_transaction', execute)
@@ -223,7 +236,8 @@ class DatabaseWorkflow:
         graph.add_edge('clarify', 'retrieve_context')
         graph.add_conditional_edges('classify_sql', lambda s: 'read_query' if s['mode'] == 'query' else 'preview')
         graph.add_conditional_edges('read_query', lambda s: 'plan_sql' if s.get('error') else 'verify_result')
-        graph.add_edge('verify_result', END)
+        graph.add_edge('verify_result', 'semantic_repair')
+        graph.add_edge('semantic_repair', END)
         graph.add_edge('preview', 'await_approval')
         graph.add_edge('await_approval', 'execute_transaction')
         graph.add_edge('execute_transaction', END)

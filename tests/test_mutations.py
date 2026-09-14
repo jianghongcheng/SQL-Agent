@@ -118,7 +118,11 @@ def test_trigger_side_effect_denied(changes):
 
 def test_api_roles_and_disabled_default(changes, tmp_path, monkeypatch):
     monkeypatch.delenv("SQL_AGENT_MUTATION_CONFIG", raising=False)
-    keys = ApiKeyAuthorizer({role: Principal(role, role) for role in ["viewer", "operator", "admin"]})
+    keys = ApiKeyAuthorizer({
+        "viewer": Principal("analyst", "viewer"),
+        "operator": Principal("analyst", "operator"),
+        "admin": Principal("administrator", "admin"),
+    })
     args = (SqliteJobRepository(tmp_path / "jobs.db"), SQLTaskRegistry(), keys)
     payload = {"database_id": "demo", "sql": "DELETE FROM orders WHERE id=1"}
     with TestClient(create_app(*args)) as client:

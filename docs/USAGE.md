@@ -20,7 +20,9 @@ retrieved documentation is not authoritative schema or execution permission.
 Each result includes `retrieval` with status, scores, source, version, content
 hash and the passages supplied to the model. Database-request checkpoints retain
 this evidence across repair and approval. Treat those records as sensitive;
-existing workspace roles are not per-user or tenant isolation.
+non-admin users can inspect only jobs submitted under the same principal name.
+Database and knowledge-source permissions remain workspace-wide rather than
+per-user or tenant-specific.
 
 No match means generation uses the question and live schema; it does not mean
 the answer is grounded in a retrieved definition. Explicit SQL skips retrieval.
@@ -538,7 +540,8 @@ The stdio process must be able to access its configured job store.
 
 The browser exchanges a configured access key for an in-memory session.
 Sessions expire after eight hours; restarting the API requires sign-in again.
-Login does not add per-dataset permissions or multi-tenant isolation.
+Login enforces job ownership but does not add per-dataset permissions or complete
+multi-tenant isolation.
 
 ## Runtime files and evaluation pages
 
@@ -643,7 +646,7 @@ Primary API endpoints (one request lifecycle):
 | --- | --- | --- |
 | `GET /v1/sources` | viewer | Configured sources and contracts |
 | `POST /v1/requests` | operator | `task_id` OR `database_id`, plus `question` or `sql`; idempotency header required |
-| `GET /v1/requests/{id}` | viewer | Job state, result or mutation preview |
+| `GET /v1/requests/{id}` | viewer | Own job state, result or mutation preview; admins may inspect all jobs |
 | `POST /v1/requests/{id}/review` | admin | `{decision, notes, proposal_sha256}`; hash required for mutations |
 
 Use MCP `list_sql_sources`, `submit_sql_request` and `get_sql_request`. Give MCP

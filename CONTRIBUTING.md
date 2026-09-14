@@ -8,7 +8,9 @@ administrator approval, transactions and execution receipts.
   Fixed catalog tasks may use application-owned reference SQL declared in their
   contract. Report those checks separately from blind model evaluation.
 - Distinguish scripted demonstrations from real-model experiments.
-- Preserve source provenance, benchmark conditions and negative results.
+- Preserve source provenance, benchmark conditions and negative results for
+  current public claims. Superseded evidence may move to Git history when the
+  README and evaluation index no longer cite it.
 - Test failure behavior, role checks, stale claims and contract drift when changed.
 - Never commit database credentials, API keys or private source databases.
 - Before publishing, inspect the staged file list and local documentation links.

@@ -20,11 +20,11 @@ checkpointed workflow.
 - **Agent control:** structured Planner decisions, user clarification, bounded
   execution-error repair, and an independent advisory Verifier.
 - **Guarded reads:** registered data sources, table permissions, read-only checks,
-  timeouts, and result limits.
+  bounded database/model calls, and result limits.
 - **Approved changes:** impact preview, explicit human approval, transactional
   execution, and idempotency protection.
-- **Reliable delivery:** persistent jobs, worker leases, retries, checkpointed
-  graph state, duplicate-request handling, and restart recovery.
+- **Reliable delivery:** persistent jobs, worker leases, retries, duplicate-request
+  handling, and checkpoint resume for clarification and approval interrupts.
 - **Evaluation:** execution accuracy, paired error analysis, token usage, latency,
   retrieval quality, and verifier behavior.
 
@@ -61,6 +61,11 @@ its agreement is evidence, not proof of semantic correctness.
 Database changes follow a separate path: preview the affected rows, request human
 approval, then execute inside a transaction. Idempotency keys and stale-worker
 checks prevent duplicate or superseded writes during retries and recovery.
+
+The BIRD adapter feeds each official question, evidence field, allowlisted SQLite
+schema, and database into this same read-only graph. It never mounts gold SQL into
+Planner, retrieval, repair, or Verifier context. After the graph finishes, a
+separate scorer executes the gold query and compares result sets.
 
 [Execution and recovery details](docs/RELIABILITY.md) ·
 [Supported operations and approval boundaries](docs/USAGE.md#approved-database-changes)
@@ -101,6 +106,10 @@ setup.
 
 [Configuration, artifacts, and paired results](docs/evidence/2026-09-13/README.md) ·
 [Evaluation protocols](docs/EVALUATION.md)
+
+The reusable evaluator is `scripts/evaluate_bird_agent.py`; model-specific shell
+wrappers only select the Planner profile and local model. Runtime outputs and BIRD
+database files remain local and are excluded from Git.
 
 ### Additional engineering evidence
 
