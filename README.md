@@ -13,7 +13,7 @@ checkpointed workflow.
 
 [Quick start](#quick-start) · [Architecture](#architecture) · [Evaluation](#evaluation) · [Usage](docs/USAGE.md)
 
-## What it implements
+## System capabilities
 
 - **Grounded generation:** database-scoped schema linking and optional BM25/vector
   retrieval with cross-encoder reranking.
@@ -32,31 +32,33 @@ checkpointed workflow.
 
 ![SQL-Agent system architecture](docs/assets/workflow.svg)
 
-The main read path is:
+The online read workflow is:
 
 ```text
 Browser / FastAPI / MCP
         ↓
 Persistent job queue and worker
         ↓
-Scoped retrieval and schema linking
+Allowlisted schema linking and optional scoped retrieval
         ↓
 LangGraph Planner
    ├── ask for clarification
    ├── stop unsupported request
    └── propose SQL
         ↓
-Policy checks and read-only execution
+Programmatic policy gate and read execution
+   ├── bounded repair for eligible execution errors
+   └── independent advisory verification
+             └── optional semantic repair
         ↓
-Bounded repair on eligible execution errors
-        ↓
-Independent Verifier and human review
+Human review
 ```
 
 The Planner proposes SQL but does not grant database access. Programmatic policy
 checks determine whether the selected database, tables, and operation are allowed.
-The Verifier independently generates a comparison query and checks result agreement;
-its agreement is evidence, not proof of semantic correctness.
+The Verifier independently generates a comparison query and checks result agreement.
+When configured, disagreement can trigger one bounded semantic-repair attempt before
+review. Verifier agreement is supporting evidence, not proof of correctness.
 
 Database changes follow a separate path: preview the affected rows, request human
 approval, then execute inside a transaction. Idempotency keys and stale-worker
@@ -72,7 +74,7 @@ separate scorer executes the gold query and compares result sets.
 
 ## Evaluation
 
-### BIRD Mini-Dev agent comparison — September 13, 2026
+### Paired BIRD Mini-Dev evaluation — September 13, 2026
 
 Both workflows were evaluated on the same **500 official BIRD Mini-Dev questions**,
 SQLite databases, local model weights, decoding settings, and execution scorer:
@@ -82,22 +84,26 @@ SQLite databases, local model weights, decoding settings, and execution scorer:
 - **PV-SQL:** the upstream Probe–Generate–Verify/Repair workflow, with the tested
   base model performing all three stages.
 
-| Model | SQL-Agent | PV-SQL | PV-SQL relative change |
-| --- | ---: | ---: | ---: |
-| **Qwen3-4B** | **196/500 (39.2%)** | 180/500 (36.0%) | **−16 tasks** |
-| **Gemma3-4B** | 108/500 (21.6%) | **110/500 (22.0%)** | **+2 tasks** |
-| **Qwen3-0.6B** | **37/500 (7.4%)** | 34/500 (6.8%) | **−3 tasks** |
+Execution accuracy uses all 500 questions as the denominator. The delta is
+SQL-Agent accuracy minus PV-SQL accuracy, in percentage points.
 
-| Model | Tokens / correct task: SQL-Agent → PV-SQL | p95 latency: SQL-Agent → PV-SQL |
-| --- | ---: | ---: |
-| Qwen3-4B | 6,763 → **19,025** | 3.66 s → **8.67 s** |
-| Gemma3-4B | 13,253 → **32,022** | 4.11 s → **12.80 s** |
-| Qwen3-0.6B | 33,898 → **44,625** | 5.20 s → **5.45 s** |
+| Planner model | SQL-Agent correct | SQL-Agent accuracy | PV-SQL correct | PV-SQL accuracy | Accuracy delta |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-4B | 196 / 500 | **39.2%** | 180 / 500 | 36.0% | **+3.2 pp** |
+| Gemma3-4B | 108 / 500 | 21.6% | 110 / 500 | **22.0%** | −0.4 pp |
+| Qwen3-0.6B | 37 / 500 | **7.4%** | 34 / 500 | 6.8% | **+0.6 pp** |
 
-Paired analysis found that PV-SQL recovered/lost **53/69**, **47/45**, and
-**17/20** questions for Qwen3-4B, Gemma3-4B, and Qwen3-0.6B respectively. The
-additional probe and verification stages helped some questions while introducing
-new failures and substantially increasing token cost.
+| Planner model | SQL-Agent tokens / correct | PV-SQL tokens / correct | PV-SQL token multiple | SQL-Agent p95 | PV-SQL p95 | PV-SQL latency multiple |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-4B | **6,763** | 19,025 | 2.81× | **3.66 s** | 8.67 s | 2.37× |
+| Gemma3-4B | **13,253** | 32,022 | 2.42× | **4.11 s** | 12.80 s | 3.11× |
+| Qwen3-0.6B | **33,898** | 44,625 | 1.32× | **5.20 s** | 5.45 s | 1.05× |
+
+SQL-Agent achieved higher execution accuracy with Qwen3-4B and Qwen3-0.6B;
+PV-SQL was 0.4 percentage points higher with Gemma3-4B. Relative to SQL-Agent,
+PV-SQL required 1.32–2.81× as many tokens per correct answer and 1.05–3.11× the
+p95 latency. Paired PV-SQL gains/losses were 53/69, 47/45, and 17/20 questions,
+respectively, showing that its added stages both recovered and introduced errors.
 
 Gold SQL was excluded from model prompts and runtime decisions and used only for
 execution-based scoring. These are local paired configuration results, not an

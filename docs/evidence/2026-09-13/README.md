@@ -5,17 +5,17 @@ the same official BIRD Mini-Dev 500 questions, SQLite database files and model
 weights. Gold SQL was excluded from generation, probing, repair and verification;
 it was used after inference to compare execution results.
 
-| Model | SQL-Agent correct | PV-SQL correct | PV-SQL gains / losses |
-| --- | ---: | ---: | ---: |
-| Qwen3-4B | **196/500 (39.2%)** | 180/500 (36.0%) | 53 / 69 |
-| Gemma3-4B | 108/500 (21.6%) | **110/500 (22.0%)** | 47 / 45 |
-| Qwen3-0.6B | **37/500 (7.4%)** | 34/500 (6.8%) | 17 / 20 |
+| Planner model | SQL-Agent correct | SQL-Agent accuracy | PV-SQL correct | PV-SQL accuracy | SQL-Agent − PV-SQL | PV-SQL gains / losses |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-4B | 196 / 500 | **39.2%** | 180 / 500 | 36.0% | **+3.2 pp** | 53 / 69 |
+| Gemma3-4B | 108 / 500 | 21.6% | 110 / 500 | **22.0%** | −0.4 pp | 47 / 45 |
+| Qwen3-0.6B | 37 / 500 | **7.4%** | 34 / 500 | 6.8% | **+0.6 pp** | 17 / 20 |
 
-| Model | SQL-Agent tokens / correct | PV-SQL tokens / correct | SQL-Agent p95 | PV-SQL p95 |
-| --- | ---: | ---: | ---: | ---: |
-| Qwen3-4B | 6,763 | 19,025 | 3.66 s | 8.67 s |
-| Gemma3-4B | 13,253 | 32,022 | 4.11 s | 12.80 s |
-| Qwen3-0.6B | 33,898 | 44,625 | 5.20 s | 5.45 s |
+| Planner model | SQL-Agent tokens / correct | PV-SQL tokens / correct | PV-SQL token multiple | SQL-Agent p95 | PV-SQL p95 | PV-SQL latency multiple |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Qwen3-4B | **6,763** | 19,025 | 2.81× | **3.66 s** | 8.67 s | 2.37× |
+| Gemma3-4B | **13,253** | 32,022 | 2.42× | **4.11 s** | 12.80 s | 3.11× |
+| Qwen3-0.6B | **33,898** | 44,625 | 1.32× | **5.20 s** | 5.45 s | 1.05× |
 
 The SQL-Agent workflow used full schema context without RAG, bounded repair for eligible
 execution errors, and Qwen2.5-Coder-7B as an independent advisory Verifier. The
