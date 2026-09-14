@@ -1,99 +1,65 @@
 #!/usr/bin/env python3
-"""Render the repository's architecture diagram without external dependencies."""
-
+"""Render the SQL-Agent architecture as a self-contained SVG."""
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-
-ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "docs" / "assets" / "workflow.svg"
+OUTPUT = Path(__file__).resolve().parents[1] / "docs/assets/workflow.svg"
 
 
-def card(x, y, w, h, title, lines, *, fill="#FFFFFF", stroke="#CBD5E1", accent="#2563EB"):
-    body = [
-        f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="{fill}" stroke="{stroke}" stroke-width="2"/>',
-        f'<rect x="{x}" y="{y}" width="6" height="{h}" rx="3" fill="{accent}"/>',
-        f'<text x="{x + 22}" y="{y + 29}" class="card-title">{escape(title)}</text>',
-    ]
-    for index, line in enumerate(lines):
-        body.append(f'<text x="{x + 22}" y="{y + 55 + index * 20}" class="card-text">{escape(line)}</text>')
-    return "\n".join(body)
+def node(x, y, n, title, lines, tone="blue", w=190, h=106):
+    colors = {"blue": ("#F7FAFF", "#B9D0F5", "#2457A7"), "amber": ("#FFFBF2", "#F0CD82", "#A95D08"), "violet": ("#FBF8FF", "#D8C5F2", "#7041A6"), "green": ("#F5FBF8", "#A9D8BF", "#217A4B")}
+    fill, stroke, accent = colors[tone]
+    out = [f'<g class="node"><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="12" fill="{fill}" stroke="{stroke}"/>', f'<circle cx="{x+22}" cy="{y+23}" r="12" fill="{accent}"/>', f'<text x="{x+22}" y="{y+27}" text-anchor="middle" class="step">{n}</text>', f'<text x="{x+43}" y="{y+29}" class="node-title">{escape(title)}</text>']
+    out += [f'<text x="{x+18}" y="{y+59+i*19}" class="node-copy">{escape(line)}</text>' for i, line in enumerate(lines)]
+    return "".join(out) + "</g>"
 
 
-def arrow(x1, y1, x2, y2, *, dashed=False, label=None):
-    dash = ' stroke-dasharray="7 6"' if dashed else ""
-    parts = [f'<path d="M{x1} {y1} L{x2} {y2}" class="arrow"{dash}/>' ]
-    if label:
-        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
-        parts.append(f'<text x="{mx}" y="{my - 8}" text-anchor="middle" class="arrow-label">{escape(label)}</text>')
-    return "\n".join(parts)
+def box(x, y, title, lines, tone="amber", w=190, h=76):
+    colors = {"amber": ("#FFFBF2", "#F0CD82", "#A95D08"), "violet": ("#FBF8FF", "#D8C5F2", "#7041A6"), "green": ("#F5FBF8", "#A9D8BF", "#217A4B")}
+    fill, stroke, accent = colors[tone]
+    out = [f'<g><rect x="{x}" y="{y}" width="{w}" height="{h}" rx="10" fill="{fill}" stroke="{stroke}"/>', f'<rect x="{x}" y="{y}" width="4" height="{h}" rx="2" fill="{accent}"/>', f'<text x="{x+17}" y="{y+27}" class="branch-title">{escape(title)}</text>']
+    out += [f'<text x="{x+17}" y="{y+49+i*17}" class="branch-copy">{escape(line)}</text>' for i, line in enumerate(lines)]
+    return "".join(out) + "</g>"
+
+
+def edge(points, dashed=False):
+    pts = " ".join(f"{x},{y}" for x, y in points)
+    dash = ' stroke-dasharray="6 6"' if dashed else ""
+    return f'<polyline points="{pts}" class="edge"{dash}/>'
 
 
 def main():
-    cards = []
-    arrows = []
+    items = []
+    xs = [55, 275, 495, 715, 935, 1155, 1375]
+    specs = [("Request", ["Browser · API · MCP", "durable job + worker"]), ("Ground", ["Allowlisted schema", "optional scoped RAG"]), ("Plan", ["SQL · clarify · stop", "structured decision"]), ("Authorize", ["Database + table scope", "read-only SQL + limits"]), ("Execute", ["Bounded DB call", "timeout + row limits"]), ("Verify", ["Independent SQL", "result agreement signal"]), ("Review", ["SQL · result · trace", "accept or reject"])]
+    items += [node(x, 190, str(i+1), title, lines) for i, (x, (title, lines)) in enumerate(zip(xs, specs))]
+    items += [edge([(x+190, 243), (x+220, 243)]) for x in xs[:-1]]
 
-    # Request and delivery.
-    cards.append(card(70, 120, 260, 90, "Clients", ["Browser · FastAPI · MCP"], fill="#EFF6FF"))
-    cards.append(card(430, 120, 280, 90, "Durable request layer", ["Persistent jobs · checkpoints", "worker leases · retries"], fill="#EFF6FF"))
-    cards.append(card(810, 120, 280, 90, "Grounding", ["Allowlisted schema linking", "optional scoped hybrid RAG"], fill="#EFF6FF"))
-    cards.append(card(1190, 120, 180, 90, "Planner", ["SQL · clarify · stop"], fill="#EFF6FF"))
-    arrows += [arrow(330,165,430,165), arrow(710,165,810,165), arrow(1090,165,1190,165)]
+    items += [box(xs[2], 350, "Clarification", ["checkpoint · answer · resume"]), box(xs[4], 350, "Execution repair", ["eligible errors · bounded retries"]), box(xs[5], 350, "Semantic repair", ["optional · verifier-guided retry"])]
+    items += [edge([(xs[2]+95,296),(xs[2]+95,350)], True), edge([(xs[4]+95,296),(xs[4]+95,350)], True), edge([(xs[5]+95,296),(xs[5]+95,350)], True)]
+    items += [edge([(xs[4],388),(850,388),(850,316),(590,316),(590,296)], True), edge([(xs[5]+190,388),(1355,388),(1355,316),(1470,316),(1470,296)], True)]
 
-    # Read graph.
-    cards.append(card(105, 330, 260, 105, "Policy gate", ["Database and table scope", "read-only SQL · limits"], fill="#F8FAFC", accent="#0F766E"))
-    cards.append(card(455, 330, 260, 105, "Read executor", ["Bounded database call", "result and timeout limits"], fill="#F8FAFC", accent="#0F766E"))
-    cards.append(card(805, 330, 260, 105, "Advisory Verifier", ["Independent comparison SQL", "result-agreement signal"], fill="#F8FAFC", accent="#0F766E"))
-    cards.append(card(1155, 330, 260, 105, "Human review", ["Inspect SQL, result and trace", "accept · reject"], fill="#F8FAFC", accent="#0F766E"))
-    arrows += [arrow(1280,210,235,330), arrow(365,382,455,382), arrow(715,382,805,382), arrow(1065,382,1155,382)]
+    mx = [295, 625, 955, 1285]
+    ms = [("Mutation request", "separate from read execution"), ("Impact preview", "show operation and affected scope"), ("Explicit approval", "decision bound to the request"), ("Transactional write", "idempotency · receipt · rollback")]
+    items += [box(x,590,t,[s],"violet",220,82) for x,(t,s) in zip(mx,ms)]
+    items += [edge([(x+220,631),(x+330,631)]) for x in mx[:-1]]
 
-    cards.append(card(455, 510, 260, 90, "Execution repair", ["Eligible database errors only", "bounded attempt budget"], fill="#FFF7ED", stroke="#FDBA74", accent="#EA580C"))
-    cards.append(card(805, 510, 260, 90, "Semantic repair", ["Optional verifier-guided retry", "never treated as proof"], fill="#FFF7ED", stroke="#FDBA74", accent="#EA580C"))
-    cards.append(card(1155, 240, 260, 70, "Clarification", ["Checkpoint · response · resume"], fill="#FFF7ED", stroke="#FDBA74", accent="#EA580C"))
-    arrows += [arrow(585,435,585,510, dashed=True, label="execution error"), arrow(455,555,300,435, dashed=True, label="retry"), arrow(935,435,935,510, dashed=True, label="disagreement"), arrow(1065,555,1285,435, dashed=True, label="review"), arrow(1280,210,1280,240, dashed=True, label="clarify")]
+    ex = [75, 375, 675, 975, 1275]
+    es = [("Official Mini-Dev", "500 questions · evidence · schema"), ("Agent inference", "same guarded read workflow"), ("Candidate execution", "generated SQL result"), ("Execution scorer", "candidate result vs gold result"), ("Evidence", "accuracy · cost · p95 · pairs")]
+    items += [box(x,850,t,[s],"green",230,82) for x,(t,s) in zip(ex,es)]
+    items += [edge([(x+230,891),(x+300,891)]) for x in ex[:-1]]
+    items += [box(760,965,"Isolated gold SQL",["available only after inference"],"green",230,72), edge([(875,965),(875,947),(1090,947),(1090,932)],True)]
 
-    # Approved mutation path.
-    cards.append(card(190, 735, 280, 100, "Impact preview", ["Proposed change and scope", "no mutation executed"], fill="#FAF5FF", stroke="#D8B4FE", accent="#7E22CE"))
-    cards.append(card(580, 735, 280, 100, "Explicit approval", ["Authorized reviewer decision", "approval bound to request"], fill="#FAF5FF", stroke="#D8B4FE", accent="#7E22CE"))
-    cards.append(card(970, 735, 280, 100, "Transactional write", ["Idempotency · stale-worker guard", "commit receipt or rollback"], fill="#FAF5FF", stroke="#D8B4FE", accent="#7E22CE"))
-    arrows += [arrow(330,435,330,735, dashed=True, label="mutation request"), arrow(470,785,580,785), arrow(860,785,970,785)]
-
-    # Offline evaluation path.
-    cards.append(card(70, 1020, 265, 110, "Official Mini-Dev input", ["500 questions · evidence", "schema · SQLite database"], fill="#F0FDF4", stroke="#86EFAC", accent="#15803D"))
-    cards.append(card(415, 1020, 265, 110, "SQL-Agent inference", ["Same guarded read graph", "gold SQL remains isolated"], fill="#F0FDF4", stroke="#86EFAC", accent="#15803D"))
-    cards.append(card(760, 1020, 265, 110, "Execution scorer", ["Candidate result vs gold result", "gold used only after inference"], fill="#F0FDF4", stroke="#86EFAC", accent="#15803D"))
-    cards.append(card(1105, 1020, 265, 110, "Reported evidence", ["accuracy · paired gains/losses", "tokens/correct · p95 latency"], fill="#F0FDF4", stroke="#86EFAC", accent="#15803D"))
-    arrows += [arrow(335,1075,415,1075), arrow(680,1075,760,1075), arrow(1025,1075,1105,1075)]
-
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1220" viewBox="0 0 1440 1220" role="img" aria-labelledby="title desc">
-<title id="title">SQL-Agent architecture</title>
-<desc id="desc">Production-oriented LangGraph SQL agent showing durable request handling, grounding, policy-gated reads, bounded execution and semantic repair, advisory verification, human review, approved transactional writes, and isolated BIRD Mini-Dev evaluation.</desc>
-<defs>
-  <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#64748B"/></marker>
-  <style>
-    .title {{ font: 700 34px Arial, sans-serif; fill: #0F172A; }}
-    .subtitle {{ font: 16px Arial, sans-serif; fill: #475569; }}
-    .lane {{ font: 700 18px Arial, sans-serif; letter-spacing: 1px; fill: #334155; }}
-    .card-title {{ font: 700 17px Arial, sans-serif; fill: #0F172A; }}
-    .card-text {{ font: 14px Arial, sans-serif; fill: #475569; }}
-    .arrow {{ fill: none; stroke: #64748B; stroke-width: 2.2; marker-end: url(#arrowhead); }}
-    .arrow-label {{ font: 12px Arial, sans-serif; fill: #64748B; paint-order: stroke; stroke: #FFFFFF; stroke-width: 4px; }}
-  </style>
-</defs>
-<rect width="1440" height="1220" fill="#FFFFFF"/>
-<text x="70" y="55" class="title">SQL-Agent system architecture</text>
-<text x="70" y="84" class="subtitle">Grounded planning, programmatic execution controls, bounded recovery, and evaluation with isolated gold answers</text>
-<text x="70" y="108" class="lane">ONLINE READ WORKFLOW</text>
-<rect x="45" y="95" width="1350" height="545" rx="20" fill="none" stroke="#DBEAFE" stroke-width="2"/>
-<text x="70" y="700" class="lane">HUMAN-APPROVED MUTATION WORKFLOW</text>
-<rect x="45" y="675" width="1350" height="200" rx="20" fill="none" stroke="#E9D5FF" stroke-width="2"/>
-<text x="70" y="985" class="lane">OFFLINE BIRD MINI-DEV EVALUATION</text>
-<rect x="45" y="960" width="1350" height="210" rx="20" fill="none" stroke="#BBF7D0" stroke-width="2"/>
-{''.join(arrows)}
-{''.join(cards)}
-<text x="70" y="1197" class="subtitle">Dashed arrows denote interrupts, bounded retries, or branch transitions. The Verifier supplies evidence; it does not certify correctness.</text>
-</svg>'''
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1620" height="1100" viewBox="0 0 1620 1100" role="img" aria-labelledby="title desc">
+<title id="title">SQL-Agent system architecture</title><desc id="desc">A left-to-right LangGraph SQL agent with durable requests, schema grounding, planning, policy-gated execution, bounded recovery, advisory verification, human review, approved writes, and isolated BIRD evaluation.</desc>
+<defs><filter id="shadow" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F172A" flood-opacity="0.08"/></filter><marker id="arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><polygon points="0 0,9 3.5,0 7" fill="#718096"/></marker><style>
+text{{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}.title{{font-size:34px;font-weight:720;fill:#172033}}.subtitle{{font-size:15px;fill:#64748B}}.lane-title{{font-size:13px;font-weight:700;letter-spacing:1.8px;fill:#64748B}}.node{{filter:url(#shadow)}}.step{{font-size:12px;font-weight:700;fill:white}}.node-title{{font-size:16px;font-weight:700;fill:#172033}}.node-copy{{font-size:12.5px;fill:#536176}}.branch-title{{font-size:14px;font-weight:700;fill:#273449}}.branch-copy{{font-size:12px;fill:#64748B}}.edge{{fill:none;stroke:#718096;stroke-width:1.7;marker-end:url(#arrow)}}.note{{font-size:12px;fill:#64748B}}
+</style></defs><rect width="1620" height="1100" fill="#FFF"/>
+<text x="55" y="54" class="title">SQL-Agent</text><text x="55" y="82" class="subtitle">Grounded planning, controlled execution, bounded recovery, and reproducible evaluation</text>
+<rect x="35" y="125" width="1550" height="360" rx="18" fill="#FCFDFF" stroke="#DCE6F5"/><text x="55" y="157" class="lane-title">ONLINE READ WORKFLOW</text>
+<rect x="35" y="525" width="1550" height="195" rx="18" fill="#FEFCFF" stroke="#E7DDF4"/><text x="55" y="557" class="lane-title">HUMAN-APPROVED MUTATION WORKFLOW</text>
+<rect x="35" y="780" width="1550" height="275" rx="18" fill="#FBFEFC" stroke="#D5EBDD"/><text x="55" y="812" class="lane-title">OFFLINE BIRD MINI-DEV EVALUATION</text>
+{''.join(items)}<text x="55" y="1078" class="note">Dashed lines show interrupts or bounded retry paths. Verifier agreement is evidence, not a correctness guarantee.</text></svg>'''
     OUTPUT.write_text(svg, encoding="utf-8")
     print(f"wrote {OUTPUT}")
 
