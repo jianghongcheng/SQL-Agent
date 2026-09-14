@@ -32,7 +32,8 @@ checkpointed workflow.
 
 ![SQL-Agent system architecture](docs/assets/workflow.svg)
 
-The online read workflow is:
+The online workflow shares request handling and planning, then branches into
+read queries or human-approved database changes:
 
 ```text
 Browser / FastAPI / MCP
@@ -46,12 +47,15 @@ LangGraph Planner
    ├── stop unsupported request
    └── propose SQL
         ↓
-Programmatic policy gate and read execution
-   ├── bounded repair for eligible execution errors
-   └── independent advisory verification
-             └── optional semantic repair
-        ↓
-Human review
+Operation classification and policy checks
+   ├── Read query
+   │     → read-only execution and bounded error repair
+   │     → advisory verification and optional semantic repair
+   │     → result review
+   └── Database change
+         → impact preview
+         → explicit human approval
+         → transactional write and receipt
 ```
 
 The Planner proposes SQL but does not grant database access. Programmatic policy
@@ -60,8 +64,10 @@ The Verifier independently generates a comparison query and checks result agreem
 When configured, disagreement can trigger one bounded semantic-repair attempt before
 review. Verifier agreement is supporting evidence, not proof of correctness.
 
-Database changes follow a separate path: preview the affected rows, request human
-approval, then execute inside a transaction. Idempotency keys and stale-worker
+Both branches belong to the online Agent workflow. Read-result review happens
+after query execution; mutation approval happens before any database change.
+The write branch previews the affected rows, requests human approval, then
+executes inside a transaction. Idempotency keys and stale-worker
 checks prevent duplicate or superseded writes during retries and recovery.
 
 The BIRD adapter feeds each official question, evidence field, allowlisted SQLite

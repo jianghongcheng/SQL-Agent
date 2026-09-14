@@ -40,7 +40,8 @@ def main():
     items += [edge([(xs[4],388),(850,388),(850,316),(590,316),(590,296)], True), edge([(xs[5]+190,388),(1355,388),(1355,316),(1470,316),(1470,296)], True)]
 
     mx = [295, 625, 955, 1285]
-    ms = [("Mutation request", "separate from read execution"), ("Impact preview", "show operation and affected scope"), ("Explicit approval", "decision bound to the request"), ("Transactional write", "idempotency · receipt · rollback")]
+    ms = [("Mutation policy", "validate operation and scope"), ("Impact preview", "show operation and affected scope"), ("Explicit approval", "approve before any write"), ("Transactional write", "idempotency · receipt · rollback")]
+    items += [edge([(685,270),(700,270),(700,490),(500,490),(500,590)])]
     items += [box(x,590,t,[s],"violet",220,82) for x,(t,s) in zip(mx,ms)]
     items += [edge([(x+220,631),(x+330,631)]) for x in mx[:-1]]
 
@@ -56,8 +57,9 @@ def main():
 text{{font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}.title{{font-size:34px;font-weight:720;fill:#172033}}.subtitle{{font-size:15px;fill:#64748B}}.lane-title{{font-size:13px;font-weight:700;letter-spacing:1.8px;fill:#64748B}}.node{{filter:url(#shadow)}}.step{{font-size:12px;font-weight:700;fill:white}}.node-title{{font-size:16px;font-weight:700;fill:#172033}}.node-copy{{font-size:12.5px;fill:#536176}}.branch-title{{font-size:14px;font-weight:700;fill:#273449}}.branch-copy{{font-size:12px;fill:#64748B}}.edge{{fill:none;stroke:#718096;stroke-width:1.7;marker-end:url(#arrow)}}.note{{font-size:12px;fill:#64748B}}
 </style></defs><rect width="1620" height="1100" fill="#FFF"/>
 <text x="55" y="54" class="title">SQL-Agent</text><text x="55" y="82" class="subtitle">Grounded planning, controlled execution, bounded recovery, and reproducible evaluation</text>
-<rect x="35" y="125" width="1550" height="360" rx="18" fill="#FCFDFF" stroke="#DCE6F5"/><text x="55" y="157" class="lane-title">ONLINE READ WORKFLOW</text>
-<rect x="35" y="525" width="1550" height="195" rx="18" fill="#FEFCFF" stroke="#E7DDF4"/><text x="55" y="557" class="lane-title">HUMAN-APPROVED MUTATION WORKFLOW</text>
+<rect x="35" y="125" width="1550" height="610" rx="18" fill="#FCFDFF" stroke="#DCE6F5"/><text x="55" y="157" class="lane-title">ONLINE AGENT WORKFLOW</text>
+<text x="55" y="178" class="note">Shared request and planning stages · reads execute before result review · writes require prior approval</text>
+<rect x="55" y="525" width="1510" height="190" rx="14" fill="#FEFCFF" stroke="#E7DDF4"/><text x="75" y="557" class="lane-title">WRITE BRANCH · HUMAN APPROVAL REQUIRED</text>
 <rect x="35" y="780" width="1550" height="275" rx="18" fill="#FBFEFC" stroke="#D5EBDD"/><text x="55" y="812" class="lane-title">OFFLINE BIRD MINI-DEV EVALUATION</text>
 {''.join(items)}<text x="55" y="1078" class="note">Dashed lines show interrupts or bounded retry paths. Verifier agreement is evidence, not a correctness guarantee.</text></svg>'''
     OUTPUT.write_text(svg, encoding="utf-8")
