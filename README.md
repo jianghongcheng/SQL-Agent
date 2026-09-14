@@ -1,163 +1,130 @@
 # SQL-Agent
 
-**A LangGraph SQL agent with hybrid RAG, a Planner–Verifier workflow, and reproducible evaluation.**
+**A LangGraph SQL agent with grounded generation, controlled execution, and reproducible evaluation.**
 
 [![CI](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/jianghongcheng/SQL-Agent/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Turn business questions into SQL with scoped retrieval, schema-aware planning,
-bounded repair, and an advisory independent Verifier for SQLite queries. Inspect
-the generated SQL, execution history, and observed input/output token usage,
-including failed calls and retries.
+SQL-Agent turns natural-language questions into SQL over registered SQLite and
+PostgreSQL databases. It combines schema and business-knowledge retrieval,
+Planner–Verifier orchestration, bounded repair, human review, and durable
+background execution. Browser, FastAPI, and MCP clients use the same
+checkpointed workflow.
 
-The browser and MCP share a checkpointed **LangGraph workflow** through an
-asynchronous request API. Registered SQLite and PostgreSQL sources support
-bounded queries and separately approved changes. Evaluation reports task accuracy,
-verifier false accepts, latency, and tokens per correct task with public evidence.
+[Quick start](#quick-start) · [Architecture](#architecture) · [Evaluation](#evaluation) · [Usage](docs/USAGE.md)
 
-[Supported database operations and approval boundaries](docs/USAGE.md#approved-database-changes)
+## What it implements
 
-[Quick start](#quick-start) · [Architecture](#architecture) · [Results](#evaluation) · [Usage](docs/USAGE.md)
+- **Grounded generation:** database-scoped schema linking and optional BM25/vector
+  retrieval with cross-encoder reranking.
+- **Agent control:** structured Planner decisions, user clarification, bounded
+  execution-error repair, and an independent advisory Verifier.
+- **Guarded reads:** registered data sources, table permissions, read-only checks,
+  timeouts, and result limits.
+- **Approved changes:** impact preview, explicit human approval, transactional
+  execution, and idempotency protection.
+- **Reliable delivery:** persistent jobs, worker leases, retries, checkpointed
+  graph state, duplicate-request handling, and restart recovery.
+- **Evaluation:** execution accuracy, paired error analysis, token usage, latency,
+  retrieval quality, and verifier behavior.
 
-### Latest measured results — September 13, 2026
+## Architecture
 
-The latest comparison uses the same **official BIRD Mini-Dev 500 questions**, SQLite
-databases and local model weights for both workflows. The v4 workflow uses full
-schema context, bounded execution-error repair and a fixed Qwen2.5-Coder-7B
-advisory Verifier. PV-SQL uses its published Probe–Generate–Verify/Repair workflow,
-with the tested base model performing all three stages.
+![SQL-Agent system architecture](docs/assets/workflow.svg)
 
-| Model | v4 | PV-SQL | PV-SQL change |
+The main read path is:
+
+```text
+Browser / FastAPI / MCP
+        ↓
+Persistent job queue and worker
+        ↓
+Scoped retrieval and schema linking
+        ↓
+LangGraph Planner
+   ├── ask for clarification
+   ├── stop unsupported request
+   └── propose SQL
+        ↓
+Policy checks and read-only execution
+        ↓
+Bounded repair on eligible execution errors
+        ↓
+Independent Verifier and human review
+```
+
+The Planner proposes SQL but does not grant database access. Programmatic policy
+checks determine whether the selected database, tables, and operation are allowed.
+The Verifier independently generates a comparison query and checks result agreement;
+its agreement is evidence, not proof of semantic correctness.
+
+Database changes follow a separate path: preview the affected rows, request human
+approval, then execute inside a transaction. Idempotency keys and stale-worker
+checks prevent duplicate or superseded writes during retries and recovery.
+
+[Execution and recovery details](docs/RELIABILITY.md) ·
+[Supported operations and approval boundaries](docs/USAGE.md#approved-database-changes)
+
+## Evaluation
+
+### BIRD Mini-Dev agent comparison — September 13, 2026
+
+Both workflows were evaluated on the same **500 official BIRD Mini-Dev questions**,
+SQLite databases, local model weights, decoding settings, and execution scorer:
+
+- **SQL-Agent:** full schema context, bounded execution-error repair, and a fixed
+  Qwen2.5-Coder-7B advisory Verifier.
+- **PV-SQL:** the upstream Probe–Generate–Verify/Repair workflow, with the tested
+  base model performing all three stages.
+
+| Model | SQL-Agent | PV-SQL | PV-SQL relative change |
 | --- | ---: | ---: | ---: |
 | **Qwen3-4B** | **196/500 (39.2%)** | 180/500 (36.0%) | **−16 tasks** |
 | **Gemma3-4B** | 108/500 (21.6%) | **110/500 (22.0%)** | **+2 tasks** |
 | **Qwen3-0.6B** | **37/500 (7.4%)** | 34/500 (6.8%) | **−3 tasks** |
 
-PV-SQL also used more tokens per correct task and had higher p95 latency:
-
-| Model | Tokens / correct task, v4 → PV-SQL | p95 latency, v4 → PV-SQL |
+| Model | Tokens / correct task: SQL-Agent → PV-SQL | p95 latency: SQL-Agent → PV-SQL |
 | --- | ---: | ---: |
 | Qwen3-4B | 6,763 → **19,025** | 3.66 s → **8.67 s** |
 | Gemma3-4B | 13,253 → **32,022** | 4.11 s → **12.80 s** |
 | Qwen3-0.6B | 33,898 → **44,625** | 5.20 s → **5.45 s** |
 
-These are local paired configuration results, not an official BIRD leaderboard
-submission or a reproduction of the paper's full BIRD results. The v4 Verifier is
-advisory and does not select or rewrite successful SQL. On this configuration,
-PV-SQL recovered and lost respectively 53/69, 47/45 and 17/20 tasks across the
-three models. [Configuration and evidence](docs/evidence/2026-09-13/README.md)
+Paired analysis found that PV-SQL recovered/lost **53/69**, **47/45**, and
+**17/20** questions for Qwen3-4B, Gemma3-4B, and Qwen3-0.6B respectively. The
+additional probe and verification stages helped some questions while introducing
+new failures and substantially increasing token cost.
 
-### Inspected development-set repair — September 9, 2026
+Gold SQL was excluded from model prompts and runtime decisions and used only for
+execution-based scoring. These are local paired configuration results, not an
+official BIRD leaderboard submission or a reproduction of the paper's full BIRD
+setup.
 
-**35/48 correct (72.9%) on an inspected SQL development set**, up from 21/48
-(43.8%) after explicit population and aggregation-grain planning. These are six
-known question families with eight data variants each, not blind generalization.
+[Configuration, artifacts, and paired results](docs/evidence/2026-09-13/README.md) ·
+[Evaluation protocols](docs/EVALUATION.md)
 
-| Metric | Before | After |
-| --- | ---: | ---: |
-| Task accuracy | 21/48 (43.8%) | **35/48 (72.9%)** |
-| Tokens per correct task, including spend on wrong/failed tasks | 6,629 | **4,250** |
-| Client p95 latency | 5.85 s | 5.91 s |
-| Verifier false accept: wrong candidates receiving agreement | 0/27 (0%) | **2/13 (15.4%)** |
-| Human review rate | 100% | 100% |
+### Additional engineering evidence
 
-Planner: **Qwen3 8B**; Verifier: **Qwen2.5-Coder 14B**; BM25 retrieval;
-local RTX 3090; two workers. No general answer was automatically released.
-The improvement fixes 15 cases and regresses one. Top-customer tie queries remain
-**0/8**; verifier agreement does not establish correctness. Token cost per correct
-task falls **35.9%**, while total workload tokens increase from 139,207 to 148,734.
+- Hybrid retrieval with reranking improved retrieval Hit@1 from **68.75% to
+  93.75%** on 16 fixed synthetic retrieval queries. This measures retrieval only,
+  not end-to-end SQL correctness.
+- A local Docker recovery/load run completed **100/100 scripted jobs at
+  concurrency 8** with **0.698 s p95** latency. The run excluded LLM inference and
+  is an engineering check, not a production SLO.
 
-[Full before/after results](docs/SQL_CORRECTNESS_REPAIR.md) ·
-[Public metric evidence](docs/evidence/2026-09-09/README.md) ·
-[Remaining correctness, production and generalization gates](docs/NEXT_QUALITY_GATES.md)
+Detailed development experiments, fine-tuning comparisons, and failure analyses
+remain available in [the evaluation documentation](docs/EVALUATION.md).
 
 ## Demo
 
 ![SQL-Agent dashboard with a synthetic commerce query](docs/assets/dashboard.png)
 
-The dashboard supports scalar answers, order lists, and grouped summaries.
-The screenshot shows synthetic commerce data; the walkthrough includes six
-[example questions and expected answers](docs/USAGE.md#six-questions-to-test-yourself).
-
-## Architecture
-
-![SQL-Agent system architecture: request delivery, LangGraph orchestration, read verification, approved changes and evaluation](docs/assets/workflow.svg)
-
-The main path is **request → durable worker → scoped retrieval → schema linking →
-Planner → read execution → independent Verifier → human review**. Database changes
-branch into impact preview, administrator approval and transactional execution.
-Clarification pauses the graph and resumes from persisted state.
-
-The Verifier is advisory. General queries use separate bounded database reads;
-registered contracted analysis tasks retain their own snapshot-preserving executor.
-Only eligible SQL errors enter the bounded repair loop. The accounting layer records
-input/output tokens across Planner, Verifier, failures and retries.
-
-General database queries never auto-complete based on execution or model
-agreement alone. SQLite natural-language requests receive an independent,
-policy-restricted checker when available; separate snapshots make this advisory,
-not proof. Explicit SQL without a question/model and PostgreSQL candidates also
-require review. Registered business-verified tasks retain automatic completion.
-
-SQL-Agent is a bounded, single-host prototype. PostgreSQL currently admits ordinary
-tables with primitive columns, not arbitrary schemas, triggers or stored logic.
-Historical accuracy results below evaluate SQLite analysis only; they do not
-measure write-task or PostgreSQL accuracy.
-
-### Retrieval-augmented SQL generation
-
-Natural-language database requests can retrieve curated business definitions,
-schema explanations and SQL examples before planning. Configurable hybrid retrieval
-combines BM25 with local sentence embeddings and reciprocal-rank fusion. Both
-branches filter by configured database and allowed tables before indexing, then supply bounded chunks with
-source, version and content hashes. Evidence is checkpointed and returned with
-the request. Explicit SQL skips retrieval; contracted tasks retain registered
-definitions and snapshot-preserving analysis.
-
-Hybrid mode uses token-aware or paragraph-bounded chunks, a model/content-addressed SQLite vector
-cache, and exact cosine search (not a distributed vector database). An optional
-local cross-encoder reranks fused candidates. BM25-only
-mode remains available. Retrieved text cannot authorize SQL or bypass approval.
-Synthetic retrieval smoke results are not SQL-answer accuracy or production evidence.
-See [knowledge configuration](docs/USAGE.md#retrieval-augmented-generation-rag).
-
-[Execution and recovery details](docs/RELIABILITY.md) · [Task registration](docs/USAGE.md#register-additional-tasks)
-
-## Evaluation
-
-Experiments report separate denominators and do not share one accuracy number.
-Cost means input/output **tokens**, including failed calls and retries; missing
-usage is unknown, not zero.
-
-| Experiment | Measured result | Scope |
-| --- | --- | --- |
-| SQL planning repair | **21/48 → 35/48**; 15 fixes, 1 regression | Inspected development set; see headline metrics above |
-| Retrieval-only BM25 → hybrid → reranking | Hit@1 **68.75% → 87.50% → 93.75%** | 16 synthetic retrieval queries; not SQL accuracy |
-| Original end-to-end RAG comparison | BM25 **21/48**, hybrid **19/48**, reranked **19/48** | Pre-repair prompt; better retrieval did not improve SQL correctness |
-| New 0.5B QLoRA training | **44/100 → 51/100**; 15 fixes, 8 regressions | Same source-labelled test set; adapter not promoted |
-| Historical 1.5B QLoRA | **52/100 → 59/100**; 9 fixes, 2 regressions | Saved-run replay; not newly trained in this run |
-| Local service load | **100/100** scripted jobs; p95 **0.698 s** | Concurrency 8; excludes LLM inference, not a production SLO |
-
-[Local engineering acceptance](docs/STRONG_SIGNAL_RESULTS.md) ·
-[QLoRA comparison and failure analysis](docs/SMALL_MODEL_COMPARISON.md) ·
-[Protocols and reproduction](docs/EVALUATION.md)
-
-**New holdout status:** runtime frozen; 60 new-domain tasks, 24 tie-ranking
-challenges and 24 shared-error-risk cases are prepared. No completed, verified
-holdout report is included in this release, so no blind accuracy is claimed.
-
-The historical **91.0% (142/156)** result uses a different Qwen3 14B thinking
-configuration and repeated development questions, with p95 **74.83 s**. It is
-not the accuracy or latency of the current 8B/14B pipeline.
-See [the historical protocol](docs/EVALUATION.md#qwen3-14b-configuration-comparison).
-
-Recovery tests exercise worker termination, lease expiry, duplicate submission,
-and stale-result rejection. They test service behavior separately from model accuracy.
+The included synthetic commerce database supports revenue analysis, order lookup,
+and grouped summaries. The dashboard exposes generated SQL, execution results,
+review decisions, and job history.
 
 ## Quick start
 
-Requires Python 3.10+, a running local Ollama service, and enough memory for
-`qwen3:14b`. Install Ollama separately, then:
+Requires Python 3.10+ and a running local Ollama service:
 
 ```bash
 git clone https://github.com/jianghongcheng/SQL-Agent.git
@@ -165,13 +132,12 @@ cd SQL-Agent
 python -m venv .venv
 source .venv/bin/activate
 pip install -e '.[dev]'
-ollama pull qwen3:14b
-python scripts/local_demo.py start --model qwen3:14b --generation-format sql --thinking --max-tokens 8192
+ollama pull qwen3:8b
+python scripts/local_demo.py start --model qwen3:8b
 ```
 
-Open **http://127.0.0.1:8765**, select **Enter local demo**, and use
-`commerce_analysis`. The local-only key is `123`. Inspect SQL and results when
-the job reaches `needs_review`, then record an approval or rejection.
+Open **http://127.0.0.1:8765**, select **Enter local demo**, and choose
+`commerce_analysis`. The local demo key is `123`.
 
 ```bash
 python scripts/local_demo.py status
@@ -179,14 +145,17 @@ python scripts/local_demo.py stop
 python -m pytest -q
 ```
 
-**Stack:** Python, Ollama, SQLite, FastAPI, MCP, Docker, GitHub Actions.
-
 ## Scope
 
-This release supports registered SQLite analytical sources and local deployment.
-General SQL requires human review; fixed catalog tasks can use explicitly
-registered reference queries. Service-wide roles are implemented, not multi-tenant
-data isolation. See [operational limits](docs/RELIABILITY.md#operational-limits)
-before deploying beyond a local environment.
+SQL-Agent is a local, single-host reference implementation. It supports registered
+SQLite analytical sources and bounded PostgreSQL operations. General SQL and all
+database mutations require human review; registered analysis tasks can follow
+explicitly configured completion policies. Review
+[the operational limits](docs/RELIABILITY.md#operational-limits) before using it
+beyond a local environment.
 
-[Usage](docs/USAGE.md) · [Evaluation](docs/EVALUATION.md) · [Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
+**Stack:** Python, LangGraph, Ollama, SQLite/PostgreSQL, FastAPI, MCP, Docker, and
+GitHub Actions.
+
+[Usage](docs/USAGE.md) · [Evaluation](docs/EVALUATION.md) ·
+[Contributing](CONTRIBUTING.md) · [MIT license](LICENSE)
